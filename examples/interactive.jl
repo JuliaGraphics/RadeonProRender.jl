@@ -1,14 +1,14 @@
 using FireRender, GeometryTypes, GLAbstraction, GLVisualize, Colors, ModernGL, FileIO, Reactive
 const FR = FireRender
-w,r=glscreen()
+w=glscreen()
 
 # Create OpenCL context using a single GPU 
 context = FR.Context(
 	FR.API_VERSION, FR.CONTEXT_OPENCL, 
 	FR.CREATION_FLAGS_ENABLE_GPU0 | FR.CREATION_FLAGS_ENABLE_GL_INTEROP
 )
-
-
+#set!(context, "rendermode", FR.RENDER_MODE_WIREFRAME)
+DN = 512
 # Create a scene
 scene = FR.Scene(context)
 
@@ -17,7 +17,8 @@ cat = FR.Shape(context, load("cat.obj"))
 push!(scene, cat)
 transform!(cat, translationmatrix(Vec3f0(0,0.5,0)))
 # Load an obj
-plane = FR.Shape(context, SimpleRectangle(-5,-5, 10,10))
+r = SimpleRectangle{Float32}(-5,-5, 10,10)
+plane = FR.Shape(context, r, (div(DN,2),div(DN,2)))
 push!(scene, plane)
 
 
@@ -27,11 +28,12 @@ reflective = FR.MaterialNode(matsys, FR.MATERIAL_NODE_DIFFUSE)
 tex = FR.MaterialNode(matsys, FR.MATERIAL_NODE_IMAGE_TEXTURE)
 set!(diffuse, "color", HSVA(181, 0.23, 0.5, 1.0)) # all colors from color package can be used
 
-pirange = linspace(0,4pi,512)
+pirange = linspace(0,4pi,DN)
 displace = FR.Image(
 	context,
 	Float32[(sin(x)*cos(y)+1)/2f0 for x=pirange, y=pirange]
 )
+
 color = FR.Image(
 	context,
 	RGBA{U8}[RGBA{U8}((sin(x)+1)/2, (cos(x)+1)/2, (cos(x)+1)/4, (cos(x)*sin(x)+1)/2) for x=pirange, y=pirange]
@@ -43,7 +45,7 @@ set!(cat, diffuse)
 set!(plane, reflective)
 set!(plane, displace)
 setdisplacementscale!(plane, 1.0)
-setsubdivisions!(plane, 6)
+setsubdivisions!(plane, 1)
 
 camera = FR.Camera(context)
 set!(scene, camera)
@@ -71,7 +73,7 @@ set!(context, "imagefilter.type", FR.FILTER_TRIANGLE)
 set!(context, "aasamples", 1.)
 
 # Create camera
-cam = w.cameras[:perspective]
+cam = PerspectiveCamera(w.inputs, Vec3f0(2), Vec3f0(0))
 
 gl_fb = w.inputs[:framebuffer_size].value
 texture = Texture(RGBA{Float16}, (gl_fb...))
@@ -79,7 +81,6 @@ view(visualize(texture), method=:fixed_pixel)
 g_frame_buffer = FR.FrameBuffer(context, texture)
 set!(context, FR.AOV_COLOR, g_frame_buffer)
 
-@async r()
 
 preserve(map(droprepeats(cam.eyeposition)) do position
 	l,u = cam.lookat.value, cam.up.value
@@ -142,7 +143,7 @@ Base.length(ti::TileIterator) = prod(ti.lengths)
 
 Base.start(ti::TileIterator) = 1
 Base.next(ti::TileIterator, state) = ti[state], state+1
-Base.done(ti::TileIterator, state) = length(ti.length) < state
+Base.done(ti::TileIterator, state) = length(ti) < state
 
 
 function Base.getindex(ti::TileIterator, i,j)
@@ -162,7 +163,7 @@ function prepare_gl()
 	glBindTexture(GL_TEXTURE_2D, 0)
 end
 function renderloop()
-	const ti = MiddleSampleIterator(TileIterator(size(texture), (256,256)))
+	const ti = TileIterator(size(texture), (256,256))
 	s = start(ti)
 	while isopen(w)
 		prepare_gl()
@@ -171,6 +172,7 @@ function renderloop()
 		end
 		next_tile, s = next(ti, s)
 		render(context, next_tile)
+		GLWindow.renderloop_inner(w)
 	end
 end
 renderloop()

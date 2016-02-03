@@ -52,8 +52,8 @@ type Shape <: FireRenderObj
 	end
 end
 
-function Shape(context::Context, mesh::GeometryPrimitive)
-	m = GLNormalUVMesh(mesh)
+function Shape(context::Context, mesh::GeometryPrimitive, args...)
+	m = GLNormalUVMesh(mesh, args...)
 	v, n, i, uv = vertices(m), normals(m), faces(m), texturecoordinates(m)
 	vraw  = reinterpret(Float32, v, (length(v)*3,))
 	nraw  = reinterpret(Float32, n, (length(n)*3,))
@@ -217,8 +217,8 @@ function set!(
 end
 set!{T<:FixedVector{4}}(base::MaterialNode, parameter::AbstractString, f::T) =
 	set!(base.x, parameter, f...)
-function set!{T}(base::MaterialNode, parameter::AbstractString, c::Colorant{T, 4})
-	c = RGBA{Float32}(c)
+function set!{T}(base::MaterialNode, parameter::AbstractString, color::Colorant{T, 4})
+	c = RGBA{Float32}(color)
 	set!(base, parameter, comp1(c), comp2(c), comp3(c), alpha(c))
 end
 function set!(shape::Shape, material::MaterialNode)
@@ -240,6 +240,17 @@ set!(scene::Scene, camera::Camera) =
 transform!(shape::Shape, transform::Mat4f0) =
 	ShapeSetTransform(shape.x, FALSE, convert(Array, transform))
 
+transform!(light::Light, transform::Mat4f0) =
+	LightSetTransform(light.x, FALSE, convert(Array, transform))
+
+function transform!(shape::Shape, trans_scale_rot::Tuple)
+	transform!(shape, trans_scale_rot...)
+end
+function transform!(shape::Shape, translate, scale, rot)
+	s = scalematrix(Vec3f0(scale))
+	t = translationmatrix(Vec3f0(translate))
+	transform!(shape, t*rot*s)
+end
 
 clear!(scene::Scene) = SceneClear(scene.x)
 clear!(frame_buffer::FrameBuffer) = FrameBufferClear(frame_buffer.x)
@@ -257,7 +268,7 @@ delete!(scene::Scene, light::Light) =
 
 set!(scene::Scene, light::EnvironmentLight) =
 	SceneSetEnvironmentLight(scene.x, light.x)
-
+	
 get(scene::Scene, ::Type{EnvironmentLight}) =
 	EnvironmentLight(SceneGetEnvironmentLight(scene::fr_scene))
 
@@ -291,23 +302,121 @@ function save(fb::FrameBuffer, path::AbstractString)
 end
 
 
+@enum(MaterialType,
+	Diffuse = 0x1,
+	Microfacet = 0x2,
+	Reflection = 0x3,
+	Refraction = 0x4,
+	MicrofacetRefraction = 0x5,
+	Transparent = 0x6,
+	Emissive = 0x7,
+	Fresnel = 0xC,
+	Orennayar = 0x18
+)
 
-function instance(context::Context, scene::Scene, shape, scales, positions, rotations, shaders)
-	iterator = zip(
-		iter_or_array(scales), 
-		iter_or_array(positions), 
-		iter_or_array(rotations), 
-		iter_or_array(shaders)
+
+immutable Material{MatType, C, RI, R, Re, B, Ra}
+	color::C
+	refraction_index::RI
+	roughness::R
+	reflectance::Re
+	bumps::B
+	radiance::Ra
+end
+
+
+function Material()
+	Materials{Diffuse}(
+		RGBA{Float32}(0,0,0,1),
+		1.5,
+		0.0,
+		RGBA{Float32}(0,0,0,1),
+		nothing,
+		nothing
 	)
-	for (scale,position,rotation,shader) in iterator
+end
+
+
+
+
+function instance(context::Context, scene::Scene, instances, materials)
+	ti = TransformationIterator(instances)
+	for (transmat, m) in zip(ti, mat)
 		inst = FR.Shape(context, shape)
-		transform!(inst,
-			translationmatrix(Vec3f0(position))*
-			scalematrix(Vec3f0(scale))
-			#rotationmatrix(rotation)*
-		)
+		transform!(inst, transmat)
 		set!(inst, shader)
 		push!(scene, inst)
 	end
 end
 
+
+immutable RandomIterator{T}
+	iterable::T
+end
+Base.start(ti::RandomIterator) = rand(1:length(ti.iterable))
+Base.next(ti::RandomIterator, state) = ti.iterable[state], rand(1:length(ti.iterable))
+Base.done(ti::RandomIterator, state) = false
+
+immutable MiddleSampleIterator{T}
+	iterable::T
+end
+function multiplier(i,j,n1,n2)
+	a = abs(mod(i-div(n1,2),n1)-div(n1,2))
+	b = abs(mod(j-div(n2,2),n2)-div(n2,2))
+	max(a,b)
+end
+function Base.start(ti::MiddleSampleIterator)
+	samplepool = Tuple{Int,Int}[]
+	for i=1:size(ti.iterable,1)
+		for j=1:size(ti.iterable,2)
+			append!(samplepool, fill((i,j), multiplier(i,j,size(ti.iterable)...)))
+		end
+	end
+	samplepool
+end
+function Base.next(ti::MiddleSampleIterator, state)
+	i = rand(1:length(state))
+	i2 = state[i]
+	filter!(state) do s
+		s != i2
+	end
+	i = sub2ind(size(ti.iterable), i2...)
+	ti.iterable[i], state
+end
+Base.done(ti::MiddleSampleIterator, state) = isempty(state)
+
+
+
+immutable TileIterator
+	size::Vec{2, Int}
+	tile_size::Vec{2, Int}
+	lengths::Vec{2, Int}
+end
+
+function TileIterator(size, tile_size)
+	s, ts = Vec(size), Vec(tile_size)
+	lengths = Vec{2, Int}(ceil(Vec{2,Float64}(s) ./ Vec{2,Float64}(ts)))
+	TileIterator(s, ts, lengths)
+end
+
+Base.size(ti::TileIterator, i) = ti.lengths[i]
+Base.size(ti::TileIterator) = ti.lengths._
+Base.length(ti::TileIterator) = prod(ti.lengths)
+
+Base.start(ti::TileIterator) = 1
+Base.next(ti::TileIterator, state) = ti[state], state+1
+Base.done(ti::TileIterator, state) = length(ti) < state
+
+
+function Base.getindex(ti::TileIterator, i,j)
+	ts    = Vec(ti.tile_size)
+	xymin = (Vec(i,j)-1) .* ts
+	xymax = xymin + ts
+	HyperRectangle(xymin, min(xymax, ti.size)-xymin)
+end
+function Base.getindex(ti::TileIterator, linear_index::Int)
+	i,j = ind2sub(size(ti), linear_index)
+	ti[i,j]
+end
+
+export TileIterator
