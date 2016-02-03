@@ -1,12 +1,9 @@
 using FireRender, GeometryTypes, GLAbstraction, GLVisualize, Colors, ModernGL, FileIO, Reactive
 using GLWindow
 const FR = FireRender
-w=glscreen()
+w = glscreen()
 # Create OpenCL context using a single GPU, which is the default
-context = FR.Context(
-	FR.API_VERSION, FR.CONTEXT_OPENCL, 
-	FR.CREATION_FLAGS_ENABLE_GPU0 | FR.CREATION_FLAGS_ENABLE_GL_INTEROP
-)
+context,glframebuffer = interactive_context()
 
 # Create a scene
 scene = FR.Scene(context)
@@ -28,7 +25,6 @@ const t = Signal(2f0*pi)
 matsys = FR.MaterialSystem(context, 0)
 reflective = FR.MaterialNode(matsys, FR.MATERIAL_NODE_MICROFACET)
 tex = FR.MaterialNode(matsys, FR.MATERIAL_NODE_IMAGE_TEXTURE)
-
 displace = FR.Image(context, z)
 color = FR.Image(context, image)
 set!(tex, "data", color)
@@ -53,7 +49,7 @@ end)
 
 
 camera = FR.Camera(context)
-lookat(camera, Vec3f0(0,9.5,11), Vec3f0(0), Vec3f0(0,0,1))
+lookat!(camera, Vec3f0(0,9.5,11), Vec3f0(0), Vec3f0(0,0,1))
 FR.CameraSetFocusDistance(camera.x, 7f0)
 FR.CameraSetFStop(camera.x, 1.8f0)
 
@@ -61,29 +57,15 @@ set!(scene, camera)
 set!(context, scene)
 ibl = FR.EnvironmentLight(context)
 imgpath = joinpath("C:\\","Program Files","KeyShot6","bin","Materials 2k.hdr")
-img = FR.Image(context, imgpath)
-set!(ibl, img)
+set!(ibl, imgpath)
 set!(scene, ibl)
 pl = FR.PointLight(context);
-FR.PointLightSetRadiantPower3f(pl.x, fill(10f0^3, 3)...)
-
-push!(scene, pl)
+setradiantpower!(pl, fill(10f0^3, 3)...)
 transform!(pl, translationmatrix(Vec3f0(0,0,7)))
 
-set!(context, "toneMapping.type", FR.TONEMAPPING_OPERATOR_PHOTOLINEAR);
-set!(context, "tonemapping.linear.scale", 1f0);
-set!(context, "tonemapping.photolinear.sensitivity", 2.0f0);
-set!(context, "tonemapping.photolinear.exposure", 4.5f0);
-set!(context, "tonemapping.photolinear.fstop", 1f0);
-set!(context, "tonemapping.reinhard02.prescale", 1f0);
-set!(context, "tonemapping.reinhard02.postscale", 1f0);
-set!(context, "tonemapping.reinhard02.burn", 1f0);
-set!(context, "tonemapping.linear.scale", 1f0);
-set!(context, "tonemapping.linear.scale", 1f0);
+push!(scene, pl)
 
-set!(context, "aacellsize", 4.)
-set!(context, "imagefilter.type", FR.FILTER_TRIANGLE)
-set!(context, "aasamples", 4.)
+set_standard_tonemapping!(context)
 
 gl_fb = w.inputs[:framebuffer_size].value
 texture = Texture(RGBA{Float16}, (gl_fb...))
@@ -92,10 +74,8 @@ g_frame_buffer = FR.FrameBuffer(context, texture)
 set!(context, FR.AOV_COLOR, g_frame_buffer)
 clear!(g_frame_buffer)
 
-println("rendering")
 frame = 1
 for i=(0.5f0:0.05f0:(pi*2f0))
-	println(i)
 	push!(t, i)
 	yield()
 	isopen(w) || break
@@ -114,5 +94,3 @@ for i=(0.5f0:0.05f0:(pi*2f0))
 	end
 	frame += 1
 end
-
-

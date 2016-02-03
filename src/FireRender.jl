@@ -4,19 +4,23 @@ include("c_interface.jl")
 
 include("julian_interface.jl")
 
-export set!, 
-  instance, 
-  setradiantpower!, 
-  setradiantpower!, 
-  setimagepath!, 
-  setimage!, 
-  setintensityscale!, 
-  setportal!, 
-  setalbedo!, 
-  setturbidity!, 
+export set!,
+  instance,
+  setradiantpower!,
+  setimagepath!,
+  setimage!,
+  setintensityscale!,
+  setportal!,
+  setalbedo!,
+  setturbidity!,
   setscale!,
   getbase,
   clear!,
-  transform!
+  transform!,
+  layeredshader,
+  TileIterator,
+  set_standard_tonemapping!,
+  setsubdivisions!,
+  setdisplacementscale!
 
 end

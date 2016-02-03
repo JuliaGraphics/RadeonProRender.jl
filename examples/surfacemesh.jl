@@ -3,9 +3,9 @@ using GLWindow
 const FR = FireRender
 w=glscreen()
 
-# Create OpenCL context using a single GPU 
-context = FR.Context(
-	FR.API_VERSION, FR.CONTEXT_OPENCL, 
+# Create OpenCL context using a single GPU
+context, g_frame_buffer = FR.Context(
+	FR.API_VERSION, FR.CONTEXT_OPENCL,
 	FR.CREATION_FLAGS_ENABLE_GPU0 | FR.CREATION_FLAGS_ENABLE_GL_INTEROP
 )
 #set!(context, "rendermode", FR.RENDER_MODE_WIREFRAME)
@@ -45,16 +45,6 @@ push!(scene, surfacemesh)
 matsys = FR.MaterialSystem(context, 0)
 tex = FR.MaterialNode(matsys, FR.MATERIAL_NODE_IMAGE_TEXTURE)
 
-function layeredshader(matsys, base, top)
-	layered = FR.MaterialNode(matsys, FR.MATERIAL_NODE_BLEND)
-	set!(layered, "color0", base)
-	# Set shader for top layer
-	set!(layered, "color1", top)
-	# Set index of refraction for base layer
-	set!(layered, "weight", 0.5, 0.5, 0.5, 1.)
-	# 
-	return layered;
-end
 base = FR.MaterialNode(matsys, FR.MATERIAL_NODE_DIFFUSE)
 top = FR.MaterialNode(matsys, FR.MATERIAL_NODE_REFLECTION)
 # Set shader parameters
@@ -62,14 +52,10 @@ baseior = 1.4
 topior = 3.3
 # Diffuse color
 set!(base, "color", tex);
-# Specular color
 set!(top, "color", 0.1, 0.3, 0.9, 1.)
-# Roughness
 set!(top, "roughness", 0.12, 0., 0., 1.);
 # Create layered shader
 layered = layeredshader(matsys, base, top);
-
-
 
 colorim = map(xyz) do xyz
 	RGBA{U8}(clamp(abs(xyz[1]), 0,1), clamp(abs(xyz[2]), 0,1), clamp(abs(xyz[3]), 0,1), 1.0)
@@ -82,12 +68,11 @@ set!(surfacemesh, layered)
 camera = FR.Camera(context)
 set!(scene, camera)
 set!(context, scene)
-lookat(camera, Vec3f0(0,6,4.5), Vec3f0(0), Vec3f0(0,0,1))
+lookat!(camera, Vec3f0(0,6,4.5), Vec3f0(0), Vec3f0(0,0,1))
 
 
 ibl = FR.EnvironmentLight(context)
 imgpath = joinpath("C:\\","Program Files","KeyShot6","bin","Materials 2k.hdr")
-
 img = FR.Image(context, imgpath)
 set!(ibl, img)
 set!(scene, ibl)
@@ -136,5 +121,3 @@ for i=1f0:360f0
 	end
 	frame += 1
 end
-
-
