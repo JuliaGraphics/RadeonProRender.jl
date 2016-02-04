@@ -14,7 +14,7 @@ set!(context, scene)
 
 # create some geometry
 cat    = GLNormalMesh(loadasset("cat.obj"))
-sphere = GLNormalMesh(Sphere(Vec3f0(0), 1f0), 12)
+sphere = GLNormalMesh(Sphere{Float32}(Vec3f0(0), 1f0), 12)
 
 """
 Generate scales for instances
@@ -33,7 +33,7 @@ Generate color for instances
 function color_gen(v0, nv)
 	l = length(v0)
 	for i in eachindex(v0)
-		v0[x] = RGBA{U8}(x/l,(cos(nv)+1)/2,(sin(x/l/3)+1)/2.,1.)
+		v0[i] = RGBA{U8}(i/l,(cos(nv)+1)/2,(sin(i/l/3)+1)/2.,1.)
 	end
 	v0
 end
