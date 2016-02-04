@@ -3,7 +3,7 @@ using GLWindow
 const FR = FireRender
 w = glscreen()
 # Create OpenCL context using a single GPU, which is the default
-context,glframebuffer = interactive_context()
+context,glframebuffer = interactive_context(w)
 
 # Create a scene
 scene = FR.Scene(context)
@@ -57,7 +57,7 @@ set!(scene, camera)
 set!(context, scene)
 ibl = FR.EnvironmentLight(context)
 imgpath = joinpath("C:\\","Program Files","KeyShot6","bin","Materials 2k.hdr")
-set!(ibl, imgpath)
+set!(ibl, context, imgpath)
 set!(scene, ibl)
 pl = FR.PointLight(context);
 setradiantpower!(pl, fill(10f0^3, 3)...)
@@ -67,19 +67,12 @@ push!(scene, pl)
 
 set_standard_tonemapping!(context)
 
-gl_fb = w.inputs[:framebuffer_size].value
-texture = Texture(RGBA{Float16}, (gl_fb...))
-view(visualize(texture), method=:fixed_pixel)
-g_frame_buffer = FR.FrameBuffer(context, texture)
-set!(context, FR.AOV_COLOR, g_frame_buffer)
-clear!(g_frame_buffer)
-
 frame = 1
 for i=(0.5f0:0.05f0:(pi*2f0))
 	push!(t, i)
 	yield()
 	isopen(w) || break
-	clear!(g_frame_buffer)
+	clear!(glframebuffer)
 	for i=1:10
 		glBindTexture(GL_TEXTURE_2D, 0)
 		@time render(context)

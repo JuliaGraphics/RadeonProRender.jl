@@ -6,7 +6,11 @@ w = glscreen()
 context, glframebuffer = interactive_context(w)
 scene = FR.Scene(context)
 set!(context, scene)
-camera = Camera(context, scene, PerspectiveCamera(w.inputs, Vec3f0(3), Vec3f0(0)))
+camera = FR.Camera(
+	context, glframebuffer, 
+	PerspectiveCamera(w.inputs, Vec3f0(3), Vec3f0(0))
+)
+set!(scene, camera)
 
 DN = 512
 
@@ -44,6 +48,6 @@ imgpath = joinpath(homedir(), "Desktop", "FRSDK 1.078", "Resources", "Textures",
 set!(ibl, context, imgpath)
 set!(scene, ibl)
 
-set_standard_tonemapping!(context, aacellsize=0.0, aasamples=0.0)
+set_standard_tonemapping!(context, aacellsize=4.0, aasamples=1.0)
 
 tiledrenderloop(w, context, glframebuffer)

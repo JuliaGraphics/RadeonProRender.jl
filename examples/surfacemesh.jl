@@ -3,16 +3,18 @@ using GLWindow
 const FR = FireRender
 w=glscreen()
 
-# Create OpenCL context using a single GPU
-context, g_frame_buffer = FR.Context(
-	FR.API_VERSION, FR.CONTEXT_OPENCL,
-	FR.CREATION_FLAGS_ENABLE_GPU0 | FR.CREATION_FLAGS_ENABLE_GL_INTEROP
-)
-#set!(context, "rendermode", FR.RENDER_MODE_WIREFRAME)
-DN = 512
+context, g_frame_buffer = interactive_context(w)
+
 # Create a scene
 scene = FR.Scene(context)
 
+camera = FR.Camera(
+	context, g_frame_buffer, 
+	PerspectiveCamera(w.inputs, Vec3f0(3), Vec3f0(0))
+)
+set!(scene, camera)
+
+DN = 512
 dphi, dtheta = pi/200.0f0, pi/200.0f0
 function mgrid(dim1, dim2)
     X = [i for i in dim1, j in dim2]
@@ -65,10 +67,10 @@ set!(tex, "data", color)
 
 set!(surfacemesh, layered)
 
-camera = FR.Camera(context)
-set!(scene, camera)
+
+
 set!(context, scene)
-lookat!(camera, Vec3f0(0,6,4.5), Vec3f0(0), Vec3f0(0,0,1))
+
 
 
 ibl = FR.EnvironmentLight(context)
@@ -77,47 +79,7 @@ img = FR.Image(context, imgpath)
 set!(ibl, img)
 set!(scene, ibl)
 
-set!(context, "toneMapping.type", FR.TONEMAPPING_OPERATOR_PHOTOLINEAR);
-set!(context, "tonemapping.linear.scale", 1f0);
-set!(context, "tonemapping.photolinear.sensitivity", 1f0);
-set!(context, "tonemapping.photolinear.exposure", 1f0);
-set!(context, "tonemapping.photolinear.fstop", 1f0);
-set!(context, "tonemapping.reinhard02.prescale", 1f0);
-set!(context, "tonemapping.reinhard02.postscale", 1f0);
-set!(context, "tonemapping.reinhard02.burn", 1f0);
-set!(context, "tonemapping.linear.scale", 1f0);
-set!(context, "tonemapping.linear.scale", 1f0);
+set_standard_tonemapping!(context, aacellsize=4.0, aasamples=1.0)
 
-set!(context, "aacellsize", 4.)
-set!(context, "imagefilter.type", FR.FILTER_BLACKMANHARRIS)
-set!(context, "aasamples", 4.)
+tiledrenderloop(w, context, g_frame_buffer)
 
-# Create camera
-
-gl_fb = w.inputs[:framebuffer_size].value
-texture = Texture(RGBA{Float16}, (gl_fb...))
-view(visualize(texture), method=:fixed_pixel)
-g_frame_buffer = FR.FrameBuffer(context, texture)
-set!(context, FR.AOV_COLOR, g_frame_buffer)
-
-
-frame = 1
-for i=1f0:360f0
-	transform!(surfacemesh, rotationmatrix_z(deg2rad(i)))
-	isopen(w) || break
-	clear!(g_frame_buffer)
-	@time for i=1:20
-		glBindTexture(GL_TEXTURE_2D, 0)
-		@time render(context)
-		isopen(w) || break
-		GLWindow.renderloop_inner(w)
-	end
-	println()
-	isopen(w) || break
-	try
-		screenshot(w, path="test$frame.png")
-	catch e
-		println(e)
-	end
-	frame += 1
-end

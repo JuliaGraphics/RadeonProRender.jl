@@ -21,6 +21,9 @@ export set!,
   TileIterator,
   set_standard_tonemapping!,
   setsubdivisions!,
-  setdisplacementscale!
+  setdisplacementscale!,
+  interactive_context,
+  tiledrenderloop,
+  lookat!
 
 end

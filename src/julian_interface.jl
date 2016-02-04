@@ -1,4 +1,5 @@
-using GeometryTypes, Colors, FixedSizeArrays
+using GeometryTypes, Colors, FixedSizeArrays, GLWindow, GLVisualize
+using Reactive, ModernGL
 import GLAbstraction: Texture, translationmatrix, scalematrix, lookat, render
 import ModernGL: GL_TEXTURE_2D
 import GLVisualize: iter_or_array
@@ -71,6 +72,7 @@ abstract AbstractLight <: FireRenderObj
 @fr_wrapper_type PointLight fr_light ContextCreatePointLight (context.x,) AbstractLight
 @fr_wrapper_type DirectionalLight fr_light ContextCreateDirectionalLight (context.x,) AbstractLight
 @fr_wrapper_type SkyLight fr_light ContextCreateSkyLight (context.x,) AbstractLight
+@fr_wrapper_type SpotLight fr_light ContextCreateSpotLight (context.x,) AbstractLight
 
 
 type Shape <: FireRenderObj
@@ -116,13 +118,13 @@ getbase(shape::Shape) =
 """
 Create layered shader give two shaders and respective IORs
 """
-function layeredshader(matsys, base, top)
-	layered = FR.MaterialNode(matsys, FR.MATERIAL_NODE_BLEND)
+function layeredshader(matsys, base, top, weight=(0.5, 0.5, 0.5, 1.))
+	layered = MaterialNode(matsys, MATERIAL_NODE_BLEND)
 	set!(layered, "color0", base)
 	# Set shader for top layer
 	set!(layered, "color1", top)
 	# Set index of refraction for base layer
-	set!(layered, "weight", 0.5, 0.5, 0.5, 1.)
+	set!(layered, "weight", weight...)
 	return layered;
 end
 
@@ -214,7 +216,7 @@ function setradiantpower!{T}(light::AbstractLight, color::Colorant{T, 3})
 	setradiantpower!(light, comp1(c), comp2(c), comp3(c))
 end
 function setradiantpower!(
-        light::DirectionalLight,
+        light::PointLight,
         r::AbstractFloat, g::AbstractFloat, b::AbstractFloat
     )
     PointLightSetRadiantPower3f(light.x, fr_float(r), fr_float(g), fr_float(b))
@@ -366,7 +368,6 @@ Sets the subdivions for a shape
 function setsubdivisions!(shape::Shape, subdivions::Integer)
 	ShapeSetSubdivisionFactor(shape.x, fr_uint(subdivions))
 end
-export
 
 """
 Transforms firerender objects with a transformation matrix
@@ -605,7 +606,6 @@ Customizable defaults for the most common tonemapping operations
 """
 function set_standard_tonemapping!(context;
         typ=TONEMAPPING_OPERATOR_PHOTOLINEAR,
-        linear_scale=1f0,
         photolinear_sensitivity=1f0,
         photolinear_exposure=1f0,
         photolinear_fstop=1f0,
@@ -615,7 +615,7 @@ function set_standard_tonemapping!(context;
         linear_scale=1f0,
         aacellsize = 4.,
         imagefilter_type = FILTER_BLACKMANHARRIS,
-        aasamples = 4,
+        aasamples = 4.,
     )
     set!(context, "toneMapping.type", typ)
     set!(context, "tonemapping.linear.scale", linear_scale)
@@ -625,11 +625,11 @@ function set_standard_tonemapping!(context;
     set!(context, "tonemapping.reinhard02.prescale", reinhard02_prescale)
     set!(context, "tonemapping.reinhard02.postscale", reinhard02_postscale)
     set!(context, "tonemapping.reinhard02.burn", reinhard02_burn)
-    set!(context, "tonemapping.linear.scale", linear_scale)
 
     set!(context, "aacellsize", aacellsize)
     set!(context, "imagefilter.type", imagefilter_type)
     set!(context, "aasamples", aasamples)
+
 end
 
 
@@ -637,7 +637,7 @@ end
 blocking renderloop that uses tiling
 """
 function tiledrenderloop(glwindow, context, framebuffer)
-	const ti = TileIterator(size(texture), (256,256))
+	const ti = TileIterator(widths(glwindow), (256,256))
 	s = start(ti)
 	while isopen(glwindow)
 		glBindTexture(GL_TEXTURE_2D, 0)
@@ -652,7 +652,7 @@ end
 
 function interactive_context(glwindow)
     context = Context(CREATION_FLAGS_ENABLE_GPU0 | CREATION_FLAGS_ENABLE_GL_INTEROP)
-    w,h = width(glwindow)
+    w,h = widths(glwindow)
     texture = Texture(RGBA{Float16}, (w,h))
     view(visualize(texture), method=:fixed_pixel)
     g_frame_buffer = FrameBuffer(context, texture)
@@ -664,13 +664,14 @@ end
 """
 Creates a camera from a GLAbstraction.Camera
 """
-function Camera(context::Context, scene::Scene, cam)
+function Camera(context::Context, framebuffer, cam)
     # Create camera
-    camera = FR.Camera(context)
+    camera = Camera(context)
     preserve(map(droprepeats(cam.eyeposition)) do position
     	l,u = cam.lookat.value, cam.up.value
     	lookat!(camera, position, l, u)
-    	clear!(g_frame_buffer)
+    	clear!(framebuffer)
     end)
+	
     camera
 end
