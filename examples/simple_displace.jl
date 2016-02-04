@@ -68,7 +68,7 @@ push!(scene, pl)
 set_standard_tonemapping!(context)
 
 frame = 1
-for i=(0.5f0:0.05f0:(pi*2f0))
+for i=(0.5f0:0.01f0:(pi*2f0))
 	push!(t, i)
 	yield()
 	isopen(w) || break

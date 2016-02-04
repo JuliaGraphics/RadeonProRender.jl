@@ -650,6 +650,9 @@ function tiledrenderloop(glwindow, context, framebuffer)
 	end
 end
 
+"""
+Creates an interactive context with the help of glvisualize to view the texture
+"""
 function interactive_context(glwindow)
     context = Context(CREATION_FLAGS_ENABLE_GPU0 | CREATION_FLAGS_ENABLE_GL_INTEROP)
     w,h = widths(glwindow)
@@ -672,6 +675,6 @@ function Camera(context::Context, framebuffer, cam)
     	lookat!(camera, position, l, u)
     	clear!(framebuffer)
     end)
-	
+
     camera
 end
