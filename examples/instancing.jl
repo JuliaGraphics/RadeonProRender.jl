@@ -99,11 +99,11 @@ for i=(pi*2f0):0.01f0:(pi*4.0f0)
 	yield() # yield to actually update the scene
 	isopen(w) || break
 	clear!(glframebuffer)
-	for i=1:12
+	for i=1:2
 		glBindTexture(GL_TEXTURE_2D, 0)
 		@time render(context) # ray trace context
 		isopen(w) || break
-		GLWindow.renderloop_inner(w) # display it by rendering glwindow
+		GLWindow.render_frame(w) # display it by rendering glwindow
 	end
 	isopen(w) || break
 	screenshot(w, path="test$frame.png") # save a screenshot

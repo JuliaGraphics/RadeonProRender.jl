@@ -1,6 +1,7 @@
 using GeometryTypes, Colors, FixedSizeArrays, GLWindow, GLVisualize
 using Reactive, ModernGL
-import GLAbstraction: Texture, translationmatrix, scalematrix, lookat, render
+import GLAbstraction: Texture, translationmatrix, scalematrix, lookat, render, std_renderobject, LazyShader
+import GLAbstraction: @frag_str, @vert_str
 import ModernGL: GL_TEXTURE_2D
 import GLVisualize: iter_or_array
 
@@ -646,9 +647,51 @@ function tiledrenderloop(glwindow, context, framebuffer)
 		end
 		next_tile, s = next(ti, s)
 		render(context, next_tile)
-		GLWindow.renderloop_inner(glwindow)
+		GLWindow.render_frame(glwindow)
 	end
 end
+
+const tex_frag = frag"""
+{{GLSL_VERSION}}
+in vec2 o_uv;
+out vec4 fragment_color;
+out uvec2 fragment_groupid;
+
+uniform sampler2D image;
+
+void main(){
+	vec4 color 		 = texture(image, o_uv);
+	fragment_color   = color/color.a;
+    fragment_groupid = uvec2(0);
+}
+
+"""
+const tex_vert = vert"""
+{{GLSL_VERSION}}
+
+in vec2 vertices;
+in vec2 texturecoordinates;
+
+out vec2       o_uv;
+
+void main(){
+	o_uv        = texturecoordinates;
+	gl_Position = vec4(vertices, 0, 1);
+}
+"""
+
+"""
+A matrix of colors is interpreted as an image
+"""
+function view_tex{T}(tex::Texture{T,2}, window)
+	data = Dict{Symbol, Any}(
+	    :image => tex,
+	    :primitive => GLUVMesh2D(SimpleRectangle{Float32}(-1f0, -1f0, 2f0,2f0)),
+    )
+    robj = std_renderobject(data, LazyShader(tex_vert, tex_frag))
+    view(robj, window, camera=:nothing)
+end
+
 
 """
 Creates an interactive context with the help of glvisualize to view the texture
@@ -657,7 +700,7 @@ function interactive_context(glwindow)
     context = Context(CREATION_FLAGS_ENABLE_GPU0 | CREATION_FLAGS_ENABLE_GL_INTEROP)
     w,h = widths(glwindow)
     texture = Texture(RGBA{Float16}, (w,h))
-    view(visualize(texture), method=:fixed_pixel)
+    view_tex(texture, glwindow)
     g_frame_buffer = FrameBuffer(context, texture)
     set!(context, AOV_COLOR, g_frame_buffer)
     context, g_frame_buffer

@@ -17,8 +17,9 @@ set!(scene, camera)
 
 DN = 512
 
+# borrow loadasset from GLVisualize (just uses load(GLVisualize.assetpath(name)))
 # Load an obj
-cat = FR.Shape(context, load("cat.obj"))
+cat = FR.Shape(context, loadasset("cat.obj"))
 push!(scene, cat)
 transform!(cat, translationmatrix(Vec3f0(0,0.5,0)))
 # Load an obj

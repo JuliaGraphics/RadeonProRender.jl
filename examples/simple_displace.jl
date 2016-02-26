@@ -77,7 +77,7 @@ for i=(0.5f0:0.01f0:(pi*2f0))
 		glBindTexture(GL_TEXTURE_2D, 0)
 		@time render(context)
 		isopen(w) || break
-		GLWindow.renderloop_inner(w)
+		GLWindow.render_frame(w)
 	end
 	isopen(w) || break
 	try

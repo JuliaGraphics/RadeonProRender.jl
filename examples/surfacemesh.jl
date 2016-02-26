@@ -38,14 +38,13 @@ x = r.*sin(phi).*cos(theta)
 y = r.*cos(phi)
 z = r.*sin(phi).*sin(theta)
 
-size_grid = (size(x,1)-1, size(x,2)-1)
 xyz     = Point3f0[Point3f0(x[i,j],y[i,j],z[i,j]) for i=1:size(x,1), j=1:size(x,2)]
 r       = SimpleRectangle(0,0,1,1)
 # decomposing a rectangle into uv and triangles is what we need to map the z coordinates on
 # since the xyz data assumes the coordinates to have the same neighouring relations
 # like a grid
-faces   = decompose(GLTriangle, r, size_grid)
-uv      = decompose(UV{Float32}, r, size_grid)
+faces   = decompose(GLTriangle, r, size(x))
+uv      = decompose(UV{Float32}, r, size(x))
 # with this we can beuild a mesh
 mesh    = GLUVMesh(Dict{Symbol, Any}(
 	:vertices=>vec(xyz), :faces=>faces, :texturecoordinates=>uv
