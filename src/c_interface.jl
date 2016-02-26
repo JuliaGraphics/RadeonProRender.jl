@@ -1,4 +1,7 @@
-const firelib = "FireRender64"
+
+const firelib = Pkg.dir("FireRender", "deps", "win64", "FireRender64")
+
+
 function check_error(error_code)
 	error_code == SUCCESS && return
 	ERROR_COMPUTE_API_NOT_SUPPORTED == error_code && error("ERROR_COMPUTE_API_NOT_SUPPORTED")
