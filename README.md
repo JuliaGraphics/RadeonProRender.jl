@@ -1,5 +1,16 @@
 # FireRender
 
+Julia wrapper for AMD's [FireRender](http://developer.amd.com/tools-and-sdks/graphics-development/firepro-sdk/amd-firerender-technology/) library.
+
+### Installation
+(Windows only for now!)
+In the Julia REPL, execute
+
+```Julia
+Pkg.clone("https://github.com/JuliaGraphics/FireRender.jl.git")
+Pkg.checkout("GLVisualize")
+```
+
 # Displaced surface
 
 ![cat particles](https://github.com/JuliaGraphics/FireRender.jl/blob/master/docs/surface.png?raw=true)
