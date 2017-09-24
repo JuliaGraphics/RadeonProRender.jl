@@ -17,7 +17,7 @@ maxi = maximum(z)
 const cmap = map(x->RGBA{U8}(x, 1.0), colormap("Blues"))
 to_color(val, mini, maxi) = cmap[floor(Int, (((val-mini)/(maxi-mini))*(length(cmap)-1)))+1]
 image = map(z) do height
-	to_color(height, mini, maxi)
+    to_color(height, mini, maxi)
 end
 plane = FR.Shape(context, SimpleRectangle(-5,-5, 10,10), (N,N))
 push!(scene, plane)
@@ -35,16 +35,16 @@ setdisplacementscale!(plane, 1.0)
 setsubdivisions!(plane, 1)
 
 preserve(map(t) do i
-	z = Float32[sin(1.3*x*i)*cos(0.9*y*i)+cos(.8*x*i)*sin(1.9*y*i)+cos(y*.2*x*i) for x in xrange, y in yrange]
-	mini = minimum(z)
-	maxi = maximum(z)
-	image = map(z) do height
-		to_color(height, mini, maxi)
-	end
-	displace = FR.Image(context, z)
-	color = FR.Image(context, image)
-	set!(tex, "data", color)
-	set!(plane, displace)
+    z = Float32[sin(1.3*x*i)*cos(0.9*y*i)+cos(.8*x*i)*sin(1.9*y*i)+cos(y*.2*x*i) for x in xrange, y in yrange]
+    mini = minimum(z)
+    maxi = maximum(z)
+    image = map(z) do height
+        to_color(height, mini, maxi)
+    end
+    displace = FR.Image(context, z)
+    color = FR.Image(context, image)
+    set!(tex, "data", color)
+    set!(plane, displace)
 end)
 
 
@@ -69,21 +69,21 @@ set_standard_tonemapping!(context)
 
 frame = 1
 for i=(0.5f0:0.01f0:(pi*2f0))
-	push!(t, i)
-	yield()
-	isopen(w) || break
-	clear!(glframebuffer)
-	for i=1:10
-		glBindTexture(GL_TEXTURE_2D, 0)
-		@time render(context)
-		isopen(w) || break
-		GLWindow.render_frame(w)
-	end
-	isopen(w) || break
-	try
-		screenshot(w, path="test$frame.png")
-	catch e
-		println(e)
-	end
-	frame += 1
+    push!(t, i)
+    yield()
+    isopen(w) || break
+    clear!(glframebuffer)
+    for i=1:10
+        glBindTexture(GL_TEXTURE_2D, 0)
+        @time render(context)
+        isopen(w) || break
+        GLWindow.render_frame(w)
+    end
+    isopen(w) || break
+    try
+        screenshot(w, path="test$frame.png")
+    catch e
+        println(e)
+    end
+    frame += 1
 end

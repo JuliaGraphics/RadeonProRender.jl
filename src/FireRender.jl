@@ -1,6 +1,7 @@
+__precompile__(true)
 module FireRender
 
-include("c_interface.jl")
+include("c_interface2.jl")
 
 include("julian_interface.jl")
 
