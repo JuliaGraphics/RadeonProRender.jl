@@ -181,7 +181,7 @@ Creates the correct `fr_image_desc` for a given array.
 function fr_image_desc{T,N}(image::Array{T, N})
 	row_pitch = size(image, 1)*sizeof(T)
 	Ref(fr_image_desc(
-	    ntuple(i->N<i? 0 : size(image, i), 3)...,
+	    ntuple(i->N<i ? 0 : size(image, i), 3)...,
 	    row_pitch, 0
 	))
 end
@@ -638,7 +638,7 @@ end
 blocking renderloop that uses tiling
 """
 function tiledrenderloop(glwindow, context, framebuffer)
-	const ti = TileIterator(widths(glwindow), (256,256))
+	ti = TileIterator(widths(glwindow), (256,256))
 	s = start(ti)
 	while isopen(glwindow)
 		glBindTexture(GL_TEXTURE_2D, 0)
