@@ -94,6 +94,9 @@ mutable struct Shape <: FireRenderObj
     end
 end
 
+Base.cconvert(::Type{rpr_shape}, x::Shape) = x
+Base.unsafe_convert(::Type{rpr_shape}, x::Shape) = x.x
+
 """
 Default shape constructor which works with every Geometry from the package
 GeometryTypes (Meshes and geometry primitives alike).
@@ -101,11 +104,13 @@ GeometryTypes (Meshes and geometry primitives alike).
 function Shape(context::Context, mesh::AbstractGeometry; kw...)
     m = uv_normal_mesh(mesh; kw...)
     v, n, fs, uv = decompose(Point3f, m), normals(m), faces(m), texturecoordinates(m)
+
     vraw  = reinterpret(Float32, v)
     nraw  = reinterpret(Float32, n)
     uvraw = reinterpret(Float32, uv)
-    iraw  = reinterpret(eltype(eltype(fs)), fs)
+    iraw  = reinterpret(eltype(eltype(eltype(fs))), fs)
     iraw  = convert(Vector{rpr_int}, iraw)
+
     m = rprContextCreateMesh(context,
         vraw, length(v), sizeof(Vec3f),
         nraw, length(n), sizeof(Vec3f),
@@ -144,6 +149,8 @@ FrameBuffer wrapper type
 mutable struct FrameBuffer <: FireRenderObj
     x::rpr_framebuffer
 end
+Base.cconvert(::Type{rpr_framebuffer}, x::FrameBuffer) = x
+Base.unsafe_convert(::Type{rpr_framebuffer}, x::FrameBuffer) = x.x
 
 function FrameBuffer(context::Context, t::Texture{T, 2}) where T
     frame_buffer = ContextCreateFramebufferFromGLTexture2D(context, GL_TEXTURE_2D, 0, t.id)
@@ -153,9 +160,9 @@ function FrameBuffer(context::Context, t::Texture{T, 2}) where T
 end
 
 function FrameBuffer(context::Context, c::Type{C}, dims::NTuple{2, Int}) where {C<:Colorant}
-    desc = Ref(rpr_framebuffer_desc(dims...))
-    fmt = rpr_image_format(length(c), COMPONENT_TYPE_FLOAT32)
-    frame_buffer = ContextCreateFrameBuffer(context, fmt, desc)
+    desc = Ref(RPR.rpr_framebuffer_desc(dims...))
+    fmt = RPR.rpr_framebuffer_format(length(c), RPR_COMPONENT_TYPE_FLOAT32)
+    frame_buffer = rprContextCreateFrameBuffer(context, fmt, desc)
     x = FrameBuffer(frame_buffer)
     finalizer(release, x)
     x
@@ -167,13 +174,15 @@ Image wrapper type
 mutable struct Image <: FireRenderObj
     x::rpr_image
 end
+Base.cconvert(::Type{rpr_image}, x::Image) = x
+Base.unsafe_convert(::Type{rpr_image}, x::Image) = x.x
 
 """
 Automatically generated the correct `rpr_image_format` for an array
 """
 rpr_image_format(a::Array) = rpr_image_format(eltype(a))
 function rpr_image_format(::Type{T}) where T<:Union{Colorant, AbstractFloat}
-    rpr_image_format(
+    RPR.rpr_image_format(
         T<:AbstractFloat ? 1 : length(T),
         component_type(T)
     )
@@ -201,7 +210,7 @@ end
 Automatically creates an Image from a matrix of colors
 """
 function Image(context::Context, image::Array{T, N}) where {T, N}
-    img  = ContextCreateImage(
+    img  = rprContextCreateImage(
         context, rpr_image_format(image),
         rpr_image_desc(image), image
     )
@@ -214,9 +223,7 @@ end
 Automatically loads an image from the given `path`
 """
 function Image(context::Context, path::AbstractString)
-    img  = ContextCreateImageFromFile(
-        context, utf8(path)
-    )
+    img = rprContextCreateImageFromFile(context, path)
     x = Image(img)
     finalizer(release, x)
     return x
@@ -232,21 +239,21 @@ end
 
 function setradiantpower!(
         light::PointLight,
-        r::AbstractFloat, g::AbstractFloat, b::AbstractFloat
+        r::Number, g::Number, b::Number
     )
     rprPointLightSetRadiantPower3f(light, rpr_float(r), rpr_float(g), rpr_float(b))
 end
 
 function setradiantpower!(
         light::SpotLight,
-        r::AbstractFloat, g::AbstractFloat, b::AbstractFloat
+        r::Number, g::Number, b::Number
     )
     rprSpotLightSetRadiantPower3f(light, rpr_float(r), rpr_float(g), rpr_float(b))
 end
 
 function setradiantpower!(
         light::DirectionalLight,
-        r::AbstractFloat, g::AbstractFloat, b::AbstractFloat
+        r::Number, g::Number, b::Number
     )
     rprDirectionalLightSetRadiantPower3f(light, rpr_float(r), rpr_float(g), rpr_float(b))
 end
@@ -307,7 +314,8 @@ setscale!(skylight::SkyLight, scale::AbstractFloat) =
     rprSkyLightSetScale(skylight.x, rpr_float(scale))
 
 
-release(x::FireRenderObj) = rprObjectDelete(x)
+# release(x::FireRenderObj) = rprObjectDelete(x)
+release(x::FireRenderObj) = println("Deleting: $(typeof(x))")
 
 """
 """
@@ -317,8 +325,8 @@ set!(context::Context, parameter::AbstractString, f::AbstractFloat) =
 set!(context::Context, parameter::AbstractString, ui::RPR.CEnum.Cenum) =
     rprContextSetParameter1u(context, parameter, ui)
 
-set!(context::Context, aov::Unsigned, fb::FrameBuffer) =
-    rprContextSetAOV(context, rpr_aov(aov), fb)
+set!(context::Context, aov::rpr_aov, fb::FrameBuffer) =
+    rprContextSetAOV(context, aov, fb)
 
 function set!(shape::Shape, image::Image)
     rprShapeSetDisplacementImage(shape, image)
@@ -334,20 +342,20 @@ Sets arbitrary values to FireRender objects
 set!(context::Context, framebuffer::FrameBuffer) = rprContextSetFrameBuffer(context, framebuffer)
 
 function set!(
-        base::MaterialNode, parameter::AbstractString,
+        base::MaterialNode, parameter::rpr_material_node_input,
         a::AbstractFloat, b::AbstractFloat, c::AbstractFloat, d::AbstractFloat
     )
-    rprMaterialNodeSetInputF(
-        base.x, parameter,
+    rprMaterialNodeSetInputFByKey(
+        base, parameter,
         rpr_float(a), rpr_float(b), rpr_float(c), rpr_float(d)
     )
 end
 
-function set!(base::MaterialNode, parameter::AbstractString, f::Vec4)
+function set!(base::MaterialNode, parameter::rpr_material_node_input, f::Vec4)
     set!(base, parameter, f...)
 end
 
-function set!(base::MaterialNode, parameter::AbstractString, color::Colorant{T, 4}) where T
+function set!(base::MaterialNode, parameter::rpr_material_node_input, color::Colorant{T, 4}) where T
     c = RGBA{Float32}(color)
     set!(base, parameter, comp1(c), comp2(c), comp3(c), alpha(c))
 end
@@ -526,7 +534,10 @@ Iterates randomly over an iterable
 struct RandomIterator{T}
     iterable::T
 end
-Base.iterate(ti::RandomIterator, state=rand(1:length(ti.iterable))) = (ti.iterable[state], rand(1:length(ti.iterable)))
+
+function Base.iterate(ti::RandomIterator, state=rand(1:length(ti.iterable)))
+    return (ti.iterable[state], rand(1:length(ti.iterable)))
+end
 
 """
 Iterates randomly over all elements in an iterable.
@@ -560,7 +571,7 @@ function Base.iterate(ti::MiddleSampleIterator, state=init_sample_pool(ti))
         s != i2
     end
     i = sub2ind(size(ti.iterable), i2...)
-    ti.iterable[i], state
+    return (ti.iterable[i], state)
 end
 
 
@@ -576,7 +587,7 @@ end
 function TileIterator(size, tile_size)
     s, ts = Vec(size), Vec(tile_size)
     lengths = Vec{2, Int}(ceil(Vec{2,Float64}(s) ./ Vec{2,Float64}(ts)))
-    TileIterator(s, ts, lengths)
+    return TileIterator(s, ts, lengths)
 end
 
 Base.size(ti::TileIterator, i) = ti.lengths[i]
@@ -594,6 +605,7 @@ function Base.getindex(ti::TileIterator, i,j)
     xymax = xymin .+ ts
     Rect(xymin, min(xymax, ti.size) .- xymin)
 end
+
 function Base.getindex(ti::TileIterator, linear_index::Int)
     i,j = ind2sub(size(ti), linear_index)
     return ti[i,j]
