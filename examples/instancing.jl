@@ -81,7 +81,6 @@ end)
 # create a camera
 camera = FR.Camera(context)
 set!(scene, camera)
-
 lookat!(camera, Vec3f0(2.6), Vec3f0(0), Vec3f0(0,0,1))
 
 
@@ -89,7 +88,6 @@ ibl = FR.EnvironmentLight(context)
 set!(scene, ibl)
 imgpath = joinpath("C:\\","Program Files","KeyShot6","bin","Materials 2k.hdr")
 set!(ibl, context, imgpath)
-
 set_standard_tonemapping!(context)
 
 

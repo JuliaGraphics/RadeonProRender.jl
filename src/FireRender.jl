@@ -1,6 +1,10 @@
 module FireRender
 
-include("c_interface.jl")
+using CEnum
+
+include("LibRPR.jl")
+using .RPR
+using .RPR: RadeonProRender_v2
 
 include("julian_interface.jl")
 
