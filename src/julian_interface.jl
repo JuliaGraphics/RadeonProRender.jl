@@ -78,6 +78,7 @@ end
 Abstract AbstractLight Type
 """
 abstract type AbstractLight <: FireRenderObj end
+
 @rpr_wrapper_type EnvironmentLight rpr_light rprContextCreateEnvironmentLight (context,) AbstractLight
 @rpr_wrapper_type PointLight rpr_light rprContextCreatePointLight (context,) AbstractLight
 @rpr_wrapper_type DirectionalLight rpr_light rprContextCreateDirectionalLight (context,) AbstractLight
@@ -101,27 +102,31 @@ Base.unsafe_convert(::Type{rpr_shape}, x::Shape) = x.x
 Default shape constructor which works with every Geometry from the package
 GeometryTypes (Meshes and geometry primitives alike).
 """
-function Shape(context::Context, mesh::AbstractGeometry; kw...)
+function Shape(context::Context, mesh::Union{GeometryBasics.Mesh, AbstractGeometry}; kw...)
     m = uv_normal_mesh(mesh; kw...)
     v, n, fs, uv = decompose(Point3f, m), normals(m), faces(m), texturecoordinates(m)
+    return Shape(context, v, n, fs, uv)
+end
 
-    vraw  = reinterpret(Float32, v)
-    nraw  = reinterpret(Float32, n)
-    uvraw = reinterpret(Float32, uv)
-    iraw  = reinterpret(eltype(eltype(eltype(fs))), fs)
-    iraw  = convert(Vector{rpr_int}, iraw)
+function Shape(context::Context, vertices, normals, faces, uvs)
+
+    vraw  = reinterpret(Float32, decompose(Point3f, vertices))
+    nraw  = reinterpret(Float32, decompose(Vec3f, normals))
+    uvraw = reinterpret(Float32, map(uv-> Vec2f(1.0 - uv[2], 1.0 - uv[1]), uvs))
+    iraw  = reinterpret(rpr_int, decompose(TriangleFace{OffsetInteger{-1, rpr_int}}, faces))
 
     m = rprContextCreateMesh(context,
-        vraw, length(v), sizeof(Vec3f),
-        nraw, length(n), sizeof(Vec3f),
-        uvraw,length(uv),sizeof(Vec2f),
+        vraw, length(vertices), sizeof(Point3f),
+        nraw, length(normals), sizeof(Vec3f),
+        uvraw, length(uvs), sizeof(Vec2f),
         iraw, sizeof(rpr_int),
         iraw, sizeof(rpr_int),
         iraw, sizeof(rpr_int),
-        fill(rpr_int(3), length(fs)), length(fs)
+        fill(rpr_int(3), length(faces)), length(faces)
     )
     return Shape(m)
 end
+
 
 """
 Creating a shape from a shape is interpreted as creating an instance.
@@ -134,7 +139,8 @@ Shape(context::Context, shape::Shape) =
 Create layered shader give two shaders and respective IORs
 """
 function layeredshader(matsys, base, top, weight=(0.5, 0.5, 0.5, 1.))
-    layered = MaterialNode(matsys, MATERIAL_NODE_BLEND)
+    layered = MaterialNode(matsys, RPR_MATERIAL_NODE_BLEND)
+
     set!(layered, "color0", base)
     # Set shader for top layer
     set!(layered, "color1", top)
@@ -192,16 +198,16 @@ end
 Gets the correct component type for Images from array element types
 """
 component_type(x::Type{T}) where {T<:Colorant} = component_type(eltype(T))
-component_type(x::Type{T}) where {T<:Union{UInt8, Colors.N0f8}} = COMPONENT_TYPE_UINT8
-component_type(x::Type{T}) where {T<:Union{Float16}} = COMPONENT_TYPE_FLOAT16
-component_type(x::Type{T}) where {T<:Union{Float32}} = COMPONENT_TYPE_FLOAT32
+component_type(x::Type{T}) where {T<:Union{UInt8, Colors.N0f8}} = RPR_COMPONENT_TYPE_UINT8
+component_type(x::Type{T}) where {T<:Union{Float16}} = RPR_COMPONENT_TYPE_FLOAT16
+component_type(x::Type{T}) where {T<:Union{Float32}} = RPR_COMPONENT_TYPE_FLOAT32
 
 """
 Creates the correct `rpr_image_desc` for a given array.
 """
 function rpr_image_desc(image::Array{T, N}) where {T, N}
     row_pitch = size(image, 1)*sizeof(T)
-    Ref(rpr_image_desc(
+    return Ref(RPR.rpr_image_desc(
         ntuple(i->N < i ? 0 : size(image, i), 3)...,
         row_pitch, 0
     ))
@@ -216,7 +222,7 @@ function Image(context::Context, image::Array{T, N}) where {T, N}
     )
     x = Image(img)
     finalizer(release, x)
-    x
+    return x
 end
 
 """
@@ -277,7 +283,7 @@ end
 Sets the intensity scale an EnvironmentLight
 """
 function setintensityscale!(light::EnvironmentLight, intensity_scale::AbstractFloat)
-    rprEnvironmentLightSetIntensityScale(light, rpr_float(intensity_scale))
+    rprEnvironmentLightSetIntensityScale(light, intensity_scale)
 end
 
 """
@@ -288,42 +294,42 @@ function setportal!(light::AbstractLight, portal::AbstractGeometry)
 end
 
 function setportal!(light::EnvironmentLight, portal::Shape)
-    rprEnvironmentLightSetPortal(light, portal.x)
+    rprEnvironmentLightSetPortal(light, portal)
 end
 
 function setportal!(light::SkyLight, portal::Shape)
-    rprSkyLightSetPortal(light, portal.x)
+    rprSkyLightSetPortal(light, portal)
 end
 
 """
 Sets the albedo for a SkyLight
 """
 setalbedo!(skylight::SkyLight, albedo::AbstractFloat) =
-    rprSkyLightSetAlbedo(skylight.x, rpr_float(albedo))
+    rprSkyLightSetAlbedo(skylight.x, albedo)
 
 """
 Sets the turbidity for a SkyLight
 """
 setturbidity!(skylight::SkyLight, turbidity::AbstractFloat) =
-    rprSkyLightSetTurbidity(skylight.x, rpr_float(turbidity.x))
+    rprSkyLightSetTurbidity(skylight.x, turbidity)
 
 """
 Sets the scale for a SkyLight
 """
 setscale!(skylight::SkyLight, scale::AbstractFloat) =
-    rprSkyLightSetScale(skylight.x, rpr_float(scale))
+    rprSkyLightSetScale(skylight, scale)
 
 
 # release(x::FireRenderObj) = rprObjectDelete(x)
-release(x::FireRenderObj) = println("Deleting: $(typeof(x))")
+release(x::FireRenderObj) = Core.println("Deleting: ", string(typeof(x)))
 
 """
 """
-set!(context::Context, parameter::AbstractString, f::AbstractFloat) =
-    rprContextSetParameter1f(context, parameter, f)
+set!(context::Context, parameter::rpr_context_info, f::AbstractFloat) =
+    rprContextSetParameterByKey1f(context, parameter, f)
 
-set!(context::Context, parameter::AbstractString, ui::RPR.CEnum.Cenum) =
-    rprContextSetParameter1u(context, parameter, ui)
+set!(context::Context, parameter::rpr_context_info, ui::Unsigned) =
+    rprContextSetParameterByKey1u(context, parameter, ui)
 
 set!(context::Context, aov::rpr_aov, fb::FrameBuffer) =
     rprContextSetAOV(context, aov, fb)
@@ -343,19 +349,22 @@ set!(context::Context, framebuffer::FrameBuffer) = rprContextSetFrameBuffer(cont
 
 function set!(
         base::MaterialNode, parameter::rpr_material_node_input,
-        a::AbstractFloat, b::AbstractFloat, c::AbstractFloat, d::AbstractFloat
+        a::Number, b::Number, c::Number, d::Number
     )
-    rprMaterialNodeSetInputFByKey(
-        base, parameter,
-        rpr_float(a), rpr_float(b), rpr_float(c), rpr_float(d)
-    )
+    rprMaterialNodeSetInputFByKey(base, parameter, a, b, c, d)
 end
+
+function set!(base::MaterialNode, parameter::rpr_material_node_input, ui::Integer)
+    rprMaterialNodeSetInputUByKey(base, parameter, ui)
+end
+
+rprMaterialNodeSetInputUByKey
 
 function set!(base::MaterialNode, parameter::rpr_material_node_input, f::Vec4)
     set!(base, parameter, f...)
 end
 
-function set!(base::MaterialNode, parameter::rpr_material_node_input, color::Colorant{T, 4}) where T
+function set!(base::MaterialNode, parameter::rpr_material_node_input, color::Colorant)
     c = RGBA{Float32}(color)
     set!(base, parameter, comp1(c), comp2(c), comp3(c), alpha(c))
 end
@@ -364,16 +373,16 @@ function set!(shape::Shape, material::MaterialNode)
     rprShapeSetMaterial(shape, material)
 end
 
-function set!(material::MaterialNode, parameter::AbstractString, material2::MaterialNode)
-    rprMaterialNodeSetInputN(material, ascii(parameter), material2)
+function set!(material::MaterialNode, parameter::rpr_material_node_input, material2::MaterialNode)
+    rprMaterialNodeSetInputNByKey(material, parameter, material2)
 end
 
-function set!(material::MaterialNode, parameter::AbstractString, image::Image)
-    MaterialNodeSetInputImageData(material, ascii(parameter), image)
+function set!(material::MaterialNode, parameter::rpr_material_node_input, image::Image)
+    rprMaterialNodeSetInputImageDataByKey(material, parameter, image)
 end
 
 function set!(
-        material::MaterialNode, parameter::AbstractString,
+        material::MaterialNode, parameter::rpr_material_node_input,
         context::Context, image::Array
     )
     set!(material, parameter, Image(context, image))
@@ -390,7 +399,6 @@ end
 function set!(scene::Scene, camera::Camera)
     rprSceneSetCamera(scene, camera)
 end
-
 
 """
 Sets the displacement scale for a shape
@@ -478,11 +486,7 @@ end
 Sets the lookat of a camera
 """
 function lookat!(camera::Camera, position::Vec3, lookatvec::Vec3, upvec::Vec3)
-    rprCameraLookAt(camera,
-        Vec3f(position)...,
-        Vec3f(lookatvec)...,
-        Vec3f(upvec)...
-    )
+    rprCameraLookAt(camera, position..., lookatvec..., upvec...)
 end
 
 """
@@ -637,9 +641,8 @@ function set_standard_tonemapping!(context;
     set!(context, "tonemapping.reinhard02.burn", reinhard02_burn)
 
     set!(context, "aacellsize", aacellsize)
-    set!(context, "imagefilter.type", imagefilter_type)
+    set!(context, RPR_CONTEXT_IMAGE_FILTER_TYPE, imagefilter_type)
     set!(context, "aasamples", aasamples)
-
 end
 
 
