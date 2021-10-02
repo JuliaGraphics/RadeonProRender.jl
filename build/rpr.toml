@@ -1,6 +1,6 @@
 [general]
-library_name = "RadeonProRender_v2"
+library_name = "RadeonProRender"
 output_file_path = "./../src/LibRPR.jl"
 module_name = "RPR"
-jll_pkg_name = "RPR_jll"
+jll_pkg_name = "RadeonProRender_jll"
 export_symbol_prefixes = ["RPR", "rpr"]

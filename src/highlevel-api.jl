@@ -85,6 +85,11 @@ end
 @rpr_wrapper_type MaterialNode rpr_material_node rprMaterialSystemCreateNode (matsystem, typ) RPRObject
 @rpr_wrapper_type Camera rpr_camera rprContextCreateCamera (context,) RPRObject
 @rpr_wrapper_type Scene rpr_scene rprContextCreateScene (context,) RPRObject
+@rpr_wrapper_type PostEffect rpr_post_effect rprContextCreatePostEffect (context, type) RPRObject
+
+function set!(pe::PostEffect, param::String, x::Number)
+    rprPostEffectSetParameter1f(pe, param, x)
+end
 
 """
 Shortcut for Context creation. Leaves empty:
@@ -166,13 +171,13 @@ end
 Create layered shader give two shaders and respective IORs
 """
 function layeredshader(matsys, base, top, weight=(0.5, 0.5, 0.5, 1.0))
-    layered = MaterialNode(matsys, RPR_MATERIAL_NODE_BLEND)
+    layered = MaterialNode(matsys, RPR.RPR_MATERIAL_NODE_BLEND)
 
-    set!(layered, "color0", base)
+    set!(layered, RPR.RPR_MATERIAL_INPUT_COLOR0, base)
     # Set shader for top layer
-    set!(layered, "color1", top)
+    set!(layered, RPR.RPR_MATERIAL_INPUT_COLOR1, top)
     # Set index of refraction for base layer
-    set!(layered, "weight", weight...)
+    set!(layered, RPR.RPR_MATERIAL_INPUT_WEIGHT, weight...)
     return layered
 end
 
@@ -318,7 +323,7 @@ function set!(context::Context, parameter::rpr_context_info, f::Number)
     return rprContextSetParameterByKey1f(context, parameter, f)
 end
 
-function set!(context::Context, parameter::rpr_context_info, ui::Unsigned)
+function set!(context::Context, parameter::rpr_context_info, ui)
     return rprContextSetParameterByKey1u(context, parameter, ui)
 end
 
@@ -431,6 +436,10 @@ end
 
 function Base.push!(scene::Scene, light::AbstractLight)
     return rprSceneAttachLight(scene, light)
+end
+
+function set!(context::Context, pe::PostEffect)
+    return rprContextAttachPostEffect(context, pe)
 end
 
 function Base.delete!(scene::Scene, light::AbstractLight)
@@ -573,21 +582,40 @@ end
 """
 Customizable defaults for the most common tonemapping operations
 """
-function set_standard_tonemapping!(context; typ=RPR_TONEMAPPING_OPERATOR_PHOTOLINEAR,
-                                   photolinear_sensitivity=1.0f0, photolinear_exposure=1.0f0,
-                                   photolinear_fstop=1.0f0, reinhard02_prescale=1.0f0,
+function set_standard_tonemapping!(context; typ=RPR.RPR_TONEMAPPING_OPERATOR_PHOTOLINEAR,
+                                   photolinear_sensitivity=0.5f0, photolinear_exposure=0.5f0,
+                                   photolinear_fstop=2f0, reinhard02_prescale=1.0f0,
                                    reinhard02_postscale=1.0f0, reinhard02_burn=1.0f0, linear_scale=1.0f0,
-                                   aacellsize=4.0, imagefilter_type=RPR_FILTER_BLACKMANHARRIS, aasamples=4.0)
-    set!(context, "toneMapping.type", typ)
-    set!(context, "tonemapping.linear.scale", linear_scale)
-    set!(context, "tonemapping.photolinear.sensitivity", photolinear_sensitivity)
-    set!(context, "tonemapping.photolinear.exposure", photolinear_exposure)
-    set!(context, "tonemapping.photolinear.fstop", photolinear_fstop)
-    set!(context, "tonemapping.reinhard02.prescale", reinhard02_prescale)
-    set!(context, "tonemapping.reinhard02.postscale", reinhard02_postscale)
-    set!(context, "tonemapping.reinhard02.burn", reinhard02_burn)
+                                   aacellsize=4.0, imagefilter_type=RPR.RPR_FILTER_BLACKMANHARRIS, aasamples=4.0)
 
-    set!(context, "aacellsize", aacellsize)
-    set!(context, RPR_CONTEXT_IMAGE_FILTER_TYPE, imagefilter_type)
-    return set!(context, "aasamples", aasamples)
+
+    norm = PostEffect(context, RPR.RPR_POST_EFFECT_NORMALIZATION)
+    set!(context, norm)
+    tonemap = PostEffect(context, RPR.RPR_POST_EFFECT_TONE_MAP)
+    set!(context, tonemap)
+    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_TYPE, typ)
+    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_LINEAR_SCALE, linear_scale)
+    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_SENSITIVITY, photolinear_sensitivity)
+    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_EXPOSURE, photolinear_exposure)
+    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_FSTOP, photolinear_fstop)
+    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_REINHARD02_PRE_SCALE, reinhard02_prescale)
+    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_REINHARD02_POST_SCALE, reinhard02_postscale)
+    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_REINHARD02_BURN, reinhard02_burn)
+    set!(context, RPR.RPR_CONTEXT_IMAGE_FILTER_TYPE, imagefilter_type)
+
+    gamma = PostEffect(context, RPR.RPR_POST_EFFECT_GAMMA_CORRECTION)
+    set!(context, gamma)
+    set!(context, RPR.RPR_CONTEXT_DISPLAY_GAMMA, 1.0)
+    # set!(context, "aacellsize", aacellsize)
+    # set!(context, "aasamples", aasamples)
+    # set!(context, RPR.RPR_CONTEXT_AA_ENABLED, UInt(1))
+
+    println("bloomie")
+    # bloom = PostEffect(context, RPR.RPR_POST_EFFECT_BLOOM)
+    # set!(context, bloom)
+	# set!(bloom, "weight", 1.0f0)
+	# set!(bloom, "radius", 0.4f0)
+	# set!(bloom, "threshold", 0.2f0)
+    return
+
 end

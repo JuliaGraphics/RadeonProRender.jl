@@ -4,7 +4,11 @@ cd(@__DIR__)
 
 include_dir = normpath(joinpath(@__DIR__, "RadeonProRenderSDK", "RadeonProRender", "inc"))
 # LIBCLANG_HEADERS are those headers to be wrapped.
-headers = [joinpath(include_dir, "RadeonProRender_v2.h")]
+headers = joinpath.(include_dir, [
+    "RadeonProRender_v2.h",
+    "RadeonProRender_GL.h",
+    "RadeonProRender_VK.h"
+]
 
 # wrapper generator options
 options = load_options(joinpath(@__DIR__, "rpr.toml"))
@@ -53,8 +57,3 @@ end
 rewrite!(ctx.dag)
 
 build!(ctx, BUILDSTAGE_PRINTING_ONLY)
-
-e = :(function rprHeteroVolumeSetDensityScale(heteroVolume, scale)
-          return ccall((:rprHeteroVolumeSetDensityScale, RadeonProRender_v2), rpr_status,
-                       (rpr_hetero_volume, rpr_float), heteroVolume, scale)
-      end)
