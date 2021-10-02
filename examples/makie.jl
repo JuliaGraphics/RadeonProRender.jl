@@ -1,8 +1,8 @@
 using Makie
-using FireRender, GeometryBasics, Colors
+using RadeonProRender, GeometryBasics, Colors
 
-const RPR = FireRender.RPR
-const FR = FireRender
+const RPR = RadeonProRender.RPR
+const FR = RadeonProRender
 
 struct RPRContext
     context::FR.Context
@@ -20,18 +20,20 @@ function to_rpr_camera(context::RPRContext, cam)
 
     map(cam.eyeposition) do position
         l, u = cam.lookat[], cam.upvector[]
-        lookat!(camera, position, l, u)
+        return lookat!(camera, position, l, u)
     end
     map(cam.fov) do fov
-        RPR.rprCameraSetFocalLength(camera, 35)
+        return RPR.rprCameraSetFocalLength(camera, fov)
     end
-
+    # RPR_CAMERA_FSTOP
+    # RPR_CAMERA_FOCAL_LENGTH
+    # RPR_CAMERA_SENSOR_SIZE
+    # RPR_CAMERA_MODE
+    # RPR_CAMERA_FOCUS_DISTANCE
     return camera
 end
 
-
 function mesh_material(context, plot)
-
     ambient = plot.ambient[]
     diffuse = plot.diffuse[]
     specular = plot.specular[]
@@ -39,11 +41,10 @@ function mesh_material(context, plot)
 
     color = to_color(plot.color[])
 
-
-    color_signal = if color isa AbstractMatrix{<: Number}
+    color_signal = if color isa AbstractMatrix{<:Number}
         map(vec2color, plot.color, plot.color_map, plot.colorrange)
-    elseif color isa AbstractMatrix{<: Colorant}
-    	tex = FR.MaterialNode(context.matsys, RPR.RPR_MATERIAL_NODE_IMAGE_TEXTURE)
+    elseif color isa AbstractMatrix{<:Colorant}
+        tex = FR.MaterialNode(context.matsys, RPR.RPR_MATERIAL_NODE_IMAGE_TEXTURE)
         map(plot.color) do color
             img = FR.Image(context.context, color)
             set!(tex, RPR.RPR_MATERIAL_INPUT_DATA, img)
@@ -57,7 +58,7 @@ function mesh_material(context, plot)
 
     material = FR.MaterialNode(context.matsys, RPR.RPR_MATERIAL_NODE_PHONG)
     map(color_signal) do color
-        set!(material, RPR.RPR_MATERIAL_INPUT_COLOR, color)
+        return set!(material, RPR.RPR_MATERIAL_INPUT_COLOR, color)
     end
 
     return material
@@ -80,16 +81,16 @@ function draw_atomic(screen::FR.Scene, scene::Scene, x::Surface)
         img = nothing
         # signals not supported for shading yet
         # We automatically insert x[3] into the color channel, so if it's equal we don't need to do anything
-        if isa(to_value(color), AbstractMatrix{<: Number}) && to_value(color) !== to_value(x[3])
+        if isa(to_value(color), AbstractMatrix{<:Number}) && to_value(color) !== to_value(x[3])
             img = el32convert(color)
         elseif to_value(color) isa Makie.AbstractPattern
             pattern_img = lift(x -> el32convert(Makie.to_image(x)), color)
-            img = ShaderAbstractions.Sampler(pattern_img, x_repeat=:repeat, minfilter=:nearest)
+            img = ShaderAbstractions.Sampler(pattern_img; x_repeat=:repeat, minfilter=:nearest)
             haskey(gl_attributes, :fetch_pixel) || (gl_attributes[:fetch_pixel] = true)
             gl_attributes[:color_map] = nothing
             gl_attributes[:color] = nothing
             gl_attributes[:color_norm] = nothing
-        elseif isa(to_value(color), AbstractMatrix{<: Colorant})
+        elseif isa(to_value(color), AbstractMatrix{<:Colorant})
             img = color
             gl_attributes[:color_map] = nothing
             gl_attributes[:color] = nothing
@@ -102,7 +103,7 @@ function draw_atomic(screen::FR.Scene, scene::Scene, x::Surface)
         @assert to_value(x[3]) isa AbstractMatrix
         types = map(v -> typeof(to_value(v)), x[1:2])
 
-        if all(T -> T <: Union{AbstractMatrix, AbstractVector}, types)
+        if all(T -> T <: Union{AbstractMatrix,AbstractVector}, types)
             t = Makie.transform_func_obs(scene)
             mat = x[3]
             xypos = map(t, x[1], x[2]) do t, x, y
@@ -125,7 +126,7 @@ function draw_atomic(screen::FR.Scene, scene::Scene, x::Surface)
             xpos = map(first, xypos)
             ypos = map(last, xypos)
             args = map((xpos, ypos, mat)) do arg
-                Texture(el32convert(arg); minfilter=:nearest)
+                return Texture(el32convert(arg); minfilter=:nearest)
             end
             return visualize(args, Style(:surface), gl_attributes)
         else
@@ -144,13 +145,21 @@ function draw_atomic(screen::FR.Scene, scene::Scene, vol::Volume)
         mi = minimum.(xyz)
         maxi = maximum.(xyz)
         w = maxi .- mi
-        m2 = Mat4f(
-            w[1], 0, 0, 0,
-            0, w[2], 0, 0,
-            0, 0, w[3], 0,
-            mi[1], mi[2], mi[3], 1
-        )
+        m2 = Mat4f(w[1], 0, 0, 0, 0, w[2], 0, 0, 0, 0, w[3], 0, mi[1], mi[2], mi[3], 1)
         return convert(Mat4f, m) * m2
     end
     return visualize(vol[4], Style(:default), gl_attributes)
+end
+
+"""
+creates a transform from a translation, scale, rotation
+"""
+function transform!(shape::RPRObject, translate, scale, rot)
+    s = scalematrix(Vec3f(scale))
+    t = translationmatrix(Vec3f(translate))
+    return transform!(shape, t * rot * s)
+end
+
+function transform!(shape::RPRObject, trans_scale_rot::Tuple)
+    return transform!(shape, trans_scale_rot...)
 end

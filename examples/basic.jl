@@ -1,52 +1,75 @@
+using RadeonProRender, GeometryBasics, Colors
+const RPR = RadeonProRender
 
-using FireRender, GeometryBasics, Colors
-using FireRender: translationmatrix
+function translationmatrix(t::Vec{3,T}) where {T}
+    T0, T1 = zero(T), one(T)
+    return Mat{4}(T1, T0, T0, T0, T0, T1, T0, T0, T0, T0, T1, T0, t[1], t[2], t[3], T1)
+end
 
-RPR = FireRender.RPR
-FR = FireRender
+isdefined(Main, :context) && RPR.release(context)
 
+context = RPR.Context()
 
-camera = FR.Camera(context)
-lookat!(camera, Vec3f0(90, 20, 100), Vec3f0(0), Vec3f0(0,0,1))
-RPR.rprCameraSetFocalLength(camera, 75.0)
+scene = RPR.Scene(context)
+matsys = RPR.MaterialSystem(context, 0)
+
+camera = RPR.Camera(context)
+lookat!(camera, Vec3f0(8, 0, 5), Vec3f0(2, 0, 2), Vec3f0(0, 0, 1))
+RPR.rprCameraSetFocalLength(camera, 45.0)
 set!(scene, camera)
 set!(context, scene)
 
-env_light = FireRender.EnvironmentLight(context)
+env_light = RadeonProRender.EnvironmentLight(context)
 image_path = joinpath(@__DIR__, "studio026.exr")
-img = FR.Image(context, image_path)
+img = RPR.Image(context, image_path)
 set!(env_light, img)
-setintensityscale!(env_light, 0.5)
+setintensityscale!(env_light, 1.1)
 push!(scene, env_light)
 
-light = FR.PointLight(context)
-transform!(light, translationmatrix(Vec3f(0, 30, 2)))
-FR.setradiantpower!(light, 500, 641, 824)
+light = RPR.PointLight(context)
+transform!(light, translationmatrix(Vec3f0(2, 0, 5)))
+f = 20
+RPR.setradiantpower!(light, 500 / f, 641 / f, 630 / f)
 push!(scene, light)
 
-sphere = FireRender.Shape(context, Sphere(Point3f0(0), 5f0))
-push!(scene, sphere)
-matsys = FR.MaterialSystem(context, 0)
-diffuse = FR.MaterialNode(matsys, RPR.RPR_MATERIAL_NODE_MICROFACET_REFRACTION)
-set!(diffuse, RPR.RPR_MATERIAL_INPUT_COLOR, RGBA(colorant"yellow", 0.1))
-set!(diffuse, RPR.RPR_MATERIAL_INPUT_ROUGHNESS, 0.01, 0.01, 0.01, 0.0)
-set!(diffuse, RPR.RPR_MATERIAL_INPUT_IOR, 2, 2, 2, 2)
-set!(diffuse, RPR.RPR_MATERIAL_INPUT_CAUSTICS, 1)
-# set!(diffuse, RPR.RPR_MATERIAL_INPUT_REFLECTANCE, 0.5, 0.5, 0.5, 0.5)
-set!(sphere, diffuse)
+function add_shape!(scene, context, matsys, mesh; material=RPR.RPR_MATERIAL_NODE_DIFFUSE,
+                    color=colorant"green", roughness=0.01)
+    rpr_mesh = RadeonProRender.Shape(context, mesh)
+    push!(scene, rpr_mesh)
+    m = RPR.MaterialNode(matsys, material)
+    set!(m, RPR.RPR_MATERIAL_INPUT_COLOR, color)
+    set!(m, RPR.RPR_MATERIAL_INPUT_ROUGHNESS, roughness, roughness, roughness, roughness)
+    set!(rpr_mesh, m)
+    return rpr_mesh, m
+end
+
+mesh, mat = add_shape!(scene, context, matsys, Rect3f(Vec3f0(-10, -10, -1), Vec3f0(20, 20, 1));
+                       color=colorant"white")
+mesh, mat = add_shape!(scene, context, matsys, Rect3f(Vec3f0(0, -10, 0), Vec3f0(0.1, 20, 5));
+                       color=colorant"white")
+mesh, mat = add_shape!(scene, context, matsys, Rect3f(Vec3f0(0, -2, 0), Vec3f0(5, 0.1, 5));
+                       color=colorant"white")
+mesh, mat = add_shape!(scene, context, matsys, Rect3f(Vec3f0(0, 2, 0), Vec3f0(5, 0.1, 5));
+                       color=colorant"white")
+
+mesh, mat_sphere = add_shape!(scene, context, matsys, Tesselation(Sphere(Point3f0(2, 0, 2), 1.0f0), 100);
+                              material=RPR.RPR_MATERIAL_NODE_MICROFACET, roughness=0.2, color=colorant"red")
+# set!(mat_sphere, RPR.RPR_MATERIAL_INPUT_IOR, 2, 2, 2, 2)
+# set!(mat_sphere, RPR.RPR_MATERIAL_INPUT_CAUSTICS, 1)
 
 fb_size = (800, 600)
-frame_buffer = FR.FrameBuffer(context, RGBA, fb_size)
-frame_bufferSolved = FR.FrameBuffer(context, RGBA, fb_size)
+frame_buffer = RPR.FrameBuffer(context, RGBA, fb_size)
+frame_bufferSolved = RPR.FrameBuffer(context, RGBA, fb_size)
 set!(context, RPR.RPR_AOV_COLOR, frame_buffer)
 
 begin
     clear!(frame_buffer)
-    RPR.rprContextSetParameterByKey1u(context, RPR.RPR_CONTEXT_RENDER_MODE, RPR.RPR_RENDER_MODE_GLOBAL_ILLUMINATION)
+    RPR.rprContextSetParameterByKey1u(context, RPR.RPR_CONTEXT_RENDER_MODE,
+                                      RPR.RPR_RENDER_MODE_GLOBAL_ILLUMINATION)
     RPR.rprContextSetParameterByKey1u(context, RPR.RPR_CONTEXT_ITERATIONS, 1)
-    for i in 1:200
-        FR.render(context)
+    for i in 1:2
+        RPR.render(context)
     end
     RPR.rprContextResolveFrameBuffer(context, frame_buffer, frame_bufferSolved, true)
-    FR.save(frame_bufferSolved, "test.png")
+    RPR.save(frame_bufferSolved, "test.png")
 end

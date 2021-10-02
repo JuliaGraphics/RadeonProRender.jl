@@ -1,7 +1,7 @@
 /*****************************************************************************\
 *
 *
-*  Project        FireRender Engine
+*  Project        RadeonProRender Engine
 *
 *  Description    Fire Render Interface header
 *

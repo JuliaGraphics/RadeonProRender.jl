@@ -1,13 +1,13 @@
-using FireRender, GeometryBasics, Colors, Makie
+using RadeonProRender, GeometryBasics, Colors, Makie
 using ReferenceTests
 using Makie: translationmatrix
 
 include("makie.jl")
 
 earth = ReferenceTests.loadasset("earth.png")
-m = uv_mesh(Tesselation(Sphere(Point3f(0), 1f0), 60))
-f, ax, mplot = Makie.mesh(m, color=earth, shading=false)
-mplot2 = Makie.mesh!(ax, Sphere(Point3f0(2, 0, 0), 0.1f0), color=:red)
+m = uv_mesh(Tesselation(Sphere(Point3f(0), 1.0f0), 60))
+f, ax, mplot = Makie.mesh(m; color=earth, shading=false)
+mplot2 = Makie.mesh!(ax, Sphere(Point3f0(2, 0, 0), 0.1f0); color=:red)
 f
 
 context = RPRContext()
@@ -36,7 +36,6 @@ push!(scene, rpr_mesh)
 rpr_mesh2 = to_rpr_mesh(context, mplot2)
 push!(scene, rpr_mesh2)
 
-
 fb_size = (800, 600)
 ctx = context.context
 frame_buffer = FR.FrameBuffer(ctx, RGBA, fb_size)
@@ -45,7 +44,8 @@ set!(ctx, RPR.RPR_AOV_COLOR, frame_buffer)
 
 begin
     clear!(frame_buffer)
-    RPR.rprContextSetParameterByKey1u(ctx, RPR.RPR_CONTEXT_RENDER_MODE, RPR.RPR_RENDER_MODE_GLOBAL_ILLUMINATION)
+    RPR.rprContextSetParameterByKey1u(ctx, RPR.RPR_CONTEXT_RENDER_MODE,
+                                      RPR.RPR_RENDER_MODE_GLOBAL_ILLUMINATION)
     RPR.rprContextSetParameterByKey1u(ctx, RPR.RPR_CONTEXT_ITERATIONS, 1)
     for i in 1:200
         FR.render(ctx)

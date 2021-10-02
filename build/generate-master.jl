@@ -2,7 +2,7 @@ using Clang.Generators
 
 cd(@__DIR__)
 
-include_dir = joinpath(@__DIR__, "RadeonProRenderSDK", "RadeonProRender", "inc") |> normpath
+include_dir = normpath(joinpath(@__DIR__, "RadeonProRenderSDK", "RadeonProRender", "inc"))
 # LIBCLANG_HEADERS are those headers to be wrapped.
 headers = [joinpath(include_dir, "RadeonProRender_v2.h")]
 
@@ -55,5 +55,6 @@ rewrite!(ctx.dag)
 build!(ctx, BUILDSTAGE_PRINTING_ONLY)
 
 e = :(function rprHeteroVolumeSetDensityScale(heteroVolume, scale)
-      ccall((:rprHeteroVolumeSetDensityScale, RadeonProRender_v2), rpr_status, (rpr_hetero_volume, rpr_float), heteroVolume, scale)
-  end)
+          return ccall((:rprHeteroVolumeSetDensityScale, RadeonProRender_v2), rpr_status,
+                       (rpr_hetero_volume, rpr_float), heteroVolume, scale)
+      end)
