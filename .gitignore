@@ -3,3 +3,7 @@
 *.jl.mem
 *.log
 cache/
+build/RadeonProRenderSDK
+examples/instances
+Manifest.toml
+test/test.png
