@@ -16,7 +16,7 @@ set!(context, scene)
 matsys = RPR.MaterialSystem(context, 0)
 
 camera = RPR.Camera(context)
-lookat!(camera, Vec3f0(1.5, 0.75, 1.5), Vec3f0(0), Vec3f0(0, 0, 1))
+lookat!(camera, Vec3f(1.5, 0.75, 1.5), Vec3f(0), Vec3f(0, 0, 1))
 RPR.rprCameraSetFocalLength(camera, 45.0)
 set!(scene, camera)
 
@@ -28,7 +28,7 @@ setintensityscale!(env_light, 1.2)
 push!(scene, env_light)
 
 light = RPR.PointLight(context)
-transform!(light, translationmatrix(Vec3f0(2, 0, 5)))
+transform!(light, translationmatrix(Vec3f(2, 0, 5)))
 f = 1.5
 RPR.setradiantpower!(light, 500 / f, 641 / f, 630 / f)
 push!(scene, light)

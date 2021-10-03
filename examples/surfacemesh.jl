@@ -7,7 +7,7 @@ context = RPR.Context()
 scene = RPR.Scene(context)
 matsys = RPR.MaterialSystem(context, 0)
 camera = RPR.Camera(context)
-lookat!(camera, Vec3f0(3), Vec3f0(0), Vec3f0(0, 0, 1))
+lookat!(camera, Vec3f(3), Vec3f(0), Vec3f(0, 0, 1))
 set!(scene, camera)
 
 # create some x,y,z data

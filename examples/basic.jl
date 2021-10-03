@@ -9,12 +9,11 @@ end
 isdefined(Main, :context) && RPR.release(context)
 
 context = RPR.Context()
-
 scene = RPR.Scene(context)
 matsys = RPR.MaterialSystem(context, 0)
 
 camera = RPR.Camera(context)
-lookat!(camera, Vec3f0(8, 0, 5), Vec3f0(2, 0, 2), Vec3f0(0, 0, 1))
+lookat!(camera, Vec3f(8, 0, 5), Vec3f(2, 0, 2), Vec3f(0, 0, 1))
 RPR.rprCameraSetFocalLength(camera, 45.0)
 set!(scene, camera)
 set!(context, scene)
@@ -27,7 +26,7 @@ setintensityscale!(env_light, 1.1)
 push!(scene, env_light)
 
 light = RPR.PointLight(context)
-transform!(light, translationmatrix(Vec3f0(2, 0, 5)))
+transform!(light, translationmatrix(Vec3f(2, 0, 5)))
 f = 20
 RPR.setradiantpower!(light, 500 / f, 641 / f, 630 / f)
 push!(scene, light)
@@ -43,16 +42,16 @@ function add_shape!(scene, context, matsys, mesh; material=RPR.RPR_MATERIAL_NODE
     return rpr_mesh, m
 end
 
-mesh, mat = add_shape!(scene, context, matsys, Rect3f(Vec3f0(-10, -10, -1), Vec3f0(20, 20, 1));
+mesh, mat = add_shape!(scene, context, matsys, Rect3f(Vec3f(-10, -10, -1), Vec3f(20, 20, 1));
                        color=colorant"white")
-mesh, mat = add_shape!(scene, context, matsys, Rect3f(Vec3f0(0, -10, 0), Vec3f0(0.1, 20, 5));
+mesh, mat = add_shape!(scene, context, matsys, Rect3f(Vec3f(0, -10, 0), Vec3f(0.1, 20, 5));
                        color=colorant"white")
-mesh, mat = add_shape!(scene, context, matsys, Rect3f(Vec3f0(0, -2, 0), Vec3f0(5, 0.1, 5));
+mesh, mat = add_shape!(scene, context, matsys, Rect3f(Vec3f(0, -2, 0), Vec3f(5, 0.1, 5));
                        color=colorant"white")
-mesh, mat = add_shape!(scene, context, matsys, Rect3f(Vec3f0(0, 2, 0), Vec3f0(5, 0.1, 5));
+mesh, mat = add_shape!(scene, context, matsys, Rect3f(Vec3f(0, 2, 0), Vec3f(5, 0.1, 5));
                        color=colorant"white")
 
-mesh, mat_sphere = add_shape!(scene, context, matsys, Tesselation(Sphere(Point3f0(2, 0, 2), 1.0f0), 100);
+mesh, mat_sphere = add_shape!(scene, context, matsys, Tesselation(Sphere(Point3f(2, 0, 2), 1.0f0), 100);
                               material=RPR.RPR_MATERIAL_NODE_MICROFACET, roughness=0.2, color=colorant"red")
 # set!(mat_sphere, RPR.RPR_MATERIAL_INPUT_IOR, 2, 2, 2, 2)
 # set!(mat_sphere, RPR.RPR_MATERIAL_INPUT_CAUSTICS, 1)

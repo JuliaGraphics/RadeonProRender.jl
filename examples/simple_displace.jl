@@ -51,7 +51,7 @@ preserve(map(t) do i
          end)
 
 camera = FR.Camera(context)
-lookat!(camera, Vec3f0(0, 9.5, 11), Vec3f0(0), Vec3f0(0, 0, 1))
+lookat!(camera, Vec3f(0, 9.5, 11), Vec3f(0), Vec3f(0, 0, 1))
 FR.CameraSetFocusDistance(camera.x, 7.0f0)
 FR.CameraSetFStop(camera.x, 1.8f0)
 
@@ -63,7 +63,7 @@ set!(ibl, context, imgpath)
 set!(scene, ibl)
 pl = FR.PointLight(context);
 setradiantpower!(pl, fill(10.0f0^3, 3)...)
-transform!(pl, translationmatrix(Vec3f0(0, 0, 7)))
+transform!(pl, translationmatrix(Vec3f(0, 0, 7)))
 
 push!(scene, pl)
 

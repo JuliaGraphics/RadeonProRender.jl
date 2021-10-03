@@ -457,16 +457,16 @@ end
 """
 Transforms firerender objects with a transformation matrix
 """
-function transform!(shape::Shape, transform::Mat4f)
-    return rprShapeSetTransform(shape, false, convert(Array, transform))
+function transform!(shape::Shape, transform::AbstractMatrix)
+    return rprShapeSetTransform(shape, false, convert(Matrix{Float32}, transform))
 end
 
-function transform!(light::AbstractLight, transform::Mat4f)
-    return rprLightSetTransform(light, false, convert(Array, transform))
+function transform!(light::AbstractLight, transform::AbstractMatrix)
+    return rprLightSetTransform(light, false, convert(Matrix{Float32}, transform))
 end
 
-function transform!(camera::Camera, transform::Mat4f)
-    return rprCameraSetTransform(camera, false, convert(Array, transform))
+function transform!(camera::Camera, transform::AbstractMatrix)
+    return rprCameraSetTransform(camera, false, convert(Matrix{Float32}, transform))
 end
 
 """
@@ -662,7 +662,6 @@ function set_standard_tonemapping!(context; typ=RPR.RPR_TONEMAPPING_OPERATOR_PHO
     # set!(context, "aasamples", aasamples)
     # set!(context, RPR.RPR_CONTEXT_AA_ENABLED, UInt(1))
 
-    println("bloomie")
     # bloom = PostEffect(context, RPR.RPR_POST_EFFECT_BLOOM)
     # set!(context, bloom)
     # set!(bloom, "weight", 1.0f0)

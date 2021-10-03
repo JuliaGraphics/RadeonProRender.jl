@@ -9,7 +9,7 @@ context, glframebuffer = interactive_context(w)
 scene = FR.Scene(context)
 set!(context, scene)
 # create a RadeonProRender.Camera from a GLAbstraction.Camera
-camera = FR.Camera(context, glframebuffer, PerspectiveCamera(w.inputs, Vec3f0(3), Vec3f0(0)))
+camera = FR.Camera(context, glframebuffer, PerspectiveCamera(w.inputs, Vec3f(3), Vec3f(0)))
 set!(scene, camera)
 
 DN = 512
@@ -18,7 +18,7 @@ DN = 512
 # Load an obj
 cat = FR.Shape(context, loadasset("cat.obj"))
 push!(scene, cat)
-transform!(cat, translationmatrix(Vec3f0(0, 0.5, 0)))
+transform!(cat, translationmatrix(Vec3f(0, 0.5, 0)))
 # Load an obj
 r = SimpleRectangle{Float32}(-5, -5, 10, 10)
 plane = FR.Shape(context, r, (div(DN, 2), div(DN, 2)))

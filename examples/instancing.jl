@@ -31,7 +31,7 @@ setintensityscale!(env_light, 1.5)
 push!(scene, env_light)
 
 light = RPR.PointLight(context)
-transform!(light, Makie.translationmatrix(Vec3f0(2, 2, 4)))
+transform!(light, Makie.translationmatrix(Vec3f(2, 2, 4)))
 RPR.setradiantpower!(light, 500, 641, 800)
 push!(scene, light)
 

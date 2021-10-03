@@ -7,7 +7,7 @@ include("makie.jl")
 earth = ReferenceTests.loadasset("earth.png")
 m = uv_mesh(Tesselation(Sphere(Point3f(0), 1.0f0), 60))
 f, ax, mplot = Makie.mesh(m; color=earth, shading=false)
-mplot2 = Makie.mesh!(ax, Sphere(Point3f0(2, 0, 0), 0.1f0); color=:red)
+mplot2 = Makie.mesh!(ax, Sphere(Point3f(2, 0, 0), 0.1f0); color=:red)
 f
 
 context = RPRContext()
