@@ -1,106 +1,113 @@
-using RadeonProRender, GeometryTypes, GLAbstraction, GLVisualize
-using GLWindow, Colors, ModernGL, FileIO, Reactive
-const FR = RadeonProRender
+using RadeonProRender, MeshIO, FileIO, GeometryBasics, Colors
+using Makie
+using Colors: N0f8
+const RPR = RadeonProRender
 
-w = glscreen()
+loadasset(paths...) = FileIO.load(joinpath(dirname(pathof(Makie)), "..", "assets", paths...))
 
-# create interactive context, which uses gl interop to display render result
-# with opengl
-context, glframebuffer = interactive_context(w)
+function trans_matrix(scale::Vec3, rotation::Vec3)
+    trans_scale = Makie.transformationmatrix(Vec3f(0), scale)
+    rotation = Mat4f(to_rotation(rotation))
+    return trans_scale * rotation
+end
 
 # Create a scene
-scene = FR.Scene(context)
+context = RPR.Context()
+matsys = RPR.MaterialSystem(context, 0)
+scene = RPR.Scene(context)
 set!(context, scene)
+set_standard_tonemapping!(context)
 
-# create some geometry
-cat = loadasset("cat.obj")
-sphere = Sphere(Point3f(0), 1.0f0)
+camera = RPR.Camera(context)
+lookat!(camera, Vec3f(1.5), Vec3f(0), Vec3f(0, 0, 1))
+RPR.rprCameraSetFocalLength(camera, 45.0)
+set!(scene, camera)
+
+env_light = RadeonProRender.EnvironmentLight(context)
+image_path = joinpath(@__DIR__, "studio026.exr")
+img = RPR.Image(context, image_path)
+set!(env_light, img)
+setintensityscale!(env_light, 1.5)
+push!(scene, env_light)
+
+light = RPR.PointLight(context)
+transform!(light, Makie.translationmatrix(Vec3f0(2, 2, 4)))
+RPR.setradiantpower!(light, 500, 641, 800)
+push!(scene, light)
+
 
 """
 Generate scales for instances
 """
-function scale_gen(v0, nv)
-    l = length(v0)
-    for i in eachindex(v0)
-        v0[i] = Vec3f0(1, 1, sin((nv * l) / i)) / 2.1
+function update_scales!(last_scales, t)
+    n = length(last_scales)
+    for i in 1:n
+        last_scales[i] = Vec3f(1, 1, sin((t * n) / i)) ./ 3.1
     end
-    return v0
+    return last_scales
 end
 
 """
 Generate color for instances
 """
-function color_gen(v0, nv)
-    l = length(v0)
-    for i in eachindex(v0)
-        v0[i] = RGBA{U8}(i / l, (cos(nv) + 1) / 2, (sin(i / l / 3) + 1) / 2.0, 1.0)
+function update_colors!(last_colors, t)
+    l = length(last_colors)
+    for i in eachindex(last_colors)
+        last_colors[i] = RGBA{N0f8}(i / l, (cos(t) + 1) / 2, (sin(i / l / 3) + 1) / 2.0, 1.0)
     end
-    return v0
+    return last_colors
 end
 
-t = Signal(2.0f0 * pi)
-position = sphere.vertices # use sphere vertices as position
-scale_start = Vec3f0[Vec3f0(1, 1, rand()) for i in 1:length(position)]
-# create a signal of of changing scales, dependant on t
-scale = foldp(scale_gen, scale_start, t)
+# create some geometry
+t = 2.0f0 * pi
+cat = loadasset("cat.obj")
+sphere = Sphere(Point3f(0), 1.0f0)
+position = decompose(Point3f, sphere) # use sphere vertices as position
+scale_start = Vec3f[Vec3f(1, 1, rand()) for i in 1:length(position)]
 # create a signal of changing colors
-color = foldp(color_gen, color_gen(zeros(RGBA{U8}, length(position)), value(t)), t)
+color = update_colors!(zeros(RGBA{N0f8}, length(position)), t)
 # use sphere normals as rotation vector
-rotation = -normals(sphere)
-# create a signal of instances
-instances = const_lift(GLVisualize.Instances, cat, position, scale, rotation)
+rotations = -decompose_normals(sphere)
 
 # create material system
-matsys = FR.MaterialSystem(context, 0)
-diffuse = FR.MaterialNode(matsys, FR.MATERIAL_NODE_DIFFUSE)
+diffuse = RPR.MaterialNode(matsys, RPR.RPR_MATERIAL_NODE_DIFFUSE)
 
 # create firerender shape
-primitive = FR.Shape(context, cat)
+primitive = RPR.Shape(context, cat)
 # pre allocate instances
-fr_instances = [FR.Shape(context, primitive) for i in 1:(length(position) - 1)]
-push!(scene, primitive)
+fr_instances = [RPR.Shape(context, primitive) for i in 1:(length(position) - 1)]
 push!(fr_instances, primitive)
+
 # pre allocate shaders
-fr_shader = [FR.MaterialNode(matsys, FR.MATERIAL_NODE_REFLECTION) for elem in 1:length(position)]
+fr_shader = [RPR.MaterialNode(matsys, RPR.RPR_MATERIAL_NODE_REFLECTION) for elem in 1:length(position)]
 
 # set shaders and attach instances to scene
 for (shader, inst) in zip(fr_shader, fr_instances)
     set!(inst, shader)
     push!(scene, inst)
 end
+
 # update scene with the instance signal
-preserve(map(instances) do i
-             it = GLVisualize.TransformationIterator(i)
-             for (trans, c, inst, shader) in zip(it, value(color), fr_instances, fr_shader)
-                 transform!(inst, trans)
-                 set!(shader, "color", c)
-             end
-         end)
+fb_size = (800, 600)
+frame_buffer = RPR.FrameBuffer(context, RGBA, fb_size)
+frame_bufferSolved = RPR.FrameBuffer(context, RGBA, fb_size)
+set!(context, RPR.RPR_AOV_COLOR, frame_buffer)
 
-# create a camera
-camera = FR.Camera(context)
-set!(scene, camera)
-lookat!(camera, Vec3f0(2.6), Vec3f0(0), Vec3f0(0, 0, 1))
+function render_scene(path, n=5)
+    clear!(frame_buffer)
+    RPR.rprContextSetParameterByKey1u(context, RPR.RPR_CONTEXT_ITERATIONS, n)
+    RPR.render(context)
+    RPR.rprContextResolveFrameBuffer(context, frame_buffer, frame_bufferSolved, false)
+    RPR.save(frame_bufferSolved, path)
+end
 
-ibl = FR.EnvironmentLight(context)
-set!(scene, ibl)
-imgpath = joinpath("C:\\", "Program Files", "KeyShot6", "bin", "Materials 2k.hdr")
-set!(ibl, context, imgpath)
-set_standard_tonemapping!(context)
-
-frame = 1
-for i in (pi * 2.0f0):0.01f0:(pi * 4.0f0)
-    push!(t, i) # push new value to t signal
-    yield() # yield to actually update the scene
-    isopen(w) || break
-    clear!(glframebuffer)
-    for i in 1:2
-        glBindTexture(GL_TEXTURE_2D, 0)
-        @time render(context) # ray trace context
-        isopen(w) || break
-        GLWindow.render_frame(w) # display it by rendering glwindow
+for (i, t) in enumerate(LinRange(0, 3.0, 1000))
+    color = update_colors!(color, t)
+    scale_start = update_scales!(scale_start, t)
+    for (scale, rotation, c, inst, shader) in zip(scale_start, rotations, color, fr_instances, fr_shader)
+        transform!(inst, trans_matrix(scale, rotation))
+        set!(shader, RPR.RPR_MATERIAL_INPUT_COLOR, c)
     end
-    isopen(w) || break
-    screenshot(w; path="test$frame.png") # save a screenshot
-    frame += 1
+    path = joinpath(@__DIR__, "instances", "frame$i.png")
+    render_scene(path, 5)
 end

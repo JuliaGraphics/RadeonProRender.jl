@@ -16,7 +16,7 @@ set!(context, scene)
 matsys = RPR.MaterialSystem(context, 0)
 
 camera = RPR.Camera(context)
-lookat!(camera, Vec3f0(1.5, 0, 1.5), Vec3f0(0), Vec3f0(0, 0, 1))
+lookat!(camera, Vec3f0(1.5, 0.75, 1.5), Vec3f0(0), Vec3f0(0, 0, 1))
 RPR.rprCameraSetFocalLength(camera, 45.0)
 set!(scene, camera)
 
@@ -54,7 +54,7 @@ for x in 0:(n-1)
     end
 end
 (a, b) = -1, 2
-r = range(-3, stop = 3, length = 1000)
+r = range(-3, stop = 3, length = 800)
 z = ((x,y) -> y.^4 - x.^4 + a.*y.^2 + b.*x.^2).(r, r')
 me = [cos.(2 .* pi .* sqrt.(x.^2 + y.^2)) .* (4 .* z) for x=r, y=r, z=r]
 mini, maxi = extrema(me)
@@ -81,7 +81,7 @@ RPR.rprContextSetParameterByKey1u(context, RPR.RPR_CONTEXT_MAX_RECURSION, 10)
 
 begin
     clear!(frame_buffer)
-    RPR.rprContextSetParameterByKey1u(context, RPR.RPR_CONTEXT_ITERATIONS, 1)
+    RPR.rprContextSetParameterByKey1u(context, RPR.RPR_CONTEXT_ITERATIONS, 4)
     RPR.render(context)
     RPR.rprContextResolveFrameBuffer(context, frame_buffer, frame_bufferSolved, true)
     RPR.save(frame_bufferSolved, "test.png")
