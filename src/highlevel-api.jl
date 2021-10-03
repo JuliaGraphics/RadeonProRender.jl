@@ -172,12 +172,12 @@ end
 
 mutable struct Shape <: RPRObject{rpr_shape}
     pointer::rpr_shape
+    referenced_arrays
 end
 
 function set!(shape::Shape, volume::HeteroVolume)
     rprShapeSetHeteroVolume(shape, volume)
 end
-
 
 """
 Abstract AbstractLight Type
@@ -206,11 +206,12 @@ function Shape(context::Context, vertices, normals, faces, uvs)
     nraw = reinterpret(Float32, decompose(Vec3f, normals))
     uvraw = reinterpret(Float32, map(uv -> Vec2f(1.0 - uv[2], 1.0 - uv[1]), uvs))
     iraw = reinterpret(rpr_int, decompose(TriangleFace{OffsetInteger{-1,rpr_int}}, faces))
+    facelens = fill(rpr_int(3), length(faces))
     rpr_mesh = rprContextCreateMesh(context, vraw, length(vertices), sizeof(Point3f), nraw, length(normals),
                                     sizeof(Vec3f), uvraw, length(uvs), sizeof(Vec2f), iraw, sizeof(rpr_int),
                                     iraw, sizeof(rpr_int), iraw, sizeof(rpr_int),
-                                    fill(rpr_int(3), length(faces)), length(faces))
-    shape = Shape(rpr_mesh)
+                                    facelens, length(faces))
+    shape = Shape(rpr_mesh, (vraw, nraw, uvraw, iraw))
     push!(context.objects, shape)
     return shape
 end
@@ -219,7 +220,7 @@ end
 Creating a shape from a shape is interpreted as creating an instance.
 """
 function Shape(context::Context, shape::Shape)
-    inst = Shape(rprContextCreateInstance(context, shape))
+    inst = Shape(rprContextCreateInstance(context, shape), nothing)
     push!(context.objects, inst)
     return inst
 end
@@ -258,6 +259,7 @@ Image wrapper type
 """
 mutable struct Image <: RPRObject{rpr_image}
     pointer::rpr_image
+    used_refs
 end
 
 """
@@ -290,7 +292,7 @@ Automatically creates an Image from a matrix of colors
 """
 function Image(context::Context, image::Array{T,N}) where {T,N}
     desc_ref = Ref(rpr_image_desc(image))
-    img = Image(rprContextCreateImage(context, rpr_image_format(image), desc_ref, image))
+    img = Image(rprContextCreateImage(context, rpr_image_format(image), desc_ref, image, (image, desc_ref)))
     push!(context.objects, img)
     return img
 end
@@ -299,7 +301,7 @@ end
 Automatically loads an image from the given `path`
 """
 function Image(context::Context, path::AbstractString)
-    img = Image(rprContextCreateImageFromFile(context, path))
+    img = Image(rprContextCreateImageFromFile(context, path), nothing)
     push!(context.objects, img)
     return img
 end
