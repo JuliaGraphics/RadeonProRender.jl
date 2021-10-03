@@ -59,6 +59,35 @@ mutable struct Context <: RPRObject{rpr_context}
     end
 end
 
+
+"""
+Shortcut for Context creation. Leaves empty:
+`props`     Context properties, reserved for future use
+`cache_path`Full path to kernel cache created by RadeonProRender, NULL means to use current folder
+"""
+function Context(api_version, pluginIDs, creation_flags)
+    return Context(api_version, pluginIDs, length(pluginIDs), creation_flags, C_NULL, C_NULL)
+end
+
+"""
+Empty constructor, defaults to using opencl and the GPU0
+"""
+function Context()
+    tahoe = normpath(joinpath(dirname(RadeonProRender_v2), "Tahoe64.dll"))
+    tahoePluginID = rprRegisterPlugin(tahoe)
+    @assert(tahoePluginID != -1)
+    plugins = [tahoePluginID]
+    ctx = Context(RPR_API_VERSION, plugins, RPR_CREATION_FLAGS_ENABLE_GPU0)
+    rprContextSetActivePlugin(ctx, plugins[1])
+    return ctx
+end
+"""
+Constructor which only uses creation flags and defaults to opencl.
+"""
+function Context(creation_flags)
+    return Context(RPR_API_VERSION, RPR_CONTEXT_OPENCL, creation_flags)
+end
+
 function release(context::Context)
     if context.pointer == C_NULL
         @assert isempty(context.objects)
@@ -91,33 +120,64 @@ function set!(pe::PostEffect, param::String, x::Number)
     rprPostEffectSetParameter1f(pe, param, x)
 end
 
-"""
-Shortcut for Context creation. Leaves empty:
-`props`     Context properties, reserved for future use
-`cache_path`Full path to kernel cache created by RadeonProRender, NULL means to use current folder
-"""
-function Context(api_version, pluginIDs, creation_flags)
-    return Context(api_version, pluginIDs, length(pluginIDs), creation_flags, C_NULL, C_NULL)
+mutable struct VoxelGrid <: RPRObject{rpr_grid}
+    pointer::rpr_grid
+    grid_values::Vector{Float32}
+    grid_indices::Vector{UInt64}
 end
 
-"""
-Empty constructor, defaults to using opencl and the GPU0
-"""
-function Context()
-    tahoe = normpath(joinpath(dirname(RadeonProRender_v2), "Tahoe64.dll"))
-    tahoePluginID = rprRegisterPlugin(tahoe)
-    @assert(tahoePluginID != -1)
-    plugins = [tahoePluginID]
-    ctx = Context(RPR_API_VERSION, plugins, RPR_CREATION_FLAGS_ENABLE_GPU0)
-    rprContextSetActivePlugin(ctx, plugins[1])
-    return ctx
+function VoxelGrid(context::Context, nx, ny, nz, grid_values::AbstractArray, grid_indices::AbstractArray)
+    grid_ptr = Ref{rpr_grid}()
+
+    grid_indices = convert(Vector{UInt64}, vec(grid_indices))
+    valuesf0 = convert(Vector{Float32}, vec(grid_values))
+
+    rprContextCreateGrid(context, grid_ptr,
+        nx, ny, nz,
+        grid_indices, length(grid_indices),
+        RPR.RPR_GRID_INDICES_TOPOLOGY_I_U64,
+        valuesf0, sizeof(valuesf0), 0
+    )
+    grid = VoxelGrid(grid_ptr[], valuesf0, grid_indices)
+    push!(context.objects, grid)
+    return grid
 end
-"""
-Constructor which only uses creation flags and defaults to opencl.
-"""
-function Context(creation_flags)
-    return Context(RPR_API_VERSION, RPR_CONTEXT_OPENCL, creation_flags)
+
+function VoxelGrid(context, values::AbstractArray{<: Number, 3})
+    indices = UInt64.((1:length(values)) .- 1)
+    return VoxelGrid(context, size(values)..., values, indices)
 end
+
+@rpr_wrapper_type HeteroVolume rpr_hetero_volume rprContextCreateHeteroVolume (context,) RPRObject
+
+function set_albedo_lookup!(volume::HeteroVolume, colors::AbstractVector)
+    RPR.rprHeteroVolumeSetAlbedoLookup(volume, convert(Vector{RGB{Float32}}, colors), length(colors))
+end
+
+function set_albedo_grid!(volume::HeteroVolume, albedo::VoxelGrid)
+    RPR.rprHeteroVolumeSetAlbedoGrid(volume, albedo)
+end
+
+function set_density_lookup!(volume::HeteroVolume, density::AbstractVector)
+    RPR.rprHeteroVolumeSetDensityLookup(volume, convert(Vector{Vec3f}, density), length(density))
+end
+
+function set_density_grid!(volume::HeteroVolume, density::VoxelGrid)
+    RPR.rprHeteroVolumeSetDensityGrid(volume, density)
+end
+
+function Base.push!(scene::Scene, volume::HeteroVolume)
+    rprSceneAttachHeteroVolume(scene, volume)
+end
+
+mutable struct Shape <: RPRObject{rpr_shape}
+    pointer::rpr_shape
+end
+
+function set!(shape::Shape, volume::HeteroVolume)
+    rprShapeSetHeteroVolume(shape, volume)
+end
+
 
 """
 Abstract AbstractLight Type
@@ -130,9 +190,6 @@ abstract type AbstractLight{PtrType} <: RPRObject{PtrType} end
 @rpr_wrapper_type SkyLight rpr_light rprContextCreateSkyLight (context,) AbstractLight
 @rpr_wrapper_type SpotLight rpr_light rprContextCreateSpotLight (context,) AbstractLight
 
-mutable struct Shape <: RPRObject{rpr_shape}
-    pointer::rpr_shape
-end
 
 """
 Default shape constructor which works with every Geometry from the package
@@ -613,9 +670,9 @@ function set_standard_tonemapping!(context; typ=RPR.RPR_TONEMAPPING_OPERATOR_PHO
     println("bloomie")
     # bloom = PostEffect(context, RPR.RPR_POST_EFFECT_BLOOM)
     # set!(context, bloom)
-	# set!(bloom, "weight", 1.0f0)
-	# set!(bloom, "radius", 0.4f0)
-	# set!(bloom, "threshold", 0.2f0)
+    # set!(bloom, "weight", 1.0f0)
+    # set!(bloom, "radius", 0.4f0)
+    # set!(bloom, "threshold", 0.2f0)
     return
 
 end

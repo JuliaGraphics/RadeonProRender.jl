@@ -62,14 +62,12 @@ frame_buffer = RPR.FrameBuffer(context, RGBA, fb_size)
 frame_bufferSolved = RPR.FrameBuffer(context, RGBA, fb_size)
 set!(context, RPR.RPR_AOV_COLOR, frame_buffer)
 
+set_standard_tonemapping!(context)
+
 begin
     clear!(frame_buffer)
-    RPR.rprContextSetParameterByKey1u(context, RPR.RPR_CONTEXT_RENDER_MODE,
-                                      RPR.RPR_RENDER_MODE_GLOBAL_ILLUMINATION)
-    RPR.rprContextSetParameterByKey1u(context, RPR.RPR_CONTEXT_ITERATIONS, 1)
-    for i in 1:2
-        RPR.render(context)
-    end
-    RPR.rprContextResolveFrameBuffer(context, frame_buffer, frame_bufferSolved, true)
+    RPR.rprContextSetParameterByKey1u(context, RPR.RPR_CONTEXT_ITERATIONS, 100)
+    RPR.render(context)
+    RPR.rprContextResolveFrameBuffer(context, frame_buffer, frame_bufferSolved, false)
     RPR.save(frame_bufferSolved, "test.png")
 end
