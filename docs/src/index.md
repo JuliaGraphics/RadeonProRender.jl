@@ -1,14 +1,14 @@
 ```@meta
-CurrentModule = FireRender2
+CurrentModule = RadeonProRender
 ```
 
-# FireRender2
+# RadeonProRender
 
-Documentation for [FireRender2](https://github.com/SimonDanisch/FireRender2.jl).
+Documentation for [RadeonProRender](https://github.com/SimonDanisch/RadeonProRender.jl).
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [FireRender2]
+Modules = [RadeonProRender]
 ```

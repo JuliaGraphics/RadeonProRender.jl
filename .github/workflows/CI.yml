@@ -55,9 +55,9 @@ jobs:
       - run: |
           julia --project=docs -e '
             using Documenter: DocMeta, doctest
-            using FireRender2
-            DocMeta.setdocmeta!(FireRender2, :DocTestSetup, :(using FireRender2); recursive=true)
-            doctest(FireRender2)'
+            using RadeonProRender
+            DocMeta.setdocmeta!(RadeonProRender, :DocTestSetup, :(using RadeonProRender); recursive=true)
+            doctest(RadeonProRender)'
       - run: julia --project=docs docs/make.jl
         env:
           JULIA_PKG_SERVER: ""

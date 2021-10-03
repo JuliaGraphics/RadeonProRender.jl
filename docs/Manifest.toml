@@ -24,7 +24,7 @@ git-tree-sha1 = "8b43e37cfb4f4edc2b6180409acc0cebce7fede8"
 uuid = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 version = "0.27.7"
 
-[[FireRender2]]
+[[RadeonProRender]]
 path = ".."
 uuid = "27029320-176d-4a42-b57d-56729d2ad457"
 version = "0.1.0"
