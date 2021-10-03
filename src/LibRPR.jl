@@ -1,7 +1,6 @@
 module RPR
 
-const RadeonProRender_v2 = joinpath(@__DIR__, "..", "build", "RadeonProRenderSDK", "RadeonProRender",
-                                    "binWin64", "RadeonProRender64.dll")
+using RadeonProRender_jll
 
 function check_error(error_code)
     error_code == RPR_SUCCESS && return
@@ -1279,13 +1278,13 @@ struct rpr_ies_image_desc
 end
 
 function rprRegisterPlugin(path)
-    return ccall((:rprRegisterPlugin, RadeonProRender_v2), rpr_int, (Ptr{rpr_char},), path)
+    return ccall((:rprRegisterPlugin, libRadeonProRender64), rpr_int, (Ptr{rpr_char},), path)
 end
 
 function rprCreateContext(api_version, pluginIDs, pluginCount, creation_flags, props, cache_path)
     out_context = Ref{rpr_context}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprCreateContext, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprCreateContext, libRadeonProRender64), rpr_status,
                       (rpr_uint, Ptr{rpr_int}, Cint, rpr_creation_flags, Ptr{rpr_context_properties},
                        Ptr{rpr_char}, Ptr{rpr_context}), api_version, pluginIDs, pluginCount, creation_flags,
                       props, cache_path, out_context))
@@ -1294,18 +1293,18 @@ function rprCreateContext(api_version, pluginIDs, pluginCount, creation_flags, p
 end
 
 function rprContextSetActivePlugin(context, pluginID)
-    return check_error(ccall((:rprContextSetActivePlugin, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextSetActivePlugin, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_int), context, pluginID))
 end
 
 function rprContextGetInfo(context, context_info, size, data, size_ret)
-    return check_error(ccall((:rprContextGetInfo, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextGetInfo, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_context_info, Cint, Ptr{Cvoid}, Ptr{Cint}), context,
                              context_info, size, data, size_ret))
 end
 
 function rprContextGetParameterInfo(context, param_idx, parameter_info, size, data, size_ret)
-    return check_error(ccall((:rprContextGetParameterInfo, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextGetParameterInfo, libRadeonProRender64), rpr_status,
                              (rpr_context, Cint, rpr_parameter_info, Cint, Ptr{Cvoid}, Ptr{Cint}), context,
                              param_idx, parameter_info, size, data, size_ret))
 end
@@ -1313,163 +1312,163 @@ end
 function rprContextGetAOV(context, aov)
     out_fb = Ref{rpr_framebuffer}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextGetAOV, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextGetAOV, libRadeonProRender64), rpr_status,
                       (rpr_context, rpr_aov, Ptr{rpr_framebuffer}), context, aov, out_fb))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_fb[]
 end
 
 function rprContextSetAOV(context, aov, frame_buffer)
-    return check_error(ccall((:rprContextSetAOV, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextSetAOV, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_aov, rpr_framebuffer), context, aov, frame_buffer))
 end
 
 function rprContextAttachRenderLayer(context, renderLayerString)
-    return check_error(ccall((:rprContextAttachRenderLayer, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextAttachRenderLayer, libRadeonProRender64), rpr_status,
                              (rpr_context, Ptr{rpr_char}), context, renderLayerString))
 end
 
 function rprContextDetachRenderLayer(context, renderLayerString)
-    return check_error(ccall((:rprContextDetachRenderLayer, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextDetachRenderLayer, libRadeonProRender64), rpr_status,
                              (rpr_context, Ptr{rpr_char}), context, renderLayerString))
 end
 
 function rprFrameBufferSetLPE(frame_buffer, lpe)
-    return check_error(ccall((:rprFrameBufferSetLPE, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprFrameBufferSetLPE, libRadeonProRender64), rpr_status,
                              (rpr_framebuffer, Ptr{rpr_char}), frame_buffer, lpe))
 end
 
 function rprContextSetAOVindexLookup(context, key, colorR, colorG, colorB, colorA)
-    return check_error(ccall((:rprContextSetAOVindexLookup, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextSetAOVindexLookup, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_int, rpr_float, rpr_float, rpr_float, rpr_float), context, key,
                              colorR, colorG, colorB, colorA))
 end
 
 function rprContextSetAOVindicesLookup(context, keyOffset, keyCount, colorRGBA)
-    return check_error(ccall((:rprContextSetAOVindicesLookup, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextSetAOVindicesLookup, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_int, rpr_int, Ptr{rpr_float}), context, keyOffset, keyCount,
                              colorRGBA))
 end
 
 function rprContextSetUserTexture(context, index, gpuCode, cpuCode)
-    return check_error(ccall((:rprContextSetUserTexture, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextSetUserTexture, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_int, Ptr{rpr_char}, Ptr{Cvoid}), context, index, gpuCode,
                              cpuCode))
 end
 
 function rprContextGetUserTexture(context, index, bufferSizeByte, buffer, size_ret)
-    return check_error(ccall((:rprContextGetUserTexture, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextGetUserTexture, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_int, Cint, Ptr{Cvoid}, Ptr{Cint}), context, index,
                              bufferSizeByte, buffer, size_ret))
 end
 
 function rprContextSetScene(context, scene)
-    return check_error(ccall((:rprContextSetScene, RadeonProRender_v2), rpr_status, (rpr_context, rpr_scene),
+    return check_error(ccall((:rprContextSetScene, libRadeonProRender64), rpr_status, (rpr_context, rpr_scene),
                              context, scene))
 end
 
 function rprContextGetScene(arg0)
     out_scene = Ref{rpr_scene}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextGetScene, RadeonProRender_v2), rpr_status, (rpr_context, Ptr{rpr_scene}),
+    check_error(ccall((:rprContextGetScene, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_scene}),
                       arg0, out_scene))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_scene[]
 end
 
 function rprContextSetParameterByKey1u(context, in_input, x)
-    return check_error(ccall((:rprContextSetParameterByKey1u, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextSetParameterByKey1u, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_context_info, rpr_uint), context, in_input, x))
 end
 
 function rprContextSetParameterByKeyPtr(context, in_input, x)
-    return check_error(ccall((:rprContextSetParameterByKeyPtr, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextSetParameterByKeyPtr, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_context_info, Ptr{Cvoid}), context, in_input, x))
 end
 
 function rprContextSetParameterByKey1f(context, in_input, x)
-    return check_error(ccall((:rprContextSetParameterByKey1f, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextSetParameterByKey1f, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_context_info, rpr_float), context, in_input, x))
 end
 
 function rprContextSetParameterByKey3f(context, in_input, x, y, z)
-    return check_error(ccall((:rprContextSetParameterByKey3f, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextSetParameterByKey3f, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_context_info, rpr_float, rpr_float, rpr_float), context,
                              in_input, x, y, z))
 end
 
 function rprContextSetParameterByKey4f(context, in_input, x, y, z, w)
-    return check_error(ccall((:rprContextSetParameterByKey4f, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextSetParameterByKey4f, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_context_info, rpr_float, rpr_float, rpr_float, rpr_float),
                              context, in_input, x, y, z, w))
 end
 
 function rprContextSetParameterByKeyString(context, in_input, value)
-    return check_error(ccall((:rprContextSetParameterByKeyString, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextSetParameterByKeyString, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_context_info, Ptr{rpr_char}), context, in_input, value))
 end
 
 function rprContextSetInternalParameter4f(context, pluginIndex, paramName, x, y, z, w)
-    return check_error(ccall((:rprContextSetInternalParameter4f, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextSetInternalParameter4f, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_uint, Ptr{rpr_char}, rpr_float, rpr_float, rpr_float,
                               rpr_float), context, pluginIndex, paramName, x, y, z, w))
 end
 
 function rprContextSetInternalParameter1u(context, pluginIndex, paramName, x)
-    return check_error(ccall((:rprContextSetInternalParameter1u, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextSetInternalParameter1u, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_uint, Ptr{rpr_char}, rpr_uint), context, pluginIndex,
                              paramName, x))
 end
 
 function rprContextSetInternalParameterBuffer(context, pluginIndex, paramName, buffer, bufferSizeByte)
-    return check_error(ccall((:rprContextSetInternalParameterBuffer, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextSetInternalParameterBuffer, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_uint, Ptr{rpr_char}, Ptr{Cvoid}, Cint), context, pluginIndex,
                              paramName, buffer, bufferSizeByte))
 end
 
 function rprContextGetInternalParameter4f(context, pluginIndex, paramName, x, y, z, w)
-    return check_error(ccall((:rprContextGetInternalParameter4f, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextGetInternalParameter4f, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_uint, Ptr{rpr_char}, Ptr{rpr_float}, Ptr{rpr_float},
                               Ptr{rpr_float}, Ptr{rpr_float}), context, pluginIndex, paramName, x, y, z, w))
 end
 
 function rprContextGetInternalParameter1u(context, pluginIndex, paramName, x)
-    return check_error(ccall((:rprContextGetInternalParameter1u, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextGetInternalParameter1u, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_uint, Ptr{rpr_char}, Ptr{rpr_uint}), context, pluginIndex,
                              paramName, x))
 end
 
 function rprContextGetInternalParameterBuffer(context, pluginIndex, paramName, bufferSizeByte, buffer,
                                               size_ret)
-    return check_error(ccall((:rprContextGetInternalParameterBuffer, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextGetInternalParameterBuffer, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_uint, Ptr{rpr_char}, Cint, Ptr{Cvoid}, Ptr{Cint}), context,
                              pluginIndex, paramName, bufferSizeByte, buffer, size_ret))
 end
 
 function rprContextRender(context)
-    return check_error(ccall((:rprContextRender, RadeonProRender_v2), rpr_status, (rpr_context,), context))
+    return check_error(ccall((:rprContextRender, libRadeonProRender64), rpr_status, (rpr_context,), context))
 end
 
 function rprContextAbortRender(context)
-    return check_error(ccall((:rprContextAbortRender, RadeonProRender_v2), rpr_status, (rpr_context,),
+    return check_error(ccall((:rprContextAbortRender, libRadeonProRender64), rpr_status, (rpr_context,),
                              context))
 end
 
 function rprContextRenderTile(context, xmin, xmax, ymin, ymax)
-    return check_error(ccall((:rprContextRenderTile, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextRenderTile, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_uint, rpr_uint, rpr_uint, rpr_uint), context, xmin, xmax, ymin,
                              ymax))
 end
 
 function rprContextClearMemory(context)
-    return check_error(ccall((:rprContextClearMemory, RadeonProRender_v2), rpr_status, (rpr_context,),
+    return check_error(ccall((:rprContextClearMemory, libRadeonProRender64), rpr_status, (rpr_context,),
                              context))
 end
 
 function rprContextCreateImage(context, format, image_desc, data)
     out_image = Ref{rpr_image}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateImage, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreateImage, libRadeonProRender64), rpr_status,
                       (rpr_context, rpr_image_format, Ptr{rpr_image_desc}, Ptr{Cvoid}, Ptr{rpr_image}),
                       context, format, image_desc, data, out_image))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
@@ -1479,7 +1478,7 @@ end
 function rprContextCreateBuffer(context, buffer_desc, data)
     out_buffer = Ref{rpr_buffer}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateBuffer, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreateBuffer, libRadeonProRender64), rpr_status,
                       (rpr_context, Ptr{rpr_buffer_desc}, Ptr{Cvoid}, Ptr{rpr_buffer}), context, buffer_desc,
                       data, out_buffer))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
@@ -1489,7 +1488,7 @@ end
 function rprContextCreateImageFromFile(context, path)
     out_image = Ref{rpr_image}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateImageFromFile, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreateImageFromFile, libRadeonProRender64), rpr_status,
                       (rpr_context, Ptr{rpr_char}, Ptr{rpr_image}), context, path, out_image))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_image[]
@@ -1498,7 +1497,7 @@ end
 function rprContextCreateImageFromFileMemory(context, extension, data, dataSizeByte)
     out_image = Ref{rpr_image}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateImageFromFileMemory, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreateImageFromFileMemory, libRadeonProRender64), rpr_status,
                       (rpr_context, Ptr{rpr_char}, Ptr{Cvoid}, Cint, Ptr{rpr_image}), context, extension,
                       data, dataSizeByte, out_image))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
@@ -1508,7 +1507,7 @@ end
 function rprContextCreateScene(context)
     out_scene = Ref{rpr_scene}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateScene, RadeonProRender_v2), rpr_status, (rpr_context, Ptr{rpr_scene}),
+    check_error(ccall((:rprContextCreateScene, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_scene}),
                       context, out_scene))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_scene[]
@@ -1517,7 +1516,7 @@ end
 function rprContextCreateInstance(context, shape)
     out_instance = Ref{rpr_shape}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateInstance, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreateInstance, libRadeonProRender64), rpr_status,
                       (rpr_context, rpr_shape, Ptr{rpr_shape}), context, shape, out_instance))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_instance[]
@@ -1529,7 +1528,7 @@ function rprContextCreateMesh(context, vertices, num_vertices, vertex_stride, no
                               num_face_vertices, num_faces)
     out_mesh = Ref{rpr_shape}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateMesh, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreateMesh, libRadeonProRender64), rpr_status,
                       (rpr_context, Ptr{rpr_float}, Cint, rpr_int, Ptr{rpr_float}, Cint, rpr_int,
                        Ptr{rpr_float}, Cint, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, rpr_int,
                        Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, Cint, Ptr{rpr_shape}), context, vertices,
@@ -1547,7 +1546,7 @@ function rprContextCreateMeshEx(context, vertices, num_vertices, vertex_stride, 
                                 tidx_stride, num_face_vertices, num_faces)
     out_mesh = Ref{rpr_shape}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateMeshEx, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreateMeshEx, libRadeonProRender64), rpr_status,
                       (rpr_context, Ptr{rpr_float}, Cint, rpr_int, Ptr{rpr_float}, Cint, rpr_int,
                        Ptr{rpr_int}, Cint, rpr_int, rpr_int, Ptr{Ptr{rpr_float}}, Ptr{Cint}, Ptr{rpr_int},
                        Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{Ptr{rpr_int}}, Ptr{rpr_int},
@@ -1567,7 +1566,7 @@ function rprContextCreateMeshEx2(context, vertices, num_vertices, vertex_stride,
                                  tidx_stride, num_face_vertices, num_faces, mesh_properties)
     out_mesh = Ref{rpr_shape}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateMeshEx2, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreateMeshEx2, libRadeonProRender64), rpr_status,
                       (rpr_context, Ptr{rpr_float}, Cint, rpr_int, Ptr{rpr_float}, Cint, rpr_int,
                        Ptr{rpr_int}, Cint, rpr_int, rpr_int, Ptr{Ptr{rpr_float}}, Ptr{Cint}, Ptr{rpr_int},
                        Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{Ptr{rpr_int}}, Ptr{rpr_int},
@@ -1584,7 +1583,7 @@ end
 function rprContextCreateCamera(context)
     out_camera = Ref{rpr_camera}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateCamera, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreateCamera, libRadeonProRender64), rpr_status,
                       (rpr_context, Ptr{rpr_camera}), context, out_camera))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_camera[]
@@ -1593,7 +1592,7 @@ end
 function rprContextCreateFrameBuffer(context, format, fb_desc)
     out_fb = Ref{rpr_framebuffer}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateFrameBuffer, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreateFrameBuffer, libRadeonProRender64), rpr_status,
                       (rpr_context, rpr_framebuffer_format, Ptr{rpr_framebuffer_desc}, Ptr{rpr_framebuffer}),
                       context, format, fb_desc, out_fb))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
@@ -1603,7 +1602,7 @@ end
 function rprContextGetFunctionPtr(context, function_name)
     out_function_ptr = Ref{Ptr{Cvoid}}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextGetFunctionPtr, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextGetFunctionPtr, libRadeonProRender64), rpr_status,
                       (rpr_context, Ptr{rpr_char}, Ptr{Ptr{Cvoid}}), context, function_name,
                       out_function_ptr))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
@@ -1611,376 +1610,376 @@ function rprContextGetFunctionPtr(context, function_name)
 end
 
 function rprCameraGetInfo(camera, camera_info, size, data, size_ret)
-    return check_error(ccall((:rprCameraGetInfo, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCameraGetInfo, libRadeonProRender64), rpr_status,
                              (rpr_camera, rpr_camera_info, Cint, Ptr{Cvoid}, Ptr{Cint}), camera, camera_info,
                              size, data, size_ret))
 end
 
 function rprCameraSetFocalLength(camera, flength)
-    return check_error(ccall((:rprCameraSetFocalLength, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCameraSetFocalLength, libRadeonProRender64), rpr_status,
                              (rpr_camera, rpr_float), camera, flength))
 end
 
 function rprCameraSetLinearMotion(camera, x, y, z)
-    return check_error(ccall((:rprCameraSetLinearMotion, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCameraSetLinearMotion, libRadeonProRender64), rpr_status,
                              (rpr_camera, rpr_float, rpr_float, rpr_float), camera, x, y, z))
 end
 
 function rprCameraSetAngularMotion(camera, x, y, z, w)
-    return check_error(ccall((:rprCameraSetAngularMotion, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCameraSetAngularMotion, libRadeonProRender64), rpr_status,
                              (rpr_camera, rpr_float, rpr_float, rpr_float, rpr_float), camera, x, y, z, w))
 end
 
 function rprCameraSetMotionTransformCount(camera, transformCount)
-    return check_error(ccall((:rprCameraSetMotionTransformCount, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCameraSetMotionTransformCount, libRadeonProRender64), rpr_status,
                              (rpr_camera, rpr_uint), camera, transformCount))
 end
 
 function rprCameraSetMotionTransform(camera, transpose, transform, timeIndex)
-    return check_error(ccall((:rprCameraSetMotionTransform, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCameraSetMotionTransform, libRadeonProRender64), rpr_status,
                              (rpr_camera, rpr_bool, Ptr{rpr_float}, rpr_uint), camera, transpose, transform,
                              timeIndex))
 end
 
 function rprCameraSetFocusDistance(camera, fdist)
-    return check_error(ccall((:rprCameraSetFocusDistance, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCameraSetFocusDistance, libRadeonProRender64), rpr_status,
                              (rpr_camera, rpr_float), camera, fdist))
 end
 
 function rprCameraSetTransform(camera, transpose, transform)
-    return check_error(ccall((:rprCameraSetTransform, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCameraSetTransform, libRadeonProRender64), rpr_status,
                              (rpr_camera, rpr_bool, Ptr{rpr_float}), camera, transpose, transform))
 end
 
 function rprCameraSetSensorSize(camera, width, height)
-    return check_error(ccall((:rprCameraSetSensorSize, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCameraSetSensorSize, libRadeonProRender64), rpr_status,
                              (rpr_camera, rpr_float, rpr_float), camera, width, height))
 end
 
 function rprCameraLookAt(camera, posx, posy, posz, atx, aty, atz, upx, upy, upz)
-    return check_error(ccall((:rprCameraLookAt, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCameraLookAt, libRadeonProRender64), rpr_status,
                              (rpr_camera, rpr_float, rpr_float, rpr_float, rpr_float, rpr_float, rpr_float,
                               rpr_float, rpr_float, rpr_float), camera, posx, posy, posz, atx, aty, atz, upx,
                              upy, upz))
 end
 
 function rprCameraSetFStop(camera, fstop)
-    return check_error(ccall((:rprCameraSetFStop, RadeonProRender_v2), rpr_status, (rpr_camera, rpr_float),
+    return check_error(ccall((:rprCameraSetFStop, libRadeonProRender64), rpr_status, (rpr_camera, rpr_float),
                              camera, fstop))
 end
 
 function rprCameraSetApertureBlades(camera, num_blades)
-    return check_error(ccall((:rprCameraSetApertureBlades, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCameraSetApertureBlades, libRadeonProRender64), rpr_status,
                              (rpr_camera, rpr_uint), camera, num_blades))
 end
 
 function rprCameraSetExposure(camera, exposure)
-    return check_error(ccall((:rprCameraSetExposure, RadeonProRender_v2), rpr_status, (rpr_camera, rpr_float),
+    return check_error(ccall((:rprCameraSetExposure, libRadeonProRender64), rpr_status, (rpr_camera, rpr_float),
                              camera, exposure))
 end
 
 function rprCameraSetMode(camera, mode)
-    return check_error(ccall((:rprCameraSetMode, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCameraSetMode, libRadeonProRender64), rpr_status,
                              (rpr_camera, rpr_camera_mode), camera, mode))
 end
 
 function rprCameraSetOrthoWidth(camera, width)
-    return check_error(ccall((:rprCameraSetOrthoWidth, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCameraSetOrthoWidth, libRadeonProRender64), rpr_status,
                              (rpr_camera, rpr_float), camera, width))
 end
 
 function rprCameraSetFocalTilt(camera, tilt)
-    return check_error(ccall((:rprCameraSetFocalTilt, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCameraSetFocalTilt, libRadeonProRender64), rpr_status,
                              (rpr_camera, rpr_float), camera, tilt))
 end
 
 function rprCameraSetIPD(camera, ipd)
-    return check_error(ccall((:rprCameraSetIPD, RadeonProRender_v2), rpr_status, (rpr_camera, rpr_float),
+    return check_error(ccall((:rprCameraSetIPD, libRadeonProRender64), rpr_status, (rpr_camera, rpr_float),
                              camera, ipd))
 end
 
 function rprCameraSetLensShift(camera, shiftx, shifty)
-    return check_error(ccall((:rprCameraSetLensShift, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCameraSetLensShift, libRadeonProRender64), rpr_status,
                              (rpr_camera, rpr_float, rpr_float), camera, shiftx, shifty))
 end
 
 function rprCameraSetTiltCorrection(camera, tiltX, tiltY)
-    return check_error(ccall((:rprCameraSetTiltCorrection, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCameraSetTiltCorrection, libRadeonProRender64), rpr_status,
                              (rpr_camera, rpr_float, rpr_float), camera, tiltX, tiltY))
 end
 
 function rprCameraSetOrthoHeight(camera, height)
-    return check_error(ccall((:rprCameraSetOrthoHeight, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCameraSetOrthoHeight, libRadeonProRender64), rpr_status,
                              (rpr_camera, rpr_float), camera, height))
 end
 
 function rprCameraSetNearPlane(camera, near)
-    return check_error(ccall((:rprCameraSetNearPlane, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCameraSetNearPlane, libRadeonProRender64), rpr_status,
                              (rpr_camera, rpr_float), camera, near))
 end
 
 function rprCameraSetFarPlane(camera, far)
-    return check_error(ccall((:rprCameraSetFarPlane, RadeonProRender_v2), rpr_status, (rpr_camera, rpr_float),
+    return check_error(ccall((:rprCameraSetFarPlane, libRadeonProRender64), rpr_status, (rpr_camera, rpr_float),
                              camera, far))
 end
 
 function rprImageGetInfo(image, image_info, size, data, size_ret)
-    return check_error(ccall((:rprImageGetInfo, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprImageGetInfo, libRadeonProRender64), rpr_status,
                              (rpr_image, rpr_image_info, Cint, Ptr{Cvoid}, Ptr{Cint}), image, image_info,
                              size, data, size_ret))
 end
 
 function rprImageSetWrap(image, type)
-    return check_error(ccall((:rprImageSetWrap, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprImageSetWrap, libRadeonProRender64), rpr_status,
                              (rpr_image, rpr_image_wrap_type), image, type))
 end
 
 function rprImageSetInternalCompression(image, compressionEnabled)
-    return check_error(ccall((:rprImageSetInternalCompression, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprImageSetInternalCompression, libRadeonProRender64), rpr_status,
                              (rpr_image, rpr_uint), image, compressionEnabled))
 end
 
 function rprImageSetOcioColorspace(image, ocioColorspace)
-    return check_error(ccall((:rprImageSetOcioColorspace, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprImageSetOcioColorspace, libRadeonProRender64), rpr_status,
                              (rpr_image, Ptr{rpr_char}), image, ocioColorspace))
 end
 
 function rprImageSetUDIM(imageUdimRoot, tileIndex, imageTile)
-    return check_error(ccall((:rprImageSetUDIM, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprImageSetUDIM, libRadeonProRender64), rpr_status,
                              (rpr_image, rpr_uint, rpr_image), imageUdimRoot, tileIndex, imageTile))
 end
 
 function rprImageSetFilter(image, type)
-    return check_error(ccall((:rprImageSetFilter, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprImageSetFilter, libRadeonProRender64), rpr_status,
                              (rpr_image, rpr_image_filter_type), image, type))
 end
 
 function rprImageSetGamma(image, type)
-    return check_error(ccall((:rprImageSetGamma, RadeonProRender_v2), rpr_status, (rpr_image, rpr_float),
+    return check_error(ccall((:rprImageSetGamma, libRadeonProRender64), rpr_status, (rpr_image, rpr_float),
                              image, type))
 end
 
 function rprImageSetMipmapEnabled(image, enabled)
-    return check_error(ccall((:rprImageSetMipmapEnabled, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprImageSetMipmapEnabled, libRadeonProRender64), rpr_status,
                              (rpr_image, rpr_bool), image, enabled))
 end
 
 function rprShapeSetTransform(shape, transpose, transform)
-    return check_error(ccall((:rprShapeSetTransform, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetTransform, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_bool, Ptr{rpr_float}), shape, transpose, transform))
 end
 
 function rprShapeSetVertexValue(in_shape, setIndex, indices, values, indicesCount)
-    return check_error(ccall((:rprShapeSetVertexValue, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetVertexValue, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_int, Ptr{rpr_int}, Ptr{rpr_float}, rpr_int), in_shape, setIndex,
                              indices, values, indicesCount))
 end
 
 function rprShapeSetSubdivisionFactor(shape, factor)
-    return check_error(ccall((:rprShapeSetSubdivisionFactor, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetSubdivisionFactor, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_uint), shape, factor))
 end
 
 function rprShapeSetSubdivisionAutoRatioCap(shape, autoRatioCap)
-    return check_error(ccall((:rprShapeSetSubdivisionAutoRatioCap, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetSubdivisionAutoRatioCap, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_float), shape, autoRatioCap))
 end
 
 function rprShapeSetSubdivisionCreaseWeight(shape, factor)
-    return check_error(ccall((:rprShapeSetSubdivisionCreaseWeight, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetSubdivisionCreaseWeight, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_float), shape, factor))
 end
 
 function rprShapeAttachRenderLayer(shape, renderLayerString)
-    return check_error(ccall((:rprShapeAttachRenderLayer, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeAttachRenderLayer, libRadeonProRender64), rpr_status,
                              (rpr_shape, Ptr{rpr_char}), shape, renderLayerString))
 end
 
 function rprShapeDetachRenderLayer(shape, renderLayerString)
-    return check_error(ccall((:rprShapeDetachRenderLayer, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeDetachRenderLayer, libRadeonProRender64), rpr_status,
                              (rpr_shape, Ptr{rpr_char}), shape, renderLayerString))
 end
 
 function rprLightAttachRenderLayer(light, renderLayerString)
-    return check_error(ccall((:rprLightAttachRenderLayer, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprLightAttachRenderLayer, libRadeonProRender64), rpr_status,
                              (rpr_light, Ptr{rpr_char}), light, renderLayerString))
 end
 
 function rprLightDetachRenderLayer(light, renderLayerString)
-    return check_error(ccall((:rprLightDetachRenderLayer, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprLightDetachRenderLayer, libRadeonProRender64), rpr_status,
                              (rpr_light, Ptr{rpr_char}), light, renderLayerString))
 end
 
 function rprShapeSetSubdivisionBoundaryInterop(shape, type)
-    return check_error(ccall((:rprShapeSetSubdivisionBoundaryInterop, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetSubdivisionBoundaryInterop, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_subdiv_boundary_interfop_type), shape, type))
 end
 
 function rprShapeAutoAdaptSubdivisionFactor(shape, framebuffer, camera, factor)
-    return check_error(ccall((:rprShapeAutoAdaptSubdivisionFactor, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeAutoAdaptSubdivisionFactor, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_framebuffer, rpr_camera, rpr_int), shape, framebuffer, camera,
                              factor))
 end
 
 function rprShapeSetDisplacementScale(shape, minscale, maxscale)
-    return check_error(ccall((:rprShapeSetDisplacementScale, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetDisplacementScale, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_float, rpr_float), shape, minscale, maxscale))
 end
 
 function rprShapeSetObjectGroupID(shape, objectGroupID)
-    return check_error(ccall((:rprShapeSetObjectGroupID, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetObjectGroupID, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_uint), shape, objectGroupID))
 end
 
 function rprShapeSetObjectID(shape, objectID)
-    return check_error(ccall((:rprShapeSetObjectID, RadeonProRender_v2), rpr_status, (rpr_shape, rpr_uint),
+    return check_error(ccall((:rprShapeSetObjectID, libRadeonProRender64), rpr_status, (rpr_shape, rpr_uint),
                              shape, objectID))
 end
 
 function rprShapeSetLightGroupID(shape, lightGroupID)
-    return check_error(ccall((:rprShapeSetLightGroupID, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetLightGroupID, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_uint), shape, lightGroupID))
 end
 
 function rprShapeSetLayerMask(shape, layerMask)
-    return check_error(ccall((:rprShapeSetLayerMask, RadeonProRender_v2), rpr_status, (rpr_shape, rpr_uint),
+    return check_error(ccall((:rprShapeSetLayerMask, libRadeonProRender64), rpr_status, (rpr_shape, rpr_uint),
                              shape, layerMask))
 end
 
 function rprShapeSetDisplacementMaterial(shape, materialNode)
-    return check_error(ccall((:rprShapeSetDisplacementMaterial, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetDisplacementMaterial, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_material_node), shape, materialNode))
 end
 
 function rprShapeSetMaterial(shape, node)
-    return check_error(ccall((:rprShapeSetMaterial, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetMaterial, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_material_node), shape, node))
 end
 
 function rprShapeSetMaterialFaces(shape, node, face_indices, num_faces)
-    return check_error(ccall((:rprShapeSetMaterialFaces, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetMaterialFaces, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_material_node, Ptr{rpr_int}, Cint), shape, node, face_indices,
                              num_faces))
 end
 
 function rprShapeSetVolumeMaterial(shape, node)
-    return check_error(ccall((:rprShapeSetVolumeMaterial, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetVolumeMaterial, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_material_node), shape, node))
 end
 
 function rprShapeSetLinearMotion(shape, x, y, z)
-    return check_error(ccall((:rprShapeSetLinearMotion, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetLinearMotion, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_float, rpr_float, rpr_float), shape, x, y, z))
 end
 
 function rprShapeSetAngularMotion(shape, x, y, z, w)
-    return check_error(ccall((:rprShapeSetAngularMotion, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetAngularMotion, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_float, rpr_float, rpr_float, rpr_float), shape, x, y, z, w))
 end
 
 function rprShapeSetScaleMotion(shape, x, y, z)
-    return check_error(ccall((:rprShapeSetScaleMotion, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetScaleMotion, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_float, rpr_float, rpr_float), shape, x, y, z))
 end
 
 function rprShapeSetMotionTransformCount(shape, transformCount)
-    return check_error(ccall((:rprShapeSetMotionTransformCount, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetMotionTransformCount, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_uint), shape, transformCount))
 end
 
 function rprShapeSetMotionTransform(shape, transpose, transform, timeIndex)
-    return check_error(ccall((:rprShapeSetMotionTransform, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetMotionTransform, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_bool, Ptr{rpr_float}, rpr_uint), shape, transpose, transform,
                              timeIndex))
 end
 
 function rprShapeSetVisibilityFlag(shape, visibilityFlag, visible)
-    return check_error(ccall((:rprShapeSetVisibilityFlag, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetVisibilityFlag, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_shape_info, rpr_bool), shape, visibilityFlag, visible))
 end
 
 function rprCurveSetVisibilityFlag(curve, visibilityFlag, visible)
-    return check_error(ccall((:rprCurveSetVisibilityFlag, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCurveSetVisibilityFlag, libRadeonProRender64), rpr_status,
                              (rpr_curve, rpr_curve_parameter, rpr_bool), curve, visibilityFlag, visible))
 end
 
 function rprShapeSetVisibility(shape, visible)
-    return check_error(ccall((:rprShapeSetVisibility, RadeonProRender_v2), rpr_status, (rpr_shape, rpr_bool),
+    return check_error(ccall((:rprShapeSetVisibility, libRadeonProRender64), rpr_status, (rpr_shape, rpr_bool),
                              shape, visible))
 end
 
 function rprCurveSetVisibility(curve, visible)
-    return check_error(ccall((:rprCurveSetVisibility, RadeonProRender_v2), rpr_status, (rpr_curve, rpr_bool),
+    return check_error(ccall((:rprCurveSetVisibility, libRadeonProRender64), rpr_status, (rpr_curve, rpr_bool),
                              curve, visible))
 end
 
 function rprShapeSetVisibilityInSpecular(shape, visible)
-    return check_error(ccall((:rprShapeSetVisibilityInSpecular, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetVisibilityInSpecular, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_bool), shape, visible))
 end
 
 function rprShapeSetShadowCatcher(shape, shadowCatcher)
-    return check_error(ccall((:rprShapeSetShadowCatcher, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetShadowCatcher, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_bool), shape, shadowCatcher))
 end
 
 function rprShapeSetReflectionCatcher(shape, reflectionCatcher)
-    return check_error(ccall((:rprShapeSetReflectionCatcher, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetReflectionCatcher, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_bool), shape, reflectionCatcher))
 end
 
 function rprShapeSetContourIgnore(shape, ignoreInContour)
-    return check_error(ccall((:rprShapeSetContourIgnore, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetContourIgnore, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_bool), shape, ignoreInContour))
 end
 
 function rprShapeMarkStatic(in_shape, in_is_static)
-    return check_error(ccall((:rprShapeMarkStatic, RadeonProRender_v2), rpr_status, (rpr_shape, rpr_bool),
+    return check_error(ccall((:rprShapeMarkStatic, libRadeonProRender64), rpr_status, (rpr_shape, rpr_bool),
                              in_shape, in_is_static))
 end
 
 function rprLightSetTransform(light, transpose, transform)
-    return check_error(ccall((:rprLightSetTransform, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprLightSetTransform, libRadeonProRender64), rpr_status,
                              (rpr_light, rpr_bool, Ptr{rpr_float}), light, transpose, transform))
 end
 
 function rprLightSetGroupId(light, groupId)
-    return check_error(ccall((:rprLightSetGroupId, RadeonProRender_v2), rpr_status, (rpr_light, rpr_uint),
+    return check_error(ccall((:rprLightSetGroupId, libRadeonProRender64), rpr_status, (rpr_light, rpr_uint),
                              light, groupId))
 end
 
 function rprShapeGetInfo(arg0, arg1, arg2, arg3, arg4)
-    return check_error(ccall((:rprShapeGetInfo, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeGetInfo, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_shape_info, Cint, Ptr{Cvoid}, Ptr{Cint}), arg0, arg1, arg2, arg3,
                              arg4))
 end
 
 function rprMeshGetInfo(mesh, mesh_info, size, data, size_ret)
-    return check_error(ccall((:rprMeshGetInfo, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprMeshGetInfo, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_mesh_info, Cint, Ptr{Cvoid}, Ptr{Cint}), mesh, mesh_info, size,
                              data, size_ret))
 end
 
 function rprCurveGetInfo(curve, curve_info, size, data, size_ret)
-    return check_error(ccall((:rprCurveGetInfo, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCurveGetInfo, libRadeonProRender64), rpr_status,
                              (rpr_curve, rpr_curve_parameter, Cint, Ptr{Cvoid}, Ptr{Cint}), curve, curve_info,
                              size, data, size_ret))
 end
 
 function rprHeteroVolumeGetInfo(heteroVol, heteroVol_info, size, data, size_ret)
-    return check_error(ccall((:rprHeteroVolumeGetInfo, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprHeteroVolumeGetInfo, libRadeonProRender64), rpr_status,
                              (rpr_hetero_volume, rpr_hetero_volume_parameter, Cint, Ptr{Cvoid}, Ptr{Cint}),
                              heteroVol, heteroVol_info, size, data, size_ret))
 end
 
 function rprGridGetInfo(grid, grid_info, size, data, size_ret)
-    return check_error(ccall((:rprGridGetInfo, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprGridGetInfo, libRadeonProRender64), rpr_status,
                              (rpr_grid, rpr_grid_parameter, Cint, Ptr{Cvoid}, Ptr{Cint}), grid, grid_info,
                              size, data, size_ret))
 end
 
 function rprBufferGetInfo(buffer, buffer_info, size, data, size_ret)
-    return check_error(ccall((:rprBufferGetInfo, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprBufferGetInfo, libRadeonProRender64), rpr_status,
                              (rpr_buffer, rpr_buffer_info, Cint, Ptr{Cvoid}, Ptr{Cint}), buffer, buffer_info,
                              size, data, size_ret))
 end
@@ -1988,7 +1987,7 @@ end
 function rprInstanceGetBaseShape(shape)
     out_shape = Ref{rpr_shape}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprInstanceGetBaseShape, RadeonProRender_v2), rpr_status, (rpr_shape, Ptr{rpr_shape}),
+    check_error(ccall((:rprInstanceGetBaseShape, libRadeonProRender64), rpr_status, (rpr_shape, Ptr{rpr_shape}),
                       shape, out_shape))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_shape[]
@@ -1997,122 +1996,122 @@ end
 function rprContextCreatePointLight(context)
     out_light = Ref{rpr_light}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreatePointLight, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreatePointLight, libRadeonProRender64), rpr_status,
                       (rpr_context, Ptr{rpr_light}), context, out_light))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_light[]
 end
 
 function rprPointLightSetRadiantPower3f(light, r, g, b)
-    return check_error(ccall((:rprPointLightSetRadiantPower3f, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprPointLightSetRadiantPower3f, libRadeonProRender64), rpr_status,
                              (rpr_light, rpr_float, rpr_float, rpr_float), light, r, g, b))
 end
 
 function rprContextCreateSpotLight(context, light)
-    return check_error(ccall((:rprContextCreateSpotLight, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextCreateSpotLight, libRadeonProRender64), rpr_status,
                              (rpr_context, Ptr{rpr_light}), context, light))
 end
 
 function rprContextCreateSphereLight(context, light)
-    return check_error(ccall((:rprContextCreateSphereLight, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextCreateSphereLight, libRadeonProRender64), rpr_status,
                              (rpr_context, Ptr{rpr_light}), context, light))
 end
 
 function rprContextCreateDiskLight(context, light)
-    return check_error(ccall((:rprContextCreateDiskLight, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextCreateDiskLight, libRadeonProRender64), rpr_status,
                              (rpr_context, Ptr{rpr_light}), context, light))
 end
 
 function rprSpotLightSetRadiantPower3f(light, r, g, b)
-    return check_error(ccall((:rprSpotLightSetRadiantPower3f, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprSpotLightSetRadiantPower3f, libRadeonProRender64), rpr_status,
                              (rpr_light, rpr_float, rpr_float, rpr_float), light, r, g, b))
 end
 
 function rprSpotLightSetImage(light, img)
-    return check_error(ccall((:rprSpotLightSetImage, RadeonProRender_v2), rpr_status, (rpr_light, rpr_image),
+    return check_error(ccall((:rprSpotLightSetImage, libRadeonProRender64), rpr_status, (rpr_light, rpr_image),
                              light, img))
 end
 
 function rprSphereLightSetRadiantPower3f(light, r, g, b)
-    return check_error(ccall((:rprSphereLightSetRadiantPower3f, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprSphereLightSetRadiantPower3f, libRadeonProRender64), rpr_status,
                              (rpr_light, rpr_float, rpr_float, rpr_float), light, r, g, b))
 end
 
 function rprSphereLightSetRadius(light, angle)
-    return check_error(ccall((:rprSphereLightSetRadius, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprSphereLightSetRadius, libRadeonProRender64), rpr_status,
                              (rpr_light, rpr_float), light, angle))
 end
 
 function rprDiskLightSetRadiantPower3f(light, r, g, b)
-    return check_error(ccall((:rprDiskLightSetRadiantPower3f, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprDiskLightSetRadiantPower3f, libRadeonProRender64), rpr_status,
                              (rpr_light, rpr_float, rpr_float, rpr_float), light, r, g, b))
 end
 
 function rprDiskLightSetRadius(light, radius)
-    return check_error(ccall((:rprDiskLightSetRadius, RadeonProRender_v2), rpr_status, (rpr_light, rpr_float),
+    return check_error(ccall((:rprDiskLightSetRadius, libRadeonProRender64), rpr_status, (rpr_light, rpr_float),
                              light, radius))
 end
 
 function rprDiskLightSetAngle(light, angle)
-    return check_error(ccall((:rprDiskLightSetAngle, RadeonProRender_v2), rpr_status, (rpr_light, rpr_float),
+    return check_error(ccall((:rprDiskLightSetAngle, libRadeonProRender64), rpr_status, (rpr_light, rpr_float),
                              light, angle))
 end
 
 function rprSpotLightSetConeShape(light, iangle, oangle)
-    return check_error(ccall((:rprSpotLightSetConeShape, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprSpotLightSetConeShape, libRadeonProRender64), rpr_status,
                              (rpr_light, rpr_float, rpr_float), light, iangle, oangle))
 end
 
 function rprContextCreateDirectionalLight(context)
     out_light = Ref{rpr_light}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateDirectionalLight, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreateDirectionalLight, libRadeonProRender64), rpr_status,
                       (rpr_context, Ptr{rpr_light}), context, out_light))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_light[]
 end
 
 function rprDirectionalLightSetRadiantPower3f(light, r, g, b)
-    return check_error(ccall((:rprDirectionalLightSetRadiantPower3f, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprDirectionalLightSetRadiantPower3f, libRadeonProRender64), rpr_status,
                              (rpr_light, rpr_float, rpr_float, rpr_float), light, r, g, b))
 end
 
 function rprDirectionalLightSetShadowSoftnessAngle(light, softnessAngle)
-    return check_error(ccall((:rprDirectionalLightSetShadowSoftnessAngle, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprDirectionalLightSetShadowSoftnessAngle, libRadeonProRender64), rpr_status,
                              (rpr_light, rpr_float), light, softnessAngle))
 end
 
 function rprContextCreateEnvironmentLight(context)
     out_light = Ref{rpr_light}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateEnvironmentLight, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreateEnvironmentLight, libRadeonProRender64), rpr_status,
                       (rpr_context, Ptr{rpr_light}), context, out_light))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_light[]
 end
 
 function rprEnvironmentLightSetImage(env_light, image)
-    return check_error(ccall((:rprEnvironmentLightSetImage, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprEnvironmentLightSetImage, libRadeonProRender64), rpr_status,
                              (rpr_light, rpr_image), env_light, image))
 end
 
 function rprEnvironmentLightSetIntensityScale(env_light, intensity_scale)
-    return check_error(ccall((:rprEnvironmentLightSetIntensityScale, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprEnvironmentLightSetIntensityScale, libRadeonProRender64), rpr_status,
                              (rpr_light, rpr_float), env_light, intensity_scale))
 end
 
 function rprEnvironmentLightAttachPortal(scene, env_light, portal)
-    return check_error(ccall((:rprEnvironmentLightAttachPortal, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprEnvironmentLightAttachPortal, libRadeonProRender64), rpr_status,
                              (rpr_scene, rpr_light, rpr_shape), scene, env_light, portal))
 end
 
 function rprEnvironmentLightDetachPortal(scene, env_light, portal)
-    return check_error(ccall((:rprEnvironmentLightDetachPortal, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprEnvironmentLightDetachPortal, libRadeonProRender64), rpr_status,
                              (rpr_scene, rpr_light, rpr_shape), scene, env_light, portal))
 end
 
 function rprEnvironmentLightSetEnvironmentLightOverride(in_ibl, overrideType, in_iblOverride)
-    return check_error(ccall((:rprEnvironmentLightSetEnvironmentLightOverride, RadeonProRender_v2),
+    return check_error(ccall((:rprEnvironmentLightSetEnvironmentLightOverride, libRadeonProRender64),
                              rpr_status, (rpr_light, rpr_environment_override, rpr_light), in_ibl,
                              overrideType, in_iblOverride))
 end
@@ -2120,7 +2119,7 @@ end
 function rprEnvironmentLightGetEnvironmentLightOverride(in_ibl, overrideType)
     out_iblOverride = Ref{rpr_light}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprEnvironmentLightGetEnvironmentLightOverride, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprEnvironmentLightGetEnvironmentLightOverride, libRadeonProRender64), rpr_status,
                       (rpr_light, rpr_environment_override, Ptr{rpr_light}), in_ibl, overrideType,
                       out_iblOverride))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
@@ -2130,116 +2129,116 @@ end
 function rprContextCreateSkyLight(context)
     out_light = Ref{rpr_light}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateSkyLight, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreateSkyLight, libRadeonProRender64), rpr_status,
                       (rpr_context, Ptr{rpr_light}), context, out_light))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_light[]
 end
 
 function rprSkyLightSetTurbidity(skylight, turbidity)
-    return check_error(ccall((:rprSkyLightSetTurbidity, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprSkyLightSetTurbidity, libRadeonProRender64), rpr_status,
                              (rpr_light, rpr_float), skylight, turbidity))
 end
 
 function rprSkyLightSetAlbedo(skylight, albedo)
-    return check_error(ccall((:rprSkyLightSetAlbedo, RadeonProRender_v2), rpr_status, (rpr_light, rpr_float),
+    return check_error(ccall((:rprSkyLightSetAlbedo, libRadeonProRender64), rpr_status, (rpr_light, rpr_float),
                              skylight, albedo))
 end
 
 function rprSkyLightSetScale(skylight, scale)
-    return check_error(ccall((:rprSkyLightSetScale, RadeonProRender_v2), rpr_status, (rpr_light, rpr_float),
+    return check_error(ccall((:rprSkyLightSetScale, libRadeonProRender64), rpr_status, (rpr_light, rpr_float),
                              skylight, scale))
 end
 
 function rprSkyLightSetDirection(skylight, x, y, z)
-    return check_error(ccall((:rprSkyLightSetDirection, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprSkyLightSetDirection, libRadeonProRender64), rpr_status,
                              (rpr_light, rpr_float, rpr_float, rpr_float), skylight, x, y, z))
 end
 
 function rprSkyLightAttachPortal(scene, skylight, portal)
-    return check_error(ccall((:rprSkyLightAttachPortal, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprSkyLightAttachPortal, libRadeonProRender64), rpr_status,
                              (rpr_scene, rpr_light, rpr_shape), scene, skylight, portal))
 end
 
 function rprSkyLightDetachPortal(scene, skylight, portal)
-    return check_error(ccall((:rprSkyLightDetachPortal, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprSkyLightDetachPortal, libRadeonProRender64), rpr_status,
                              (rpr_scene, rpr_light, rpr_shape), scene, skylight, portal))
 end
 
 function rprContextCreateIESLight(context, light)
-    return check_error(ccall((:rprContextCreateIESLight, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextCreateIESLight, libRadeonProRender64), rpr_status,
                              (rpr_context, Ptr{rpr_light}), context, light))
 end
 
 function rprIESLightSetRadiantPower3f(light, r, g, b)
-    return check_error(ccall((:rprIESLightSetRadiantPower3f, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprIESLightSetRadiantPower3f, libRadeonProRender64), rpr_status,
                              (rpr_light, rpr_float, rpr_float, rpr_float), light, r, g, b))
 end
 
 function rprIESLightSetImageFromFile(env_light, imagePath, nx, ny)
-    return check_error(ccall((:rprIESLightSetImageFromFile, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprIESLightSetImageFromFile, libRadeonProRender64), rpr_status,
                              (rpr_light, Ptr{rpr_char}, rpr_int, rpr_int), env_light, imagePath, nx, ny))
 end
 
 function rprIESLightSetImageFromIESdata(env_light, iesData, nx, ny)
-    return check_error(ccall((:rprIESLightSetImageFromIESdata, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprIESLightSetImageFromIESdata, libRadeonProRender64), rpr_status,
                              (rpr_light, Ptr{rpr_char}, rpr_int, rpr_int), env_light, iesData, nx, ny))
 end
 
 function rprLightGetInfo(light, info, size, data, size_ret)
-    return check_error(ccall((:rprLightGetInfo, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprLightGetInfo, libRadeonProRender64), rpr_status,
                              (rpr_light, rpr_light_info, Cint, Ptr{Cvoid}, Ptr{Cint}), light, info, size,
                              data, size_ret))
 end
 
 function rprSceneClear(scene)
-    return check_error(ccall((:rprSceneClear, RadeonProRender_v2), rpr_status, (rpr_scene,), scene))
+    return check_error(ccall((:rprSceneClear, libRadeonProRender64), rpr_status, (rpr_scene,), scene))
 end
 
 function rprSceneAttachShape(scene, shape)
-    return check_error(ccall((:rprSceneAttachShape, RadeonProRender_v2), rpr_status, (rpr_scene, rpr_shape),
+    return check_error(ccall((:rprSceneAttachShape, libRadeonProRender64), rpr_status, (rpr_scene, rpr_shape),
                              scene, shape))
 end
 
 function rprSceneDetachShape(scene, shape)
-    return check_error(ccall((:rprSceneDetachShape, RadeonProRender_v2), rpr_status, (rpr_scene, rpr_shape),
+    return check_error(ccall((:rprSceneDetachShape, libRadeonProRender64), rpr_status, (rpr_scene, rpr_shape),
                              scene, shape))
 end
 
 function rprSceneAttachHeteroVolume(scene, heteroVolume)
-    return check_error(ccall((:rprSceneAttachHeteroVolume, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprSceneAttachHeteroVolume, libRadeonProRender64), rpr_status,
                              (rpr_scene, rpr_hetero_volume), scene, heteroVolume))
 end
 
 function rprSceneDetachHeteroVolume(scene, heteroVolume)
-    return check_error(ccall((:rprSceneDetachHeteroVolume, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprSceneDetachHeteroVolume, libRadeonProRender64), rpr_status,
                              (rpr_scene, rpr_hetero_volume), scene, heteroVolume))
 end
 
 function rprSceneAttachCurve(scene, curve)
-    return check_error(ccall((:rprSceneAttachCurve, RadeonProRender_v2), rpr_status, (rpr_scene, rpr_curve),
+    return check_error(ccall((:rprSceneAttachCurve, libRadeonProRender64), rpr_status, (rpr_scene, rpr_curve),
                              scene, curve))
 end
 
 function rprSceneDetachCurve(scene, curve)
-    return check_error(ccall((:rprSceneDetachCurve, RadeonProRender_v2), rpr_status, (rpr_scene, rpr_curve),
+    return check_error(ccall((:rprSceneDetachCurve, libRadeonProRender64), rpr_status, (rpr_scene, rpr_curve),
                              scene, curve))
 end
 
 function rprCurveSetMaterial(curve, material)
-    return check_error(ccall((:rprCurveSetMaterial, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCurveSetMaterial, libRadeonProRender64), rpr_status,
                              (rpr_curve, rpr_material_node), curve, material))
 end
 
 function rprCurveSetTransform(curve, transpose, transform)
-    return check_error(ccall((:rprCurveSetTransform, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCurveSetTransform, libRadeonProRender64), rpr_status,
                              (rpr_curve, rpr_bool, Ptr{rpr_float}), curve, transpose, transform))
 end
 
 function rprContextCreateCurve(context, out_curve, num_controlPoints, controlPointsData, controlPointsStride,
                                num_indices, curveCount, indicesData, radius, textureUV, segmentPerCurve,
                                creationFlag_tapered)
-    return check_error(ccall((:rprContextCreateCurve, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextCreateCurve, libRadeonProRender64), rpr_status,
                              (rpr_context, Ptr{rpr_curve}, Cint, Ptr{rpr_float}, rpr_int, Cint, rpr_uint,
                               Ptr{rpr_uint}, Ptr{rpr_float}, Ptr{rpr_float}, Ptr{rpr_int}, rpr_uint), context,
                              out_curve, num_controlPoints, controlPointsData, controlPointsStride,
@@ -2248,107 +2247,107 @@ function rprContextCreateCurve(context, out_curve, num_controlPoints, controlPoi
 end
 
 function rprSceneAttachLight(scene, light)
-    return check_error(ccall((:rprSceneAttachLight, RadeonProRender_v2), rpr_status, (rpr_scene, rpr_light),
+    return check_error(ccall((:rprSceneAttachLight, libRadeonProRender64), rpr_status, (rpr_scene, rpr_light),
                              scene, light))
 end
 
 function rprSceneDetachLight(scene, light)
-    return check_error(ccall((:rprSceneDetachLight, RadeonProRender_v2), rpr_status, (rpr_scene, rpr_light),
+    return check_error(ccall((:rprSceneDetachLight, libRadeonProRender64), rpr_status, (rpr_scene, rpr_light),
                              scene, light))
 end
 
 function rprSceneSetEnvironmentLight(in_scene, in_light)
-    return check_error(ccall((:rprSceneSetEnvironmentLight, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprSceneSetEnvironmentLight, libRadeonProRender64), rpr_status,
                              (rpr_scene, rpr_light), in_scene, in_light))
 end
 
 function rprSceneGetEnvironmentLight(in_scene)
     out_light = Ref{rpr_light}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprSceneGetEnvironmentLight, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprSceneGetEnvironmentLight, libRadeonProRender64), rpr_status,
                       (rpr_scene, Ptr{rpr_light}), in_scene, out_light))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_light[]
 end
 
 function rprSceneGetInfo(scene, info, size, data, size_ret)
-    return check_error(ccall((:rprSceneGetInfo, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprSceneGetInfo, libRadeonProRender64), rpr_status,
                              (rpr_scene, rpr_scene_info, Cint, Ptr{Cvoid}, Ptr{Cint}), scene, info, size,
                              data, size_ret))
 end
 
 function rprSceneSetBackgroundImage(scene, image)
-    return check_error(ccall((:rprSceneSetBackgroundImage, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprSceneSetBackgroundImage, libRadeonProRender64), rpr_status,
                              (rpr_scene, rpr_image), scene, image))
 end
 
 function rprSceneGetBackgroundImage(scene)
     out_image = Ref{rpr_image}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprSceneGetBackgroundImage, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprSceneGetBackgroundImage, libRadeonProRender64), rpr_status,
                       (rpr_scene, Ptr{rpr_image}), scene, out_image))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_image[]
 end
 
 function rprSceneSetCameraRight(scene, camera)
-    return check_error(ccall((:rprSceneSetCameraRight, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprSceneSetCameraRight, libRadeonProRender64), rpr_status,
                              (rpr_scene, rpr_camera), scene, camera))
 end
 
 function rprSceneGetCameraRight(scene)
     out_camera = Ref{rpr_camera}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprSceneGetCameraRight, RadeonProRender_v2), rpr_status, (rpr_scene, Ptr{rpr_camera}),
+    check_error(ccall((:rprSceneGetCameraRight, libRadeonProRender64), rpr_status, (rpr_scene, Ptr{rpr_camera}),
                       scene, out_camera))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_camera[]
 end
 
 function rprSceneSetCamera(scene, camera)
-    return check_error(ccall((:rprSceneSetCamera, RadeonProRender_v2), rpr_status, (rpr_scene, rpr_camera),
+    return check_error(ccall((:rprSceneSetCamera, libRadeonProRender64), rpr_status, (rpr_scene, rpr_camera),
                              scene, camera))
 end
 
 function rprSceneGetCamera(scene)
     out_camera = Ref{rpr_camera}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprSceneGetCamera, RadeonProRender_v2), rpr_status, (rpr_scene, Ptr{rpr_camera}),
+    check_error(ccall((:rprSceneGetCamera, libRadeonProRender64), rpr_status, (rpr_scene, Ptr{rpr_camera}),
                       scene, out_camera))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_camera[]
 end
 
 function rprFrameBufferGetInfo(framebuffer, info, size, data, size_ret)
-    return check_error(ccall((:rprFrameBufferGetInfo, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprFrameBufferGetInfo, libRadeonProRender64), rpr_status,
                              (rpr_framebuffer, rpr_framebuffer_info, Cint, Ptr{Cvoid}, Ptr{Cint}),
                              framebuffer, info, size, data, size_ret))
 end
 
 function rprFrameBufferClear(frame_buffer)
-    return check_error(ccall((:rprFrameBufferClear, RadeonProRender_v2), rpr_status, (rpr_framebuffer,),
+    return check_error(ccall((:rprFrameBufferClear, libRadeonProRender64), rpr_status, (rpr_framebuffer,),
                              frame_buffer))
 end
 
 function rprFrameBufferFillWithColor(frame_buffer, r, g, b, a)
-    return check_error(ccall((:rprFrameBufferFillWithColor, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprFrameBufferFillWithColor, libRadeonProRender64), rpr_status,
                              (rpr_framebuffer, rpr_float, rpr_float, rpr_float, rpr_float), frame_buffer, r,
                              g, b, a))
 end
 
 function rprFrameBufferSaveToFile(frame_buffer, file_path)
-    return check_error(ccall((:rprFrameBufferSaveToFile, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprFrameBufferSaveToFile, libRadeonProRender64), rpr_status,
                              (rpr_framebuffer, Ptr{rpr_char}), frame_buffer, file_path))
 end
 
 function rprFrameBufferSaveToFileEx(framebufferList, framebufferCount, filePath, extraOptions)
-    return check_error(ccall((:rprFrameBufferSaveToFileEx, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprFrameBufferSaveToFileEx, libRadeonProRender64), rpr_status,
                              (Ptr{rpr_framebuffer}, rpr_uint, Ptr{rpr_char}, Ptr{Cvoid}), framebufferList,
                              framebufferCount, filePath, extraOptions))
 end
 
 function rprContextResolveFrameBuffer(context, src_frame_buffer, dst_frame_buffer, normalizeOnly)
-    return check_error(ccall((:rprContextResolveFrameBuffer, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextResolveFrameBuffer, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_framebuffer, rpr_framebuffer, rpr_bool), context,
                              src_frame_buffer, dst_frame_buffer, normalizeOnly))
 end
@@ -2356,7 +2355,7 @@ end
 function rprMaterialSystemGetInfo(in_material_system, type, in_size, in_data)
     out_size = Ref{Cint}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprMaterialSystemGetInfo, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprMaterialSystemGetInfo, libRadeonProRender64), rpr_status,
                       (rpr_material_system, rpr_material_system_info, Cint, Ptr{Cvoid}, Ptr{Cint}),
                       in_material_system, type, in_size, in_data, out_size))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
@@ -2366,7 +2365,7 @@ end
 function rprContextCreateMaterialSystem(in_context, type)
     out_matsys = Ref{rpr_material_system}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateMaterialSystem, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreateMaterialSystem, libRadeonProRender64), rpr_status,
                       (rpr_context, rpr_material_system_type, Ptr{rpr_material_system}), in_context, type,
                       out_matsys))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
@@ -2376,7 +2375,7 @@ end
 function rprMaterialSystemGetSize(in_context)
     out_size = Ref{rpr_uint}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprMaterialSystemGetSize, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprMaterialSystemGetSize, libRadeonProRender64), rpr_status,
                       (rpr_context, Ptr{rpr_uint}), in_context, out_size))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_size[]
@@ -2385,7 +2384,7 @@ end
 function rprMaterialSystemCreateNode(in_matsys, in_type)
     out_node = Ref{rpr_material_node}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprMaterialSystemCreateNode, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprMaterialSystemCreateNode, libRadeonProRender64), rpr_status,
                       (rpr_material_system, rpr_material_node_type, Ptr{rpr_material_node}), in_matsys,
                       in_type, out_node))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
@@ -2393,49 +2392,49 @@ function rprMaterialSystemCreateNode(in_matsys, in_type)
 end
 
 function rprMaterialNodeSetID(in_node, id)
-    return check_error(ccall((:rprMaterialNodeSetID, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprMaterialNodeSetID, libRadeonProRender64), rpr_status,
                              (rpr_material_node, rpr_uint), in_node, id))
 end
 
 function rprMaterialNodeSetInputNByKey(in_node, in_input, in_input_node)
-    return check_error(ccall((:rprMaterialNodeSetInputNByKey, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprMaterialNodeSetInputNByKey, libRadeonProRender64), rpr_status,
                              (rpr_material_node, rpr_material_node_input, rpr_material_node), in_node,
                              in_input, in_input_node))
 end
 
 function rprMaterialNodeSetInputFByKey(in_node, in_input, in_value_x, in_value_y, in_value_z, in_value_w)
-    return check_error(ccall((:rprMaterialNodeSetInputFByKey, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprMaterialNodeSetInputFByKey, libRadeonProRender64), rpr_status,
                              (rpr_material_node, rpr_material_node_input, rpr_float, rpr_float, rpr_float,
                               rpr_float), in_node, in_input, in_value_x, in_value_y, in_value_z, in_value_w))
 end
 
 function rprMaterialNodeSetInputUByKey(in_node, in_input, in_value)
-    return check_error(ccall((:rprMaterialNodeSetInputUByKey, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprMaterialNodeSetInputUByKey, libRadeonProRender64), rpr_status,
                              (rpr_material_node, rpr_material_node_input, rpr_uint), in_node, in_input,
                              in_value))
 end
 
 function rprMaterialNodeSetInputImageDataByKey(in_node, in_input, image)
-    return check_error(ccall((:rprMaterialNodeSetInputImageDataByKey, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprMaterialNodeSetInputImageDataByKey, libRadeonProRender64), rpr_status,
                              (rpr_material_node, rpr_material_node_input, rpr_image), in_node, in_input,
                              image))
 end
 
 function rprMaterialNodeSetInputBufferDataByKey(in_node, in_input, buffer)
-    return check_error(ccall((:rprMaterialNodeSetInputBufferDataByKey, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprMaterialNodeSetInputBufferDataByKey, libRadeonProRender64), rpr_status,
                              (rpr_material_node, rpr_material_node_input, rpr_buffer), in_node, in_input,
                              buffer))
 end
 
 function rprMaterialNodeSetInputGridDataByKey(in_node, in_input, grid)
-    return check_error(ccall((:rprMaterialNodeSetInputGridDataByKey, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprMaterialNodeSetInputGridDataByKey, libRadeonProRender64), rpr_status,
                              (rpr_material_node, rpr_material_node_input, rpr_grid), in_node, in_input, grid))
 end
 
 function rprMaterialNodeGetInfo(in_node, in_info, in_size, in_data)
     out_size = Ref{Cint}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprMaterialNodeGetInfo, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprMaterialNodeGetInfo, libRadeonProRender64), rpr_status,
                       (rpr_material_node, rpr_material_node_info, Cint, Ptr{Cvoid}, Ptr{Cint}), in_node,
                       in_info, in_size, in_data, out_size))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
@@ -2445,7 +2444,7 @@ end
 function rprMaterialNodeGetInputInfo(in_node, in_input_idx, in_info, in_size, in_data)
     out_size = Ref{Cint}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprMaterialNodeGetInputInfo, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprMaterialNodeGetInputInfo, libRadeonProRender64), rpr_status,
                       (rpr_material_node, rpr_int, rpr_material_node_input_info, Cint, Ptr{Cvoid}, Ptr{Cint}),
                       in_node, in_input_idx, in_info, in_size, in_data, out_size))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
@@ -2455,7 +2454,7 @@ end
 function rprContextCreateComposite(context, in_type)
     out_composite = Ref{rpr_composite}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateComposite, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreateComposite, libRadeonProRender64), rpr_status,
                       (rpr_context, rpr_composite_type, Ptr{rpr_composite}), context, in_type, out_composite))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_composite[]
@@ -2464,7 +2463,7 @@ end
 function rprContextCreateLUTFromFile(context, fileLutPath)
     out_lut = Ref{rpr_lut}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateLUTFromFile, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreateLUTFromFile, libRadeonProRender64), rpr_status,
                       (rpr_context, Ptr{rpr_char}, Ptr{rpr_lut}), context, fileLutPath, out_lut))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_lut[]
@@ -2473,131 +2472,131 @@ end
 function rprContextCreateLUTFromData(context, lutData)
     out_lut = Ref{rpr_lut}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateLUTFromData, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreateLUTFromData, libRadeonProRender64), rpr_status,
                       (rpr_context, Ptr{rpr_char}, Ptr{rpr_lut}), context, lutData, out_lut))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_lut[]
 end
 
 function rprCompositeSetInputFb(composite, inputName, input)
-    return check_error(ccall((:rprCompositeSetInputFb, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCompositeSetInputFb, libRadeonProRender64), rpr_status,
                              (rpr_composite, Ptr{rpr_char}, rpr_framebuffer), composite, inputName, input))
 end
 
 function rprCompositeSetInputC(composite, inputName, input)
-    return check_error(ccall((:rprCompositeSetInputC, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCompositeSetInputC, libRadeonProRender64), rpr_status,
                              (rpr_composite, Ptr{rpr_char}, rpr_composite), composite, inputName, input))
 end
 
 function rprCompositeSetInputLUT(composite, inputName, input)
-    return check_error(ccall((:rprCompositeSetInputLUT, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCompositeSetInputLUT, libRadeonProRender64), rpr_status,
                              (rpr_composite, Ptr{rpr_char}, rpr_lut), composite, inputName, input))
 end
 
 function rprCompositeSetInput4f(composite, inputName, x, y, z, w)
-    return check_error(ccall((:rprCompositeSetInput4f, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCompositeSetInput4f, libRadeonProRender64), rpr_status,
                              (rpr_composite, Ptr{rpr_char}, Cfloat, Cfloat, Cfloat, Cfloat), composite,
                              inputName, x, y, z, w))
 end
 
 function rprCompositeSetInput1u(composite, inputName, value)
-    return check_error(ccall((:rprCompositeSetInput1u, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCompositeSetInput1u, libRadeonProRender64), rpr_status,
                              (rpr_composite, Ptr{rpr_char}, rpr_uint), composite, inputName, value))
 end
 
 function rprCompositeSetInputOp(composite, inputName, op)
-    return check_error(ccall((:rprCompositeSetInputOp, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCompositeSetInputOp, libRadeonProRender64), rpr_status,
                              (rpr_composite, Ptr{rpr_char}, rpr_material_node_arithmetic_operation),
                              composite, inputName, op))
 end
 
 function rprCompositeCompute(composite, fb)
-    return check_error(ccall((:rprCompositeCompute, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCompositeCompute, libRadeonProRender64), rpr_status,
                              (rpr_composite, rpr_framebuffer), composite, fb))
 end
 
 function rprCompositeGetInfo(composite, composite_info, size, data, size_ret)
-    return check_error(ccall((:rprCompositeGetInfo, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprCompositeGetInfo, libRadeonProRender64), rpr_status,
                              (rpr_composite, rpr_composite_info, Cint, Ptr{Cvoid}, Ptr{Cint}), composite,
                              composite_info, size, data, size_ret))
 end
 
 function rprObjectDelete(obj)
-    return check_error(ccall((:rprObjectDelete, RadeonProRender_v2), rpr_status, (Ptr{Cvoid},), obj))
+    return check_error(ccall((:rprObjectDelete, libRadeonProRender64), rpr_status, (Ptr{Cvoid},), obj))
 end
 
 function rprObjectSetName(node, name)
-    return check_error(ccall((:rprObjectSetName, RadeonProRender_v2), rpr_status, (Ptr{Cvoid}, Ptr{rpr_char}),
+    return check_error(ccall((:rprObjectSetName, libRadeonProRender64), rpr_status, (Ptr{Cvoid}, Ptr{rpr_char}),
                              node, name))
 end
 
 function rprObjectSetCustomPointer(node, customPtr)
-    return check_error(ccall((:rprObjectSetCustomPointer, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprObjectSetCustomPointer, libRadeonProRender64), rpr_status,
                              (Ptr{Cvoid}, Ptr{Cvoid}), node, customPtr))
 end
 
 function rprObjectGetCustomPointer(node, customPtr_out)
-    return check_error(ccall((:rprObjectGetCustomPointer, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprObjectGetCustomPointer, libRadeonProRender64), rpr_status,
                              (Ptr{Cvoid}, Ptr{Ptr{Cvoid}}), node, customPtr_out))
 end
 
 function rprContextCreatePostEffect(context, type)
     out_effect = Ref{rpr_post_effect}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreatePostEffect, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreatePostEffect, libRadeonProRender64), rpr_status,
                       (rpr_context, rpr_post_effect_type, Ptr{rpr_post_effect}), context, type, out_effect))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_effect[]
 end
 
 function rprContextAttachPostEffect(context, effect)
-    return check_error(ccall((:rprContextAttachPostEffect, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextAttachPostEffect, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_post_effect), context, effect))
 end
 
 function rprContextDetachPostEffect(context, effect)
-    return check_error(ccall((:rprContextDetachPostEffect, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextDetachPostEffect, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_post_effect), context, effect))
 end
 
 function rprPostEffectSetParameter1u(effect, name, x)
-    return check_error(ccall((:rprPostEffectSetParameter1u, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprPostEffectSetParameter1u, libRadeonProRender64), rpr_status,
                              (rpr_post_effect, Ptr{rpr_char}, rpr_uint), effect, name, x))
 end
 
 function rprPostEffectSetParameter1f(effect, name, x)
-    return check_error(ccall((:rprPostEffectSetParameter1f, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprPostEffectSetParameter1f, libRadeonProRender64), rpr_status,
                              (rpr_post_effect, Ptr{rpr_char}, rpr_float), effect, name, x))
 end
 
 function rprPostEffectSetParameter3f(effect, name, x, y, z)
-    return check_error(ccall((:rprPostEffectSetParameter3f, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprPostEffectSetParameter3f, libRadeonProRender64), rpr_status,
                              (rpr_post_effect, Ptr{rpr_char}, rpr_float, rpr_float, rpr_float), effect, name,
                              x, y, z))
 end
 
 function rprPostEffectSetParameter4f(effect, name, x, y, z, w)
-    return check_error(ccall((:rprPostEffectSetParameter4f, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprPostEffectSetParameter4f, libRadeonProRender64), rpr_status,
                              (rpr_post_effect, Ptr{rpr_char}, rpr_float, rpr_float, rpr_float, rpr_float),
                              effect, name, x, y, z, w))
 end
 
 function rprContextGetAttachedPostEffectCount(context, nb)
-    return check_error(ccall((:rprContextGetAttachedPostEffectCount, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextGetAttachedPostEffectCount, libRadeonProRender64), rpr_status,
                              (rpr_context, Ptr{rpr_uint}), context, nb))
 end
 
 function rprContextGetAttachedPostEffect(context, i)
     out_effect = Ref{rpr_post_effect}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextGetAttachedPostEffect, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextGetAttachedPostEffect, libRadeonProRender64), rpr_status,
                       (rpr_context, rpr_uint, Ptr{rpr_post_effect}), context, i, out_effect))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_effect[]
 end
 
 function rprPostEffectGetInfo(effect, info, size, data, size_ret)
-    return check_error(ccall((:rprPostEffectGetInfo, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprPostEffectGetInfo, libRadeonProRender64), rpr_status,
                              (rpr_post_effect, rpr_post_effect_info, Cint, Ptr{Cvoid}, Ptr{Cint}), effect,
                              info, size, data, size_ret))
 end
@@ -2605,7 +2604,7 @@ end
 function rprContextCreateGrid(context, out_grid, gridSizeX, gridSizeY, gridSizeZ, indicesList,
                               numberOfIndices, indicesListTopology, gridData, gridDataSizeByte,
                               gridDataTopology___unused)
-    return check_error(ccall((:rprContextCreateGrid, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprContextCreateGrid, libRadeonProRender64), rpr_status,
                              (rpr_context, Ptr{rpr_grid}, Cint, Cint, Cint, Ptr{Cvoid}, Cint,
                               rpr_grid_indices_topology, Ptr{Cvoid}, Cint, rpr_uint), context, out_grid,
                              gridSizeX, gridSizeY, gridSizeZ, indicesList, numberOfIndices,
@@ -2615,65 +2614,65 @@ end
 function rprContextCreateHeteroVolume(context)
     out_heteroVolume = Ref{rpr_hetero_volume}()
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
-    check_error(ccall((:rprContextCreateHeteroVolume, RadeonProRender_v2), rpr_status,
+    check_error(ccall((:rprContextCreateHeteroVolume, libRadeonProRender64), rpr_status,
                       (rpr_context, Ptr{rpr_hetero_volume}), context, out_heteroVolume))
     #= c:\Users\sdani\MakieDev\dev\RadeonProRender\build\generate-master.jl:34 =#
     return out_heteroVolume[]
 end
 
 function rprShapeSetHeteroVolume(shape, heteroVolume)
-    return check_error(ccall((:rprShapeSetHeteroVolume, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprShapeSetHeteroVolume, libRadeonProRender64), rpr_status,
                              (rpr_shape, rpr_hetero_volume), shape, heteroVolume))
 end
 
 function rprHeteroVolumeSetTransform(heteroVolume, transpose, transform)
-    return check_error(ccall((:rprHeteroVolumeSetTransform, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprHeteroVolumeSetTransform, libRadeonProRender64), rpr_status,
                              (rpr_hetero_volume, rpr_bool, Ptr{rpr_float}), heteroVolume, transpose,
                              transform))
 end
 
 function rprHeteroVolumeSetEmissionGrid(heteroVolume, grid)
-    return check_error(ccall((:rprHeteroVolumeSetEmissionGrid, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprHeteroVolumeSetEmissionGrid, libRadeonProRender64), rpr_status,
                              (rpr_hetero_volume, rpr_grid), heteroVolume, grid))
 end
 
 function rprHeteroVolumeSetDensityGrid(heteroVolume, grid)
-    return check_error(ccall((:rprHeteroVolumeSetDensityGrid, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprHeteroVolumeSetDensityGrid, libRadeonProRender64), rpr_status,
                              (rpr_hetero_volume, rpr_grid), heteroVolume, grid))
 end
 
 function rprHeteroVolumeSetAlbedoGrid(heteroVolume, grid)
-    return check_error(ccall((:rprHeteroVolumeSetAlbedoGrid, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprHeteroVolumeSetAlbedoGrid, libRadeonProRender64), rpr_status,
                              (rpr_hetero_volume, rpr_grid), heteroVolume, grid))
 end
 
 function rprHeteroVolumeSetEmissionLookup(heteroVolume, ptr, n)
-    return check_error(ccall((:rprHeteroVolumeSetEmissionLookup, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprHeteroVolumeSetEmissionLookup, libRadeonProRender64), rpr_status,
                              (rpr_hetero_volume, Ptr{rpr_float}, rpr_uint), heteroVolume, ptr, n))
 end
 
 function rprHeteroVolumeSetDensityLookup(heteroVolume, ptr, n)
-    return check_error(ccall((:rprHeteroVolumeSetDensityLookup, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprHeteroVolumeSetDensityLookup, libRadeonProRender64), rpr_status,
                              (rpr_hetero_volume, Ptr{rpr_float}, rpr_uint), heteroVolume, ptr, n))
 end
 
 function rprHeteroVolumeSetAlbedoLookup(heteroVolume, ptr, n)
-    return check_error(ccall((:rprHeteroVolumeSetAlbedoLookup, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprHeteroVolumeSetAlbedoLookup, libRadeonProRender64), rpr_status,
                              (rpr_hetero_volume, Ptr{rpr_float}, rpr_uint), heteroVolume, ptr, n))
 end
 
 function rprHeteroVolumeSetAlbedoScale(heteroVolume, scale)
-    return check_error(ccall((:rprHeteroVolumeSetAlbedoScale, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprHeteroVolumeSetAlbedoScale, libRadeonProRender64), rpr_status,
                              (rpr_hetero_volume, rpr_float), heteroVolume, scale))
 end
 
 function rprHeteroVolumeSetEmissionScale(heteroVolume, scale)
-    return check_error(ccall((:rprHeteroVolumeSetEmissionScale, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprHeteroVolumeSetEmissionScale, libRadeonProRender64), rpr_status,
                              (rpr_hetero_volume, rpr_float), heteroVolume, scale))
 end
 
 function rprHeteroVolumeSetDensityScale(heteroVolume, scale)
-    return check_error(ccall((:rprHeteroVolumeSetDensityScale, RadeonProRender_v2), rpr_status,
+    return check_error(ccall((:rprHeteroVolumeSetDensityScale, libRadeonProRender64), rpr_status,
                              (rpr_hetero_volume, rpr_float), heteroVolume, scale))
 end
 

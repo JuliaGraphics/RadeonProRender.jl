@@ -72,20 +72,13 @@ end
 """
 Empty constructor, defaults to using opencl and the GPU0
 """
-function Context()
-    tahoe = normpath(joinpath(dirname(RadeonProRender_v2), "Tahoe64.dll"))
-    tahoePluginID = rprRegisterPlugin(tahoe)
-    @assert(tahoePluginID != -1)
-    plugins = [tahoePluginID]
-    ctx = Context(RPR_API_VERSION, plugins, RPR_CREATION_FLAGS_ENABLE_GPU0)
-    rprContextSetActivePlugin(ctx, plugins[1])
+function Context(; resource=RPR_CREATION_FLAGS_ENABLE_GPU0, plugin = libTahoe64)
+    id = rprRegisterPlugin(plugin)
+    @assert(id != -1)
+    plugin_ids = [id]
+    ctx = Context(RPR_API_VERSION, plugin_ids, resource)
+    rprContextSetActivePlugin(ctx, id)
     return ctx
-end
-"""
-Constructor which only uses creation flags and defaults to opencl.
-"""
-function Context(creation_flags)
-    return Context(RPR_API_VERSION, RPR_CONTEXT_OPENCL, creation_flags)
 end
 
 function release(context::Context)

@@ -109,5 +109,5 @@ for (i, t) in enumerate(LinRange(0, 3.0, 1000))
         set!(shader, RPR.RPR_MATERIAL_INPUT_COLOR, c)
     end
     path = joinpath(@__DIR__, "instances", "frame$i.png")
-    render_scene(path, 5)
+    render_scene(path, 100)
 end

@@ -3,14 +3,13 @@ module RadeonProRender
 using GeometryBasics
 using Colors
 using CEnum
+using RadeonProRender_jll
 
 include("LibRPR.jl")
 
 using .RPR
-using .RPR: RadeonProRender_v2
 
 include("highlevel-api.jl")
-# include("opengl-interop.jl")
 
 export set!
 export setradiantpower!

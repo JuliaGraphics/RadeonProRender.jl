@@ -744,6 +744,12 @@ version = "2.4.2"
 deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 
+[[RadeonProRender_jll]]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "b7ce7633b8e90f6b2544d1b0e6fbfd83dda8928e"
+uuid = "e92fa02b-1b7a-5e4e-a5cb-14fe26dfc45b"
+version = "2.2.7+0"
+
 [[Random]]
 deps = ["Serialization"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
