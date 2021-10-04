@@ -5,6 +5,8 @@ using Colors
 using CEnum
 using RadeonProRender_jll
 
+assetpath(paths...) = normpath(joinpath(@__DIR__, "..", "assets", paths...))
+
 include("LibRPR.jl")
 
 using .RPR

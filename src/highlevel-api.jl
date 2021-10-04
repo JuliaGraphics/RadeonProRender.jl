@@ -141,6 +141,32 @@ function VoxelGrid(context, values::AbstractArray{<: Number, 3})
     return VoxelGrid(context, size(values)..., values, indices)
 end
 
+mutable struct Curve <: RPRObject{rpr_curve}
+    pointer::rpr_curve
+    referenced_memory
+end
+
+function Curve(context::Context, control_points::AbstractVector,
+                indices::AbstractVector, radius::AbstractVector,
+                uvs::AbstractVector, segments_per_curve::AbstractVector,
+                creationFlag_tapered=0)
+
+    curve_ref = Ref{rpr_curve}()
+    control_pointsf0 = convert(Vector{Point3f}, control_points)
+    indices_i = convert(Vector{RPR.rpr_int}, indices)
+    segments_per_curve_i = convert(Vector{RPR.rpr_int}, segments_per_curve)
+    uvs_f0 = convert(Vector{Vec2f}, uvs)
+    radiusf0 = convert(Vector{Float32}, radius)
+    rprContextCreateCurve(context, curve_ref,
+        length(control_pointsf0), control_pointsf0, sizeof(Point3f),
+        length(indices_i), length(segments_per_curve_i), indices_i, radiusf0, uvs_f0, segments_per_curve_i,
+        creationFlag_tapered
+    )
+    curve = Curve(curve_ref[], (control_pointsf0, indices_i, segments_per_curve_i, uvs_f0, radiusf0))
+    push!(context.objects, curve)
+    return curve
+end
+
 @rpr_wrapper_type HeteroVolume rpr_hetero_volume rprContextCreateHeteroVolume (context,) RPRObject
 
 function set_albedo_lookup!(volume::HeteroVolume, colors::AbstractVector)
@@ -285,7 +311,7 @@ Automatically creates an Image from a matrix of colors
 """
 function Image(context::Context, image::Array{T,N}) where {T,N}
     desc_ref = Ref(rpr_image_desc(image))
-    img = Image(rprContextCreateImage(context, rpr_image_format(image), desc_ref, image, (image, desc_ref)))
+    img = Image(rprContextCreateImage(context, rpr_image_format(image), desc_ref, image), (image, desc_ref))
     push!(context.objects, img)
     return img
 end
@@ -416,6 +442,10 @@ function set!(shape::Shape, material::MaterialNode)
     return rprShapeSetMaterial(shape, material)
 end
 
+function set!(shape::Curve, material::MaterialNode)
+    return rprCurveSetMaterial(shape, material)
+end
+
 function set!(material::MaterialNode, parameter::rpr_material_node_input, material2::MaterialNode)
     return rprMaterialNodeSetInputNByKey(material, parameter, material2)
 end
@@ -485,6 +515,11 @@ Pushes objects to Scene
 function Base.push!(scene::Scene, shape::Shape)
     return rprSceneAttachShape(scene, shape)
 end
+
+function Base.push!(scene::Scene, curve::Curve)
+    return rprSceneAttachCurve(scene, curve)
+end
+
 
 function Base.push!(scene::Scene, light::AbstractLight)
     return rprSceneAttachLight(scene, light)
