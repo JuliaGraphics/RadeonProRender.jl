@@ -6,8 +6,6 @@ function translationmatrix(t::Vec{3,T}) where {T}
     return Mat{4}(T1, T0, T0, T0, T0, T1, T0, T0, T0, T0, T1, T0, t[1], t[2], t[3], T1)
 end
 
-isdefined(Main, :context) && RPR.release(context)
-
 context = RPR.Context()
 scene = RPR.Scene(context)
 matsys = RPR.MaterialSystem(context, 0)
@@ -53,8 +51,6 @@ mesh, mat = add_shape!(scene, context, matsys, Rect3f(Vec3f(0, 2, 0), Vec3f(5, 0
 
 mesh, mat_sphere = add_shape!(scene, context, matsys, Tesselation(Sphere(Point3f(2, 0, 2), 1.0f0), 100);
                               material=RPR.RPR_MATERIAL_NODE_MICROFACET, roughness=0.2, color=colorant"red")
-# set!(mat_sphere, RPR.RPR_MATERIAL_INPUT_IOR, 2, 2, 2, 2)
-# set!(mat_sphere, RPR.RPR_MATERIAL_INPUT_CAUSTICS, 1)
 
 fb_size = (800, 600)
 frame_buffer = RPR.FrameBuffer(context, RGBA, fb_size)

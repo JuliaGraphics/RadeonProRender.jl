@@ -221,16 +221,22 @@ function Shape(context::Context, meshlike; kw...)
 end
 
 function Shape(context::Context, vertices, normals, faces, uvs)
+    @assert length(vertices) == length(normals)
+    @assert length(vertices) == length(uvs)
+
     vraw = reinterpret(Float32, decompose(Point3f, vertices))
     nraw = reinterpret(Float32, decompose(Vec3f, normals))
-    uvraw = reinterpret(Float32, map(uv -> Vec2f(1.0 - uv[2], 1.0 - uv[1]), uvs))
+    uvraw = reinterpret(Float32, map(uv -> Vec2f(1-uv[2], 1-uv[1]), uvs))
     iraw = reinterpret(rpr_int, decompose(TriangleFace{OffsetInteger{-1,rpr_int}}, faces))
     facelens = fill(rpr_int(3), length(faces))
+
+    foreach(i-> checkbounds(vertices, i + 1), iraw)
+
     rpr_mesh = rprContextCreateMesh(context, vraw, length(vertices), sizeof(Point3f), nraw, length(normals),
                                     sizeof(Vec3f), uvraw, length(uvs), sizeof(Vec2f), iraw, sizeof(rpr_int),
                                     iraw, sizeof(rpr_int), iraw, sizeof(rpr_int),
                                     facelens, length(faces))
-    shape = Shape(rpr_mesh, (vraw, nraw, uvraw, iraw))
+    shape = Shape(rpr_mesh, (vraw, nraw, uvraw, iraw, facelens))
     push!(context.objects, shape)
     return shape
 end
