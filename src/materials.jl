@@ -88,27 +88,15 @@ function (::Type{Material{Typ}})(matsys::MaterialSystem) where Typ
 end
 
 function Base.setproperty!(material::T, field::Symbol, value::Vec4) where T <: Material
-    try
-        set!(material.node, field2enum(T, field), value...)
-    catch e
-        error("Can't set field $(field) with $(value)")
-    end
+    set!(material.node, field2enum(T, field), value...)
 end
 
 function Base.setproperty!(material::T, field::Symbol, value::Vec3) where T <: Material
-    try
-        set!(material.node, field2enum(T, field), value..., 0.0)
-    catch e
-        error("Can't set field $(field) with $(value)")
-    end
+    set!(material.node, field2enum(T, field), value..., 0.0)
 end
 
 function Base.setproperty!(material::T, field::Symbol, value) where T <: Material
-    try
-        set!(material.node, field2enum(T, field), value)
-    catch e
-        error("Can't set field $(field) with $(value)")
-    end
+    set!(material.node, field2enum(T, field), value)
 end
 
 function Base.setproperty!(material::T, field::Symbol, c::Color3) where T <: Material
@@ -119,123 +107,315 @@ function Base.setproperty!(material::T, field::Symbol, value::Nothing) where T <
     # TODO, can you actually unset a material property?
 end
 
-function field2enum(::Type{UberMaterial}, field::Symbol)
-
-    field === :diffuse_color && return RPR.RPR_MATERIAL_INPUT_UBER_DIFFUSE_COLOR
-    field === :diffuse_weight && return RPR.RPR_MATERIAL_INPUT_UBER_DIFFUSE_WEIGHT
-    field === :diffuse_roughness && return RPR.RPR_MATERIAL_INPUT_UBER_DIFFUSE_ROUGHNESS
-    field === :diffuse_normal && return RPR.RPR_MATERIAL_INPUT_UBER_DIFFUSE_NORMAL
-
-    field === :reflection_color && return RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_COLOR
-    field === :reflection_weight && return RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_WEIGHT
-    field === :reflection_roughness && return RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_ROUGHNESS
-    field === :reflection_anisotropy && return RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_ANISOTROPY
-    field === :reflection_anisotropy_rotation && return RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_ANISOTROPY_ROTATION
-    field === :reflection_mode && return RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_MODE
-    field === :reflection_ior && return RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_IOR
-    field === :reflection_metalness && return RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_METALNESS
-    field === :reflection_normal && return RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_NORMAL
-    field === :reflection_dielectric_reflectance && return RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_DIELECTRIC_REFLECTANCE
-
-    field === :refraction_color && return RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_COLOR
-    field === :refraction_weight && return RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_WEIGHT
-    field === :refraction_roughness && return RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_ROUGHNESS
-    field === :refraction_ior && return RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_IOR
-    field === :refraction_normal && return RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_NORMAL
-    field === :refraction_thin_surface && return RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_THIN_SURFACE
-    field === :refraction_absorption_color && return RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_ABSORPTION_COLOR
-    field === :refraction_absorption_distance && return RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_ABSORPTION_DISTANCE
-    field === :refraction_caustics && return RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_CAUSTICS
-
-    field === :coating_color && return RPR.RPR_MATERIAL_INPUT_UBER_COATING_COLOR
-    field === :coating_weight && return RPR.RPR_MATERIAL_INPUT_UBER_COATING_WEIGHT
-    field === :coating_roughness && return RPR.RPR_MATERIAL_INPUT_UBER_COATING_ROUGHNESS
-    field === :coating_mode && return RPR.RPR_MATERIAL_INPUT_UBER_COATING_MODE
-    field === :coating_ior && return RPR.RPR_MATERIAL_INPUT_UBER_COATING_IOR
-    field === :coating_metalness && return RPR.RPR_MATERIAL_INPUT_UBER_COATING_METALNESS
-    field === :coating_normal && return RPR.RPR_MATERIAL_INPUT_UBER_COATING_NORMAL
-    field === :coating_transmission_color && return RPR.RPR_MATERIAL_INPUT_UBER_COATING_TRANSMISSION_COLOR
-    field === :coating_thickness && return RPR.RPR_MATERIAL_INPUT_UBER_COATING_THICKNESS
-
-    field === :sheen && return RPR.RPR_MATERIAL_INPUT_UBER_SHEEN
-    field === :sheen_tint && return RPR.RPR_MATERIAL_INPUT_UBER_SHEEN_TINT
-    field === :sheen_weight && return RPR.RPR_MATERIAL_INPUT_UBER_SHEEN_WEIGHT
-    field === :emission_color && return RPR.RPR_MATERIAL_INPUT_UBER_EMISSION_COLOR
-    field === :emission_weight && return RPR.RPR_MATERIAL_INPUT_UBER_EMISSION_WEIGHT
-    field === :emission_mode && return RPR.RPR_MATERIAL_INPUT_UBER_EMISSION_MODE
-    field === :transparency && return RPR.RPR_MATERIAL_INPUT_UBER_TRANSPARENCY
-
-    field === :sss_scatter_color && return RPR.RPR_MATERIAL_INPUT_UBER_SSS_SCATTER_COLOR
-    field === :sss_scatter_distance && return RPR.RPR_MATERIAL_INPUT_UBER_SSS_SCATTER_DISTANCE
-    field === :sss_scatter_direction && return RPR.RPR_MATERIAL_INPUT_UBER_SSS_SCATTER_DIRECTION
-    field === :sss_weight && return RPR.RPR_MATERIAL_INPUT_UBER_SSS_WEIGHT
-    field === :sss_multiscatter && return RPR.RPR_MATERIAL_INPUT_UBER_SSS_MULTISCATTER
-    field === :backscatter_weight && return RPR.RPR_MATERIAL_INPUT_UBER_BACKSCATTER_WEIGHT
-    field === :backscatter_color && return RPR.RPR_MATERIAL_INPUT_UBER_BACKSCATTER_COLOR
-    field === :fresnel_schlick_approximation && return RPR.RPR_MATERIAL_INPUT_UBER_FRESNEL_SCHLICK_APPROXIMATION
-    error("Uber shader doesn't have the property: $(field)")
+function field2enum(::Type{T}, field::Symbol) where T
+    info = material_info(T)
+    if haskey(info, field)
+        return getfield(info, field)
+    else
+        error("Material $(T) doesn't have the property $(field)")
+    end
 end
 
-function defaults(::Type{UberMaterial})
+function Base.propertynames(m::T) where T <: Material
+    info = material_info(T)
+    return propertynames(info)
+end
+
+function material_info(::Type{UberMaterial})
     return (
-        diffuse_color=RGB(1, 0, 0),
-        diffuse_weight=Vec4(0.5),
-        diffuse_roughness=Vec4(0.01),
-        diffuse_normal=nothing,
+        color = RPR.RPR_MATERIAL_INPUT_UBER_DIFFUSE_COLOR,
+        diffuse_weight = RPR.RPR_MATERIAL_INPUT_UBER_DIFFUSE_WEIGHT,
+        diffuse_roughness = RPR.RPR_MATERIAL_INPUT_UBER_DIFFUSE_ROUGHNESS,
+        diffuse_normal = RPR.RPR_MATERIAL_INPUT_UBER_DIFFUSE_NORMAL,
 
-        reflection_color=RGB(0, 0, 0),
-        reflection_weight=Vec4(0),
-        reflection_roughness=Vec4(0),
-        reflection_anisotropy=Vec4(0),
-        reflection_anisotropy_rotation=Vec4(0),
-        reflection_mode=Vec4(0),
-        reflection_ior=Vec4(0),
-        reflection_metalness=Vec4(0),
-        reflection_normal=nothing,
-        # reflection_dielectric_reflectance=false,
+        reflection_color = RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_COLOR,
+        reflection_weight = RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_WEIGHT,
+        reflection_roughness = RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_ROUGHNESS,
+        reflection_anisotropy = RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_ANISOTROPY,
+        reflection_anisotropy_rotation = RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_ANISOTROPY_ROTATION,
+        reflection_mode = RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_MODE,
+        reflection_ior = RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_IOR,
+        reflection_metalness = RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_METALNESS,
+        reflection_normal = RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_NORMAL,
+        reflection_dielectric_reflectance = RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_DIELECTRIC_REFLECTANCE,
 
-        refraction_color=RGB(0, 0, 0),
-        refraction_weight=Vec4(0),
-        refraction_roughness=Vec4(0),
-        refraction_ior=Vec4(0),
-        refraction_normal=nothing,
-        refraction_thin_surface=false,
-        refraction_absorption_color=RGB(0, 0, 0),
-        refraction_absorption_distance=Vec4(0),
-        refraction_caustics=Vec4(0),
+        refraction_color = RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_COLOR,
+        refraction_weight = RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_WEIGHT,
+        refraction_roughness = RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_ROUGHNESS,
+        refraction_ior = RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_IOR,
+        refraction_normal = RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_NORMAL,
+        refraction_thin_surface = RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_THIN_SURFACE,
+        refraction_absorption_color = RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_ABSORPTION_COLOR,
+        refraction_absorption_distance = RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_ABSORPTION_DISTANCE,
+        refraction_caustics = RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_CAUSTICS,
 
-        coating_color=RGB(0, 0, 0),
-        coating_weight=Vec4(0),
-        coating_roughness=Vec4(0),
-        coating_mode=Vec4(0),
-        coating_ior=Vec4(0),
-        coating_metalness=Vec4(0),
-        coating_normal=nothing,
-        coating_transmission_color=Vec4(0),
-        coating_thickness=Vec4(0),
+        coating_color = RPR.RPR_MATERIAL_INPUT_UBER_COATING_COLOR,
+        coating_weight = RPR.RPR_MATERIAL_INPUT_UBER_COATING_WEIGHT,
+        coating_roughness = RPR.RPR_MATERIAL_INPUT_UBER_COATING_ROUGHNESS,
+        coating_mode = RPR.RPR_MATERIAL_INPUT_UBER_COATING_MODE,
+        coating_ior = RPR.RPR_MATERIAL_INPUT_UBER_COATING_IOR,
+        coating_metalness = RPR.RPR_MATERIAL_INPUT_UBER_COATING_METALNESS,
+        coating_normal = RPR.RPR_MATERIAL_INPUT_UBER_COATING_NORMAL,
+        coating_transmission_color = RPR.RPR_MATERIAL_INPUT_UBER_COATING_TRANSMISSION_COLOR,
+        coating_thickness = RPR.RPR_MATERIAL_INPUT_UBER_COATING_THICKNESS,
 
-        sheen=Vec4(0),
-        sheen_tint=Vec4(0),
-        sheen_weight=Vec4(0),
-        emission_color=Vec4(0),
-        emission_weight=Vec4(0),
-        emission_mode=Vec4(0),
-        transparency=Vec4(0),
+        sheen = RPR.RPR_MATERIAL_INPUT_UBER_SHEEN,
+        sheen_tint = RPR.RPR_MATERIAL_INPUT_UBER_SHEEN_TINT,
+        sheen_weight = RPR.RPR_MATERIAL_INPUT_UBER_SHEEN_WEIGHT,
+        emission_color = RPR.RPR_MATERIAL_INPUT_UBER_EMISSION_COLOR,
+        emission_weight = RPR.RPR_MATERIAL_INPUT_UBER_EMISSION_WEIGHT,
+        emission_mode = RPR.RPR_MATERIAL_INPUT_UBER_EMISSION_MODE,
+        transparency = RPR.RPR_MATERIAL_INPUT_UBER_TRANSPARENCY,
 
-        sss_scatter_color=RGB(0, 0, 0),
-        sss_scatter_distance=Vec4(0),
-        sss_scatter_direction=Vec4(0),
-        sss_weight=Vec4(0),
-        sss_multiscatter=false,
-        backscatter_weight=Vec4(0),
-        backscatter_color=RGB(0, 0, 0),
-        fresnel_schlick_approximation=Vec4(0),
+        sss_scatter_color = RPR.RPR_MATERIAL_INPUT_UBER_SSS_SCATTER_COLOR,
+        sss_scatter_distance = RPR.RPR_MATERIAL_INPUT_UBER_SSS_SCATTER_DISTANCE,
+        sss_scatter_direction = RPR.RPR_MATERIAL_INPUT_UBER_SSS_SCATTER_DIRECTION,
+        sss_weight = RPR.RPR_MATERIAL_INPUT_UBER_SSS_WEIGHT,
+        sss_multiscatter = RPR.RPR_MATERIAL_INPUT_UBER_SSS_MULTISCATTER,
+        backscatter_weight = RPR.RPR_MATERIAL_INPUT_UBER_BACKSCATTER_WEIGHT,
+        backscatter_color = RPR.RPR_MATERIAL_INPUT_UBER_BACKSCATTER_COLOR,
+        fresnel_schlick_approximation = RPR.RPR_MATERIAL_INPUT_UBER_FRESNEL_SCHLICK_APPROXIMATION,
     )
 end
 
-function field2enum(::Type{DiffuseMaterial}, field::Symbol)
-    field === :diffuse_color && return RPR.RPR_MATERIAL_INPUT_COLOR
-    field === :diffuse_normal && return RPR.RPR_MATERIAL_INPUT_NORMAL
-    field === :diffuse_roughness && return RPR.RPR_MATERIAL_INPUT_ROUGHNESS
-    error("DiffuseMaterial doesn't have the property: $(field)")
+function material_info(::Type{DiffuseMaterial})
+    return (
+        color = RPR.RPR_MATERIAL_INPUT_COLOR,
+        normal = RPR.RPR_MATERIAL_INPUT_NORMAL,
+        roughness = RPR.RPR_MATERIAL_INPUT_ROUGHNESS,
+    )
+end
+
+function material_info(::Type{DiffuseRefractionMaterial})
+    return material_info(DiffuseMaterial)
+end
+
+
+function material_info(::Type{BumpMapMaterial})
+    return (
+        color = RPR.RPR_MATERIAL_INPUT_COLOR,
+        scale = RPR.RPR_MATERIAL_INPUT_SCALE
+    )
+end
+
+function material_info(::Type{VolumeMaterial})
+    return (
+        scattering = RPR.RPR_MATERIAL_INPUT_SCATTERING,
+        absorption = RPR.RPR_MATERIAL_INPUT_ABSORBTION,
+        emission = RPR.RPR_MATERIAL_INPUT_EMISSION,
+        scatter_direction = RPR.RPR_MATERIAL_INPUT_G,
+        multiscatter = RPR.RPR_MATERIAL_INPUT_MULTISCATTER,
+    )
+end
+
+function material_info(::Type{MicrofacetAnisotropicReflectionMaterial})
+    return (
+        color = RPR.RPR_MATERIAL_INPUT_COLOR,
+        normal = RPR.RPR_MATERIAL_INPUT_NORMAL,
+        ior = RPR.RPR_MATERIAL_INPUT_IOR,
+        roughness = RPR.RPR_MATERIAL_INPUT_ROUGHNESS,
+        anisotropic = RPR.RPR_MATERIAL_INPUT_ANISOTROPIC,
+        rotation = RPR.RPR_MATERIAL_INPUT_ROTATION,
+    )
+end
+
+function material_info(::Type{BlendMaterial})
+    return (
+        color1 = RPR.RPR_MATERIAL_INPUT_COLOR0,
+        color2 = RPR.RPR_MATERIAL_INPUT_COLOR1,
+        weight = RPR.RPR_MATERIAL_INPUT_WEIGHT,
+        transmission_color = RPR.RPR_MATERIAL_INPUT_TRANSMISSION_COLOR,
+        thickness = RPR.RPR_MATERIAL_INPUT_THICKNESS,
+    )
+end
+
+function material_info(::Type{MicrofacetAnisotropicRefractionMaterial})
+    return material_info(MicrofacetAnisotropicReflectionMaterial)
+end
+
+function material_info(::Type{MicrofacetMaterial})
+    return (
+        color = RPR.RPR_MATERIAL_INPUT_COLOR,
+        normal = RPR.RPR_MATERIAL_INPUT_NORMAL,
+        ior = RPR.RPR_MATERIAL_INPUT_IOR,
+        roughness = RPR.RPR_MATERIAL_INPUT_ROUGHNESS
+    )
+end
+
+function material_info(::Type{TwosidedMaterial})
+    return (
+        frontface = RPR.RPR_MATERIAL_INPUT_FRONTFACE,
+        backface = RPR.RPR_MATERIAL_INPUT_BACKFACE,
+    )
+end
+
+function material_info(::Type{EmissiveMaterial})
+    return (color = RPR.RPR_MATERIAL_INPUT_COLOR,)
+end
+
+function material_info(::Type{RefractionMaterial})
+    return (
+        color = RPR.RPR_MATERIAL_INPUT_COLOR,
+        normal = RPR.RPR_MATERIAL_INPUT_NORMAL,
+        ior = RPR.RPR_MATERIAL_INPUT_IOR,
+        caustics = RPR.RPR_MATERIAL_INPUT_CAUSTICS
+    )
+end
+
+function material_info(::Type{ReflectionMaterial})
+    return (
+        color = RPR.RPR_MATERIAL_INPUT_COLOR,
+        normal = RPR.RPR_MATERIAL_INPUT_NORMAL,
+    )
+end
+
+function material_field_info()
+    f01 = (Float32, (0, 1))
+    Dict(
+        RPR.RPR_MATERIAL_INPUT_COLOR => RGB,
+        RPR.RPR_MATERIAL_INPUT_COLOR0 => Material,
+        RPR.RPR_MATERIAL_INPUT_COLOR1 => Material,
+        RPR.RPR_MATERIAL_INPUT_NORMAL => Vec3,
+        RPR.RPR_MATERIAL_INPUT_UV => Vec2,
+        RPR.RPR_MATERIAL_INPUT_DATA => Image,
+        RPR.RPR_MATERIAL_INPUT_ROUGHNESS => f01,
+        RPR.RPR_MATERIAL_INPUT_IOR => (Float32, (1,5)),
+        RPR.RPR_MATERIAL_INPUT_ROUGHNESS_X => f01,
+        RPR.RPR_MATERIAL_INPUT_ROUGHNESS_Y => f01,
+        RPR.RPR_MATERIAL_INPUT_ROTATION => f01,
+        RPR.RPR_MATERIAL_INPUT_WEIGHT => f01,
+        RPR.RPR_MATERIAL_INPUT_OP => RPR.rpr_material_node_arithmetic_operation,
+        # RPR.RPR_MATERIAL_INPUT_INVEC => ,
+        # RPR.RPR_MATERIAL_INPUT_UV_SCALE => ,
+        # RPR.RPR_MATERIAL_INPUT_VALUE => ,
+        RPR.RPR_MATERIAL_INPUT_REFLECTANCE => f01,
+        RPR.RPR_MATERIAL_INPUT_SCALE => f01,
+        RPR.RPR_MATERIAL_INPUT_SCATTERING => RGBA,
+        RPR.RPR_MATERIAL_INPUT_ABSORBTION => RGBA,
+        RPR.RPR_MATERIAL_INPUT_EMISSION => RGBA,
+        RPR.RPR_MATERIAL_INPUT_G => (Float32, (-1, 1)), #	Forward or back scattering.
+        RPR.RPR_MATERIAL_INPUT_MULTISCATTER => Bool,
+
+        RPR.RPR_MATERIAL_INPUT_COLOR2 => RGBA,
+        RPR.RPR_MATERIAL_INPUT_COLOR3 => RGBA,
+        RPR.RPR_MATERIAL_INPUT_ANISOTROPIC => (Float32, (-1, 1)), # amount forwards/backward
+        RPR.RPR_MATERIAL_INPUT_FRONTFACE => Material,
+        RPR.RPR_MATERIAL_INPUT_BACKFACE => Material,
+        # RPR.RPR_MATERIAL_INPUT_ORIGIN => ,
+        # RPR.RPR_MATERIAL_INPUT_ZAXIS => ,
+        # RPR.RPR_MATERIAL_INPUT_XAXIS => ,
+        # RPR.RPR_MATERIAL_INPUT_THRESHOLD => ,
+        # RPR.RPR_MATERIAL_INPUT_OFFSET => ,
+        # RPR.RPR_MATERIAL_INPUT_UV_TYPE => ,
+        # RPR.RPR_MATERIAL_INPUT_RADIUS => ,
+        # RPR.RPR_MATERIAL_INPUT_SIDE => ,
+        RPR.RPR_MATERIAL_INPUT_CAUSTICS => Bool,
+        RPR.RPR_MATERIAL_INPUT_TRANSMISSION_COLOR => RGBA,
+        RPR.RPR_MATERIAL_INPUT_THICKNESS => f01,
+        # RPR.RPR_MATERIAL_INPUT_0 => ,
+        # RPR.RPR_MATERIAL_INPUT_1 => ,
+        # RPR.RPR_MATERIAL_INPUT_2 => ,
+        # RPR.RPR_MATERIAL_INPUT_3 => ,
+        # RPR.RPR_MATERIAL_INPUT_4 => ,
+        RPR.RPR_MATERIAL_INPUT_SCHLICK_APPROXIMATION => Float32,
+        # RPR.RPR_MATERIAL_INPUT_APPLYSURFACE => ,
+        # RPR.RPR_MATERIAL_INPUT_TANGENT => ,
+        # RPR.RPR_MATERIAL_INPUT_DISTRIBUTION => ,
+        # RPR.RPR_MATERIAL_INPUT_BASE => ,
+        # RPR.RPR_MATERIAL_INPUT_TINT => ,
+        # RPR.RPR_MATERIAL_INPUT_EXPONENT => ,
+        # RPR.RPR_MATERIAL_INPUT_AMPLITUDE => ,
+        # RPR.RPR_MATERIAL_INPUT_PIVOT => ,
+        # RPR.RPR_MATERIAL_INPUT_POSITION => ,
+        # RPR.RPR_MATERIAL_INPUT_AMOUNT => ,
+        # RPR.RPR_MATERIAL_INPUT_AXIS => ,
+        # RPR.RPR_MATERIAL_INPUT_LUMACOEFF => ,
+        # RPR.RPR_MATERIAL_INPUT_REFLECTIVITY => ,
+        # RPR.RPR_MATERIAL_INPUT_EDGE_COLOR => ,
+        # RPR.RPR_MATERIAL_INPUT_VIEW_DIRECTION => ,
+        # RPR.RPR_MATERIAL_INPUT_INTERIOR => ,
+        # RPR.RPR_MATERIAL_INPUT_OCTAVES => ,
+        # RPR.RPR_MATERIAL_INPUT_LACUNARITY => ,
+        # RPR.RPR_MATERIAL_INPUT_DIMINISH => ,
+        # RPR.RPR_MATERIAL_INPUT_WRAP_U => ,
+        # RPR.RPR_MATERIAL_INPUT_WRAP_V => ,
+        # RPR.RPR_MATERIAL_INPUT_WRAP_W => ,
+        # RPR.RPR_MATERIAL_INPUT_5 => ,
+        # RPR.RPR_MATERIAL_INPUT_6 => ,
+        # RPR.RPR_MATERIAL_INPUT_7 => ,
+        # RPR.RPR_MATERIAL_INPUT_8 => ,
+        # RPR.RPR_MATERIAL_INPUT_9 => ,
+        # RPR.RPR_MATERIAL_INPUT_10 => ,
+        # RPR.RPR_MATERIAL_INPUT_11 => ,
+        # RPR.RPR_MATERIAL_INPUT_12 => ,
+        # RPR.RPR_MATERIAL_INPUT_13 => ,
+        # RPR.RPR_MATERIAL_INPUT_14 => ,
+        # RPR.RPR_MATERIAL_INPUT_15 => ,
+        # RPR.RPR_MATERIAL_INPUT_DIFFUSE_RAMP => ,
+        # RPR.RPR_MATERIAL_INPUT_SHADOW => ,
+        # RPR.RPR_MATERIAL_INPUT_MID => ,
+        # RPR.RPR_MATERIAL_INPUT_HIGHLIGHT => ,
+        # RPR.RPR_MATERIAL_INPUT_POSITION1 => ,
+        # RPR.RPR_MATERIAL_INPUT_POSITION2 => ,
+        # RPR.RPR_MATERIAL_INPUT_RANGE1 => ,
+        # RPR.RPR_MATERIAL_INPUT_RANGE2 => ,
+        # RPR.RPR_MATERIAL_INPUT_INTERPOLATION => ,
+        # RPR.RPR_MATERIAL_INPUT_RANDOMNESS => ,
+        # RPR.RPR_MATERIAL_INPUT_DIMENSION => ,
+        # RPR.RPR_MATERIAL_INPUT_OUTTYPE => ,
+        # RPR.RPR_MATERIAL_INPUT_DENSITY => ,
+        # RPR.RPR_MATERIAL_INPUT_DENSITYGRID => ,
+        # RPR.RPR_MATERIAL_INPUT_DISPLACEMENT => ,
+        # RPR.RPR_MATERIAL_INPUT_TEMPERATURE => ,
+        # RPR.RPR_MATERIAL_INPUT_KELVIN => ,
+        RPR.RPR_MATERIAL_INPUT_UBER_DIFFUSE_COLOR => RGB,
+        RPR.RPR_MATERIAL_INPUT_UBER_DIFFUSE_WEIGHT => RGB,
+        RPR.RPR_MATERIAL_INPUT_UBER_DIFFUSE_ROUGHNESS => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_DIFFUSE_NORMAL => Vec3f,
+        RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_COLOR => RGB,
+        RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_WEIGHT => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_ROUGHNESS => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_ANISOTROPY => (Float32, (-1, 1)),
+        RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_ANISOTROPY_ROTATION => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_MODE => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_IOR => (Float32, (1, 5)),
+        RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_METALNESS => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_NORMAL => Vec3f,
+        RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_DIELECTRIC_REFLECTANCE => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_COLOR => RGB,
+        RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_WEIGHT => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_ROUGHNESS => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_IOR => (Float32, (1, 5)),
+        RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_NORMAL => Vec3f,
+        RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_THIN_SURFACE => Bool,
+        RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_ABSORPTION_COLOR => RGB,
+        RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_ABSORPTION_DISTANCE => Float32, # soft 0-10
+        RPR.RPR_MATERIAL_INPUT_UBER_REFRACTION_CAUSTICS => Bool,
+        RPR.RPR_MATERIAL_INPUT_UBER_COATING_COLOR => RGB,
+        RPR.RPR_MATERIAL_INPUT_UBER_COATING_WEIGHT => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_COATING_ROUGHNESS => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_COATING_MODE => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_COATING_IOR => (Float32, (1, 5)),
+        RPR.RPR_MATERIAL_INPUT_UBER_COATING_METALNESS => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_COATING_NORMAL => Vec3f,
+        RPR.RPR_MATERIAL_INPUT_UBER_COATING_TRANSMISSION_COLOR => RGB,
+        RPR.RPR_MATERIAL_INPUT_UBER_COATING_THICKNESS => Float32, # soft 0-10
+        RPR.RPR_MATERIAL_INPUT_UBER_SHEEN => RGB,
+        RPR.RPR_MATERIAL_INPUT_UBER_SHEEN_TINT => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_SHEEN_WEIGHT => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_EMISSION_COLOR => RGB,
+        RPR.RPR_MATERIAL_INPUT_UBER_EMISSION_WEIGHT => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_EMISSION_MODE => Bool,
+        RPR.RPR_MATERIAL_INPUT_UBER_TRANSPARENCY => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_SSS_SCATTER_COLOR => RGB,
+        RPR.RPR_MATERIAL_INPUT_UBER_SSS_SCATTER_DISTANCE => Vec3f, # soft 0-10
+        RPR.RPR_MATERIAL_INPUT_UBER_SSS_SCATTER_DIRECTION => (Float32, (-1, 1)),
+        RPR.RPR_MATERIAL_INPUT_UBER_SSS_WEIGHT => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_SSS_MULTISCATTER => Bool,
+        RPR.RPR_MATERIAL_INPUT_UBER_BACKSCATTER_WEIGHT => f01,
+        RPR.RPR_MATERIAL_INPUT_UBER_BACKSCATTER_COLOR => RGB,
+        # RPR.RPR_MATERIAL_INPUT_ADDRESS => ,
+        # RPR.RPR_MATERIAL_INPUT_TYPE => ,
+        # RPR.RPR_MATERIAL_INPUT_UBER_FRESNEL_SCHLICK_APPROXIMATION => ,
+    )
 end

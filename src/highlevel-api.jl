@@ -69,15 +69,30 @@ function Context(api_version, pluginIDs, creation_flags)
     return Context(api_version, pluginIDs, length(pluginIDs), creation_flags, C_NULL, C_NULL)
 end
 
+const ACTIVE_CONTEXT = Base.RefValue{Context}()
+
 """
-Empty constructor, defaults to using opencl and the GPU0
+    Context()
+Empty constructor, defaults to using opencl, GPU0 and Tahoe as the rendering plugin.
+
+* `resource::rpr_creation_flags_t` = RPR_CREATION_FLAGS_ENABLE_GPU0
+* plugin = RadeonProRender_jll.libTahoe64, can use libNorthstar64 or Hybrid or HybridPro. Everything is tested with libTahoe, which seems to be the most stable. `libNorthstar64` also seems to be working but documentation on it is almost non existing. It seems to be AMDs ray tracer, using Vulkan/Directx and AMDs hardware ray tracing acceleration on new AMD GPUs.
+* singleton = true, set to true, to only allow one context at the same time. This is useful, to immediately free all old resources when creating a new context, instead of relying on the GC.
 """
-function Context(; resource=RPR_CREATION_FLAGS_ENABLE_GPU0, plugin = libTahoe64)
+function Context(; resource=RPR_CREATION_FLAGS_ENABLE_GPU0, plugin = libTahoe64, singleton=true)
+
     id = rprRegisterPlugin(plugin)
     @assert(id != -1)
     plugin_ids = [id]
     ctx = Context(RPR_API_VERSION, plugin_ids, resource)
     rprContextSetActivePlugin(ctx, id)
+    if singleton
+        if isassigned(ACTIVE_CONTEXT)
+            @info("releasing old context")
+            release(ACTIVE_CONTEXT[])
+        end
+        ACTIVE_CONTEXT[] = ctx
+    end
     return ctx
 end
 
