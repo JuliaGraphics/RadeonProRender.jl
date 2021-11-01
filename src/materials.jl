@@ -162,6 +162,7 @@ function material_info(::Type{UberMaterial})
         sheen = RPR.RPR_MATERIAL_INPUT_UBER_SHEEN,
         sheen_tint = RPR.RPR_MATERIAL_INPUT_UBER_SHEEN_TINT,
         sheen_weight = RPR.RPR_MATERIAL_INPUT_UBER_SHEEN_WEIGHT,
+
         emission_color = RPR.RPR_MATERIAL_INPUT_UBER_EMISSION_COLOR,
         emission_weight = RPR.RPR_MATERIAL_INPUT_UBER_EMISSION_WEIGHT,
         emission_mode = RPR.RPR_MATERIAL_INPUT_UBER_EMISSION_MODE,

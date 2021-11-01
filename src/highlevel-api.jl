@@ -427,11 +427,15 @@ Sets the scale for a SkyLight
 """
 setscale!(skylight::SkyLight, scale::Number) = rprSkyLightSetScale(skylight, scale)
 
-function set!(context::Context, parameter::rpr_context_info, f::Number)
+function set!(context::Context, parameter::rpr_context_info, f::AbstractFloat)
     return rprContextSetParameterByKey1f(context, parameter, f)
 end
 
+function set!(context::Context, parameter::rpr_context_info, ui::Integer)
+    return rprContextSetParameterByKey1u(context, parameter, ui)
+end
 function set!(context::Context, parameter::rpr_context_info, ui)
+    # overload for enums
     return rprContextSetParameterByKey1u(context, parameter, ui)
 end
 
