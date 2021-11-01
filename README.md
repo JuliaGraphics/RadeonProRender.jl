@@ -36,6 +36,3 @@ Pkg.checkout("GLVisualize")
 (slow, because of my slow hardware)
 ![surface mesh](https://github.com/JuliaGraphics/RadeonProRender.jl/blob/master/docs/interactive.gif?raw=true)
 
-#TODO
-
-Volumes, wrap more of FireRenders API, integrate seamlessly into GLVisualize
