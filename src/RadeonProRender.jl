@@ -12,6 +12,7 @@ include("LibRPR.jl")
 using .RPR
 
 include("highlevel-api.jl")
+include("materials.jl")
 
 export set!
 export setradiantpower!
