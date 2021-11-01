@@ -244,7 +244,6 @@ function Shape(context::Context, vertices, normals, faces, uvs)
     uvraw = reinterpret(Float32, map(uv -> Vec2f(1-uv[2], 1-uv[1]), uvs))
     iraw = reinterpret(rpr_int, decompose(TriangleFace{OffsetInteger{-1,rpr_int}}, faces))
     facelens = fill(rpr_int(3), length(faces))
-
     foreach(i-> checkbounds(vertices, i + 1), iraw)
 
     rpr_mesh = rprContextCreateMesh(context, vraw, length(vertices), sizeof(Point3f), nraw, length(normals),
