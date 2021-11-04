@@ -4,6 +4,7 @@ using GeometryBasics
 using Colors
 using CEnum
 using RadeonProRender_jll
+using Printf
 
 assetpath(paths...) = normpath(joinpath(@__DIR__, "..", "assets", paths...))
 

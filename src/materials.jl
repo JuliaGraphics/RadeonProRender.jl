@@ -2,6 +2,7 @@ abstract type RPRMaterial end
 
 struct Material{Typ} <: RPRMaterial
     node::MaterialNode
+    parameters::Dict{Symbol, Any}
 end
 
 const ALL_MATERIALS = [
@@ -83,24 +84,52 @@ for (name, enum) in ALL_MATERIALS
     @eval const $(Symbol(name, :Material)) = Material{$(enum)}
 end
 
-function (::Type{Material{Typ}})(matsys::MaterialSystem) where Typ
-    return Material{Typ}(MaterialNode(matsys, Typ))
+function snake2camel(str)
+    str = replace(lowercase(str), r"_(.)" => r-> uppercase(r[2]))
+    return uppercase(str[1]) * str[2:end]
+end
+
+function Base.show(io::IO, material::Material{Typ}) where Typ
+    typ_str = snake2camel(replace(string(Typ), "RPR_MATERIAL_NODE_" => ""))
+    println(io, typ_str, "Material:")
+    params = getfield(material, :parameters)
+    maxlen = maximum(x-> length(string(x)), keys(params)) + 1
+    fstr = Printf.Format("    %-$(maxlen)s %s\n")
+    for (k, v) in params
+        Printf.format(io, fstr, string(k, ":"), v)
+    end
+end
+
+function (::Type{Material{Typ}})(matsys::MaterialSystem; kw...) where Typ
+    mat = Material{Typ}(MaterialNode(matsys, Typ), Dict{Symbol, Any}(kw))
+    for (key, value) in kw
+        setproperty!(mat, key, value)
+    end
+    return mat
 end
 
 function Base.setproperty!(material::T, field::Symbol, value::Vec4) where T <: Material
     set!(material.node, field2enum(T, field), value...)
+    getfield(material, :parameters)[field] = value
+    return
 end
 
 function Base.setproperty!(material::T, field::Symbol, value::Vec3) where T <: Material
     set!(material.node, field2enum(T, field), value..., 0.0)
+    getfield(material, :parameters)[field] = value
+    return
 end
 
 function Base.setproperty!(material::T, field::Symbol, value) where T <: Material
     set!(material.node, field2enum(T, field), value)
+    getfield(material, :parameters)[field] = value
+    return
 end
 
 function Base.setproperty!(material::T, field::Symbol, c::Color3) where T <: Material
     set!(material.node, field2enum(T, field), red(c), green(c), blue(c), 0.0)
+    getfield(material, :parameters)[field] = c
+    return
 end
 
 function Base.setproperty!(material::T, field::Symbol, value::Nothing) where T <: Material
@@ -419,4 +448,13 @@ function material_field_info()
         # RPR.RPR_MATERIAL_INPUT_TYPE => ,
         # RPR.RPR_MATERIAL_INPUT_UBER_FRESNEL_SCHLICK_APPROXIMATION => ,
     )
+end
+
+
+function ShinyMetal(;
+        color = to_color(:gray),
+        roughness = Vec3f(0.01),
+        ior = Vec3f(1.5),
+    )
+
 end
