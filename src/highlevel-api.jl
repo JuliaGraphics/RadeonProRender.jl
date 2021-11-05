@@ -213,6 +213,7 @@ function set!(shape::Shape, volume::HeteroVolume)
     rprShapeSetHeteroVolume(shape, volume)
 end
 
+
 """
 Abstract AbstractLight Type
 """
@@ -552,7 +553,6 @@ end
 function Base.push!(scene::Scene, curve::Curve)
     return rprSceneAttachCurve(scene, curve)
 end
-
 
 function Base.push!(scene::Scene, light::AbstractLight)
     return rprSceneAttachLight(scene, light)

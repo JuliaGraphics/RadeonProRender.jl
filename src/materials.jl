@@ -5,6 +5,15 @@ struct Material{Typ} <: RPRMaterial
     parameters::Dict{Symbol, Any}
 end
 
+function set!(shape::Shape, material::Material)
+    set!(shape, material.node)
+end
+
+function set!(m::MaterialNode, input::RPR.rpr_material_node_input, m2::Material)
+    set!(m, input, m2.node)
+end
+
+
 const ALL_MATERIALS = [
     :Diffuse => RPR.RPR_MATERIAL_NODE_DIFFUSE,
     :Microfacet => RPR.RPR_MATERIAL_NODE_MICROFACET,
@@ -249,6 +258,15 @@ function material_info(::Type{MicrofacetAnisotropicReflectionMaterial})
     )
 end
 
+function material_info(::Type{PhongMaterial})
+    return (
+        color = RPR.RPR_MATERIAL_INPUT_COLOR,
+        normal = RPR.RPR_MATERIAL_INPUT_NORMAL,
+        ior = RPR.RPR_MATERIAL_INPUT_IOR,
+        roughness = RPR.RPR_MATERIAL_INPUT_ROUGHNESS,
+    )
+end
+
 function material_info(::Type{BlendMaterial})
     return (
         color1 = RPR.RPR_MATERIAL_INPUT_COLOR0,
@@ -296,6 +314,19 @@ function material_info(::Type{ReflectionMaterial})
     return (
         color = RPR.RPR_MATERIAL_INPUT_COLOR,
         normal = RPR.RPR_MATERIAL_INPUT_NORMAL,
+    )
+end
+
+function material_info(::Type{TransparentMaterial})
+    return (
+        color = RPR.RPR_MATERIAL_INPUT_COLOR,
+    )
+end
+
+function material_info(::Type{ImageTextureMaterial})
+    return (
+        data = RPR.RPR_MATERIAL_INPUT_DATA,
+        uv = RPR.RPR_MATERIAL_INPUT_UV
     )
 end
 
@@ -450,11 +481,86 @@ function material_field_info()
     )
 end
 
+to_color(c::Colorant) = convert(RGBA{Float32}, c)
+to_color(c::Union{Symbol, String}) = parse(RGBA{Float32}, string(c))
 
-function ShinyMetal(;
+function LayerMaterial(matsys, a, b; weight=Vec3f(0.5), transmission_color=nothing, thickness=Vec3f(0.1))
+    return BlendMaterial(
+        matsys,
+        color1 = a.node,
+        color2 = b.node,
+        weight = weight,
+        transmission_color = transmission_color,
+        thickness = thickness,
+    )
+end
+
+
+function ShinyMetal(matsys; kw...)
+    return MicrofacetMaterial(matsys,
+        color = to_color(:white),
+        roughness = Vec3f(0.0),
+        ior = Vec3f(1.5), # Aluminium
+        kw...
+    )
+end
+
+function Chrome(matsys; kw...)
+    return MicrofacetMaterial(matsys,
         color = to_color(:gray),
         roughness = Vec3f(0.01),
-        ior = Vec3f(1.5),
+        ior = Vec3f(1.390), # Aluminium
+        kw...
     )
+end
 
+
+function Plastic(matsys; kw...)
+    return UberMaterial(matsys;
+        color = to_color(:yellow),
+        reflection_color =Vec4f(1),
+        reflection_weight =Vec4f(1),
+        reflection_roughness =Vec4f(0),
+        reflection_anisotropy =Vec4f(0),
+        reflection_anisotropy_rotation =Vec4f(0),
+        reflection_metalness = Vec4f(0),
+        reflection_ior = Vec4f(1.5),
+        refraction_weight =Vec4f(0),
+        coating_weight =Vec4f(0),
+        sheen_weight =Vec4f(0),
+        emission_weight =Vec3f(0),
+        transparency =Vec4f(0),
+        reflection_mode = UInt(RPR.RPR_UBER_MATERIAL_IOR_MODE_PBR),
+        emission_mode = UInt(RPR.RPR_UBER_MATERIAL_EMISSION_MODE_SINGLESIDED),
+        coating_mode = UInt(RPR.RPR_UBER_MATERIAL_IOR_MODE_PBR),
+        sss_multiscatter = false,
+        refraction_thin_surface = false,
+    )
+end
+
+function Glass(matsys; kw...)
+    return UberMaterial(matsys;
+        reflection_color = Vec4f(0.9),
+        reflection_weight = Vec4f(1.0),
+        reflection_roughness = Vec4f(0.0),
+        reflection_anisotropy = Vec4f(0.0),
+        reflection_anisotropy_rotation = Vec4f(0.0),
+        reflection_mode = 1,
+        reflection_ior = Vec4f(1.5),
+
+        refraction_color = Vec4f(0.9),
+        refraction_weight = Vec4f(1.0),
+        refraction_roughness = Vec4f(0.0),
+        refraction_ior = Vec4f(1.5),
+        refraction_thin_surface = false,
+        refraction_absorption_color = Vec4f(0.6, 0.8, 0.6, 0.0),
+        refraction_absorption_distance = Vec4f(150),
+        refraction_caustics = true,
+
+        coating_weight = Vec4f(0),
+        sheen_weight = Vec4f(0),
+        emission_weight = Vec4f(0),
+        transparency = Vec4f(0),
+        kw...
+    )
 end
