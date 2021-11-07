@@ -472,6 +472,10 @@ function set!(base::MaterialNode, parameter::rpr_material_node_input, color::Col
     return set!(base, parameter, comp1(c), comp2(c), comp3(c), alpha(c))
 end
 
+function set!(mat::MaterialNode, parameter::rpr_material_node_input, enum)
+    return set!(mat, parameter, UInt(enum))
+end
+
 function set!(shape::Shape, material::MaterialNode)
     return rprShapeSetMaterial(shape, material)
 end
