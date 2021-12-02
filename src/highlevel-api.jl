@@ -67,15 +67,30 @@ function Context(api_version, pluginIDs, creation_flags)
     return Context(api_version, pluginIDs, length(pluginIDs), creation_flags, C_NULL, C_NULL)
 end
 
+const ACTIVE_CONTEXT = Base.RefValue{Context}()
+
 """
-Empty constructor, defaults to using opencl and the GPU0
+    Context()
+Empty constructor, defaults to using opencl, GPU0 and Tahoe as the rendering plugin.
+
+* `resource::rpr_creation_flags_t` = RPR_CREATION_FLAGS_ENABLE_GPU0
+* plugin = RadeonProRender_jll.libTahoe64, can use libNorthstar64 or Hybrid or HybridPro. Everything is tested with libTahoe, which seems to be the most stable. `libNorthstar64` also seems to be working but documentation on it is almost non existing. It seems to be AMDs ray tracer, using Vulkan/Directx and AMDs hardware ray tracing acceleration on new AMD GPUs.
+* singleton = true, set to true, to only allow one context at the same time. This is useful, to immediately free all old resources when creating a new context, instead of relying on the GC.
 """
-function Context(; resource=RPR_CREATION_FLAGS_ENABLE_GPU0, plugin = libTahoe64)
+function Context(; resource=RPR_CREATION_FLAGS_ENABLE_GPU0, plugin = libTahoe64, singleton=true)
+
     id = rprRegisterPlugin(plugin)
     @assert(id != -1)
     plugin_ids = [id]
     ctx = Context(RPR_API_VERSION, plugin_ids, resource)
     rprContextSetActivePlugin(ctx, id)
+    if singleton
+        if isassigned(ACTIVE_CONTEXT)
+            @info("releasing old context")
+            release(ACTIVE_CONTEXT[])
+        end
+        ACTIVE_CONTEXT[] = ctx
+    end
     return ctx
 end
 
@@ -196,6 +211,7 @@ function set!(shape::Shape, volume::HeteroVolume)
     rprShapeSetHeteroVolume(shape, volume)
 end
 
+
 """
 Abstract AbstractLight Type
 """
@@ -235,6 +251,7 @@ function Shape(context::Context, vertices, normals, faces, uvs)
     f = decompose(TriangleFace{OffsetInteger{-1,rpr_int}}, faces)
     iraw = collect(reinterpret(rpr_int, f))
     facelens = fill(rpr_int(3), length(faces))
+<<<<<<< HEAD
 
     @assert eltype(vraw) == Point3f
     @assert eltype(nraw) == Vec3f
@@ -242,6 +259,9 @@ function Shape(context::Context, vertices, normals, faces, uvs)
 
     foreach(i -> checkbounds(vertices, i + 1), iraw)
     yield()
+=======
+    foreach(i-> checkbounds(vertices, i + 1), iraw)
+>>>>>>> 614e5e7e7847a0fcbc0bb72dad45d99a3e06231d
 
     rpr_mesh = rprContextCreateMesh(context, vraw, length(vertices), sizeof(Point3f), nraw, length(normals),
                                     sizeof(Vec3f), uvraw, length(uvs), sizeof(Vec2f), iraw, sizeof(rpr_int),
@@ -425,11 +445,15 @@ Sets the scale for a SkyLight
 """
 setscale!(skylight::SkyLight, scale::Number) = rprSkyLightSetScale(skylight, scale)
 
-function set!(context::Context, parameter::rpr_context_info, f::Number)
+function set!(context::Context, parameter::rpr_context_info, f::AbstractFloat)
     return rprContextSetParameterByKey1f(context, parameter, f)
 end
 
+function set!(context::Context, parameter::rpr_context_info, ui::Integer)
+    return rprContextSetParameterByKey1u(context, parameter, ui)
+end
 function set!(context::Context, parameter::rpr_context_info, ui)
+    # overload for enums
     return rprContextSetParameterByKey1u(context, parameter, ui)
 end
 
@@ -464,6 +488,10 @@ end
 function set!(base::MaterialNode, parameter::rpr_material_node_input, color::Colorant)
     c = RGBA{Float32}(color)
     return set!(base, parameter, comp1(c), comp2(c), comp3(c), alpha(c))
+end
+
+function set!(mat::MaterialNode, parameter::rpr_material_node_input, enum)
+    return set!(mat, parameter, UInt(enum))
 end
 
 function set!(shape::Shape, material::MaterialNode)
@@ -547,7 +575,6 @@ end
 function Base.push!(scene::Scene, curve::Curve)
     return rprSceneAttachCurve(scene, curve)
 end
-
 
 function Base.push!(scene::Scene, light::AbstractLight)
     return rprSceneAttachLight(scene, light)
