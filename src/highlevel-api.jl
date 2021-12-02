@@ -53,9 +53,7 @@ mutable struct Context <: RPRObject{rpr_context}
     objects::Base.IdSet{RPRObject}
     function Context(api_version, pluginIDs, pluginCount, creation_flags, props=C_NULL, cache_path=C_NULL)
         ptr = rprCreateContext(api_version, pluginIDs, pluginCount, creation_flags, props, cache_path)
-        ctx = new(ptr, Base.IdSet{RPRObject}())
-        finalizer(release, ctx)
-        return ctx
+        return new(ptr, Base.IdSet{RPRObject}())
     end
 end
 
@@ -220,26 +218,41 @@ function Shape(context::Context, meshlike; kw...)
     return Shape(context, v, n, fs, uv)
 end
 
+#=
+The yield + nospecialize somehow prevent some stack/memory corruption when run with `--check-bounds=yes`
+This is kind of magical and still under investigation.
+MWE:
+https://gist.github.com/SimonDanisch/475064ae102141554f65e926f3070630
+=#
+@nospecialize
 function Shape(context::Context, vertices, normals, faces, uvs)
     @assert length(vertices) == length(normals)
     @assert length(vertices) == length(uvs)
 
-    vraw = reinterpret(Float32, decompose(Point3f, vertices))
-    nraw = reinterpret(Float32, decompose(Vec3f, normals))
-    uvraw = reinterpret(Float32, map(uv -> Vec2f(1-uv[2], 1-uv[1]), uvs))
-    iraw = reinterpret(rpr_int, decompose(TriangleFace{OffsetInteger{-1,rpr_int}}, faces))
+    vraw = decompose(Point3f, vertices)
+    nraw = decompose(Vec3f, normals)
+    uvraw = map(uv -> Vec2f(1 - uv[2], 1 - uv[1]), uvs)
+    f = decompose(TriangleFace{OffsetInteger{-1,rpr_int}}, faces)
+    iraw = collect(reinterpret(rpr_int, f))
     facelens = fill(rpr_int(3), length(faces))
 
-    foreach(i-> checkbounds(vertices, i + 1), iraw)
+    @assert eltype(vraw) == Point3f
+    @assert eltype(nraw) == Vec3f
+    @assert eltype(uvraw) == Vec2f
+
+    foreach(i -> checkbounds(vertices, i + 1), iraw)
+    yield()
 
     rpr_mesh = rprContextCreateMesh(context, vraw, length(vertices), sizeof(Point3f), nraw, length(normals),
                                     sizeof(Vec3f), uvraw, length(uvs), sizeof(Vec2f), iraw, sizeof(rpr_int),
-                                    iraw, sizeof(rpr_int), iraw, sizeof(rpr_int),
-                                    facelens, length(faces))
-    shape = Shape(rpr_mesh, (vraw, nraw, uvraw, iraw, facelens))
+                                    iraw, sizeof(rpr_int), iraw, sizeof(rpr_int), facelens, length(faces))
+
+    jl_references = (vraw, nraw, uvraw, iraw, facelens)
+    shape = Shape(rpr_mesh, jl_references)
     push!(context.objects, shape)
     return shape
 end
+@specialize
 
 """
 Creating a shape from a shape is interpreted as creating an instance.
