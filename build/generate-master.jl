@@ -1,14 +1,15 @@
+using Clang
 using Clang.Generators
 
 cd(@__DIR__)
-
-include_dir = normpath(joinpath(@__DIR__, "RadeonProRenderSDK", "RadeonProRender", "inc"))
+# current version checked in is v2.2.9
+include_dir = normpath(joinpath(@__DIR__, "RadeonProRenderSDK", "inc"))
 # LIBCLANG_HEADERS are those headers to be wrapped.
 headers = joinpath.(include_dir, [
     "RadeonProRender_v2.h",
-    "RadeonProRender_GL.h",
-    "RadeonProRender_VK.h"
-]
+    # "RadeonProRender_GL.h",
+    # "RadeonProRender_VK.h"
+])
 
 # wrapper generator options
 options = load_options(joinpath(@__DIR__, "rpr.toml"))
@@ -56,4 +57,12 @@ end
 
 rewrite!(ctx.dag)
 
+quote
+    function check_error(error_code)
+        error_code == RPR_SUCCESS && return
+        return error("Error code returned: $(error_code)")
+    end
+end
+
+cd(@__DIR__)
 build!(ctx, BUILDSTAGE_PRINTING_ONLY)

@@ -53,9 +53,7 @@ mutable struct Context <: RPRObject{rpr_context}
     objects::Base.IdSet{RPRObject}
     function Context(api_version, pluginIDs, pluginCount, creation_flags, props=C_NULL, cache_path=C_NULL)
         ptr = rprCreateContext(api_version, pluginIDs, pluginCount, creation_flags, props, cache_path)
-        ctx = new(ptr, Base.IdSet{RPRObject}())
-        finalizer(release, ctx)
-        return ctx
+        return new(ptr, Base.IdSet{RPRObject}())
     end
 end
 
@@ -69,15 +67,30 @@ function Context(api_version, pluginIDs, creation_flags)
     return Context(api_version, pluginIDs, length(pluginIDs), creation_flags, C_NULL, C_NULL)
 end
 
+const ACTIVE_CONTEXT = Base.RefValue{Context}()
+
 """
-Empty constructor, defaults to using opencl and the GPU0
+    Context()
+Empty constructor, defaults to using opencl, GPU0 and Tahoe as the rendering plugin.
+
+* `resource::rpr_creation_flags_t` = RPR_CREATION_FLAGS_ENABLE_GPU0
+* plugin = RadeonProRender_jll.libTahoe64, can use libNorthstar64 or Hybrid or HybridPro. Everything is tested with libTahoe, which seems to be the most stable. `libNorthstar64` also seems to be working but documentation on it is almost non existing. It seems to be AMDs ray tracer, using Vulkan/Directx and AMDs hardware ray tracing acceleration on new AMD GPUs.
+* singleton = true, set to true, to only allow one context at the same time. This is useful, to immediately free all old resources when creating a new context, instead of relying on the GC.
 """
-function Context(; resource=RPR_CREATION_FLAGS_ENABLE_GPU0, plugin = libTahoe64)
+function Context(; resource=RPR_CREATION_FLAGS_ENABLE_GPU0, plugin = libTahoe64, singleton=true)
+
     id = rprRegisterPlugin(plugin)
     @assert(id != -1)
     plugin_ids = [id]
     ctx = Context(RPR_API_VERSION, plugin_ids, resource)
     rprContextSetActivePlugin(ctx, id)
+    if singleton
+        if isassigned(ACTIVE_CONTEXT)
+            @info("releasing old context")
+            release(ACTIVE_CONTEXT[])
+        end
+        ACTIVE_CONTEXT[] = ctx
+    end
     return ctx
 end
 
@@ -141,6 +154,32 @@ function VoxelGrid(context, values::AbstractArray{<: Number, 3})
     return VoxelGrid(context, size(values)..., values, indices)
 end
 
+mutable struct Curve <: RPRObject{rpr_curve}
+    pointer::rpr_curve
+    referenced_memory
+end
+
+function Curve(context::Context, control_points::AbstractVector,
+                indices::AbstractVector, radius::AbstractVector,
+                uvs::AbstractVector, segments_per_curve::AbstractVector,
+                creationFlag_tapered=0)
+
+    curve_ref = Ref{rpr_curve}()
+    control_pointsf0 = convert(Vector{Point3f}, control_points)
+    indices_i = convert(Vector{RPR.rpr_int}, indices)
+    segments_per_curve_i = convert(Vector{RPR.rpr_int}, segments_per_curve)
+    uvs_f0 = convert(Vector{Vec2f}, uvs)
+    radiusf0 = convert(Vector{Float32}, radius)
+    rprContextCreateCurve(context, curve_ref,
+        length(control_pointsf0), control_pointsf0, sizeof(Point3f),
+        length(indices_i), length(segments_per_curve_i), indices_i, radiusf0, uvs_f0, segments_per_curve_i,
+        creationFlag_tapered
+    )
+    curve = Curve(curve_ref[], (control_pointsf0, indices_i, segments_per_curve_i, uvs_f0, radiusf0))
+    push!(context.objects, curve)
+    return curve
+end
+
 @rpr_wrapper_type HeteroVolume rpr_hetero_volume rprContextCreateHeteroVolume (context,) RPRObject
 
 function set_albedo_lookup!(volume::HeteroVolume, colors::AbstractVector)
@@ -172,6 +211,7 @@ function set!(shape::Shape, volume::HeteroVolume)
     rprShapeSetHeteroVolume(shape, volume)
 end
 
+
 """
 Abstract AbstractLight Type
 """
@@ -194,20 +234,41 @@ function Shape(context::Context, meshlike; kw...)
     return Shape(context, v, n, fs, uv)
 end
 
+#=
+The yield + nospecialize somehow prevent some stack/memory corruption when run with `--check-bounds=yes`
+This is kind of magical and still under investigation.
+MWE:
+https://gist.github.com/SimonDanisch/475064ae102141554f65e926f3070630
+=#
+@nospecialize
 function Shape(context::Context, vertices, normals, faces, uvs)
-    vraw = reinterpret(Float32, decompose(Point3f, vertices))
-    nraw = reinterpret(Float32, decompose(Vec3f, normals))
-    uvraw = reinterpret(Float32, map(uv -> Vec2f(1.0 - uv[2], 1.0 - uv[1]), uvs))
-    iraw = reinterpret(rpr_int, decompose(TriangleFace{OffsetInteger{-1,rpr_int}}, faces))
+    @assert length(vertices) == length(normals)
+    @assert length(vertices) == length(uvs)
+
+    vraw = decompose(Point3f, vertices)
+    nraw = decompose(Vec3f, normals)
+    uvraw = map(uv -> Vec2f(1 - uv[2], 1 - uv[1]), uvs)
+    f = decompose(TriangleFace{OffsetInteger{-1,rpr_int}}, faces)
+    iraw = collect(reinterpret(rpr_int, f))
     facelens = fill(rpr_int(3), length(faces))
+
+    @assert eltype(vraw) == Point3f
+    @assert eltype(nraw) == Vec3f
+    @assert eltype(uvraw) == Vec2f
+
+    foreach(i -> checkbounds(vertices, i + 1), iraw)
+    yield()
+
     rpr_mesh = rprContextCreateMesh(context, vraw, length(vertices), sizeof(Point3f), nraw, length(normals),
                                     sizeof(Vec3f), uvraw, length(uvs), sizeof(Vec2f), iraw, sizeof(rpr_int),
-                                    iraw, sizeof(rpr_int), iraw, sizeof(rpr_int),
-                                    facelens, length(faces))
-    shape = Shape(rpr_mesh, (vraw, nraw, uvraw, iraw))
+                                    iraw, sizeof(rpr_int), iraw, sizeof(rpr_int), facelens, length(faces))
+
+    jl_references = (vraw, nraw, uvraw, iraw, facelens)
+    shape = Shape(rpr_mesh, jl_references)
     push!(context.objects, shape)
     return shape
 end
+@specialize
 
 """
 Creating a shape from a shape is interpreted as creating an instance.
@@ -245,6 +306,15 @@ function FrameBuffer(context::Context, c::Type{C}, dims::NTuple{2,Int}) where {C
     frame_buffer = FrameBuffer(rprContextCreateFrameBuffer(context, fmt, desc))
     push!(context.objects, frame_buffer)
     return frame_buffer
+end
+
+function get_data(framebuffer::FrameBuffer)
+    framebuffer_size = Ref{Cint}()
+    RPR.rprFrameBufferGetInfo(framebuffer, RPR.RPR_FRAMEBUFFER_DATA, 0 , C_NULL, framebuffer_size)
+    data = zeros(RGBA{Float32}, framebuffer_size[] ÷ sizeof(RGBA{Float32}))
+    @assert sizeof(data) == framebuffer_size[]
+    RPR.rprFrameBufferGetInfo(framebuffer, RPR.RPR_FRAMEBUFFER_DATA, framebuffer_size[], data , C_NULL)
+    return data
 end
 
 """
@@ -285,7 +355,7 @@ Automatically creates an Image from a matrix of colors
 """
 function Image(context::Context, image::Array{T,N}) where {T,N}
     desc_ref = Ref(rpr_image_desc(image))
-    img = Image(rprContextCreateImage(context, rpr_image_format(image), desc_ref, image, (image, desc_ref)))
+    img = Image(rprContextCreateImage(context, rpr_image_format(image), desc_ref, image), (image, desc_ref))
     push!(context.objects, img)
     return img
 end
@@ -371,11 +441,15 @@ Sets the scale for a SkyLight
 """
 setscale!(skylight::SkyLight, scale::Number) = rprSkyLightSetScale(skylight, scale)
 
-function set!(context::Context, parameter::rpr_context_info, f::Number)
+function set!(context::Context, parameter::rpr_context_info, f::AbstractFloat)
     return rprContextSetParameterByKey1f(context, parameter, f)
 end
 
+function set!(context::Context, parameter::rpr_context_info, ui::Integer)
+    return rprContextSetParameterByKey1u(context, parameter, ui)
+end
 function set!(context::Context, parameter::rpr_context_info, ui)
+    # overload for enums
     return rprContextSetParameterByKey1u(context, parameter, ui)
 end
 
@@ -412,8 +486,16 @@ function set!(base::MaterialNode, parameter::rpr_material_node_input, color::Col
     return set!(base, parameter, comp1(c), comp2(c), comp3(c), alpha(c))
 end
 
+function set!(mat::MaterialNode, parameter::rpr_material_node_input, enum)
+    return set!(mat, parameter, UInt(enum))
+end
+
 function set!(shape::Shape, material::MaterialNode)
     return rprShapeSetMaterial(shape, material)
+end
+
+function set!(shape::Curve, material::MaterialNode)
+    return rprCurveSetMaterial(shape, material)
 end
 
 function set!(material::MaterialNode, parameter::rpr_material_node_input, material2::MaterialNode)
@@ -484,6 +566,10 @@ Pushes objects to Scene
 """
 function Base.push!(scene::Scene, shape::Shape)
     return rprSceneAttachShape(scene, shape)
+end
+
+function Base.push!(scene::Scene, curve::Curve)
+    return rprSceneAttachCurve(scene, curve)
 end
 
 function Base.push!(scene::Scene, light::AbstractLight)
