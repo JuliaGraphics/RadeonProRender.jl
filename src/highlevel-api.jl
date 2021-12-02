@@ -251,7 +251,6 @@ function Shape(context::Context, vertices, normals, faces, uvs)
     f = decompose(TriangleFace{OffsetInteger{-1,rpr_int}}, faces)
     iraw = collect(reinterpret(rpr_int, f))
     facelens = fill(rpr_int(3), length(faces))
-<<<<<<< HEAD
 
     @assert eltype(vraw) == Point3f
     @assert eltype(nraw) == Vec3f
@@ -259,9 +258,6 @@ function Shape(context::Context, vertices, normals, faces, uvs)
 
     foreach(i -> checkbounds(vertices, i + 1), iraw)
     yield()
-=======
-    foreach(i-> checkbounds(vertices, i + 1), iraw)
->>>>>>> 614e5e7e7847a0fcbc0bb72dad45d99a3e06231d
 
     rpr_mesh = rprContextCreateMesh(context, vraw, length(vertices), sizeof(Point3f), nraw, length(normals),
                                     sizeof(Vec3f), uvraw, length(uvs), sizeof(Vec2f), iraw, sizeof(rpr_int),
