@@ -11,11 +11,82 @@ function Base.unsafe_convert(::Type{Ptr{Nothing}}, object::RPRObject{T}) where {
 end
 
 function release(object::RPRObject)
+    remove_from_context!(object.parent, object)
     if object.pointer != C_NULL
         rprObjectDelete(object)
     end
     object.pointer = C_NULL
+    if hasproperty(object, :referenced_memory)
+        object.referenced_memory = nothing
+    end
     return
+end
+
+@enum PluginType Tahoe Northstar Hybrid HybridPro
+
+using Libdl
+
+function plugin_path(plugin::PluginType)
+    if plugin == Tahoe
+        return RadeonProRender_jll.libTahoe64
+    elseif plugin == Northstar
+        return RadeonProRender_jll.libNorthstar64
+    end
+    Sys.isapple() && error("Only Tahoe and Northstar are supported")
+    path_base = dirname(RadeonProRender_jll.libNorthstar64)
+    # Hybrid isn't currently part of Binarybuilder products, since its missing on Apple
+    if plugin == Hybrid
+        return joinpath(path_base, "Hybrid.$(Libdl.dlext)")
+    elseif plugin == HybridPro
+        return joinpath(path_base, "HybridPro.$(Libdl.dlext)")
+    end
+end
+
+mutable struct Context <: RPRObject{rpr_context}
+    pointer::rpr_context
+    objects::Base.IdSet{RPRObject}
+    plugin::PluginType
+    function Context(plugin::PluginType, creation_flags, singleton=true, props=C_NULL, cache_path=C_NULL)
+        id = RPR.rprRegisterPlugin(plugin_path(plugin))
+        @assert(id != -1)
+        plugin_ids = [id]
+        ctx_ptr = RPR.rprCreateContext(RPR.RPR_API_VERSION, plugin_ids, 1, creation_flags, props, cache_path)
+        RPR.rprContextSetActivePlugin(ctx_ptr, id)
+        ctx = new(ctx_ptr, Base.IdSet{RPRObject}(), plugin)
+        if singleton
+            if isassigned(ACTIVE_CONTEXT)
+                @info("releasing old context")
+                release(ACTIVE_CONTEXT[])
+            end
+            ACTIVE_CONTEXT[] = ctx
+        end
+        return ctx
+    end
+end
+
+const ACTIVE_CONTEXT = Base.RefValue{Context}()
+
+get_context(object::RPRObject) = get_context(object.parent)
+get_context(context::Context) = context
+
+function add_to_context!(contextlike::RPRObject, object::RPRObject)
+    return push!(get_context(contextlike).objects, object)
+end
+
+function remove_from_context!(contextlike::RPRObject, object::RPRObject)
+    return delete!(get_context(contextlike).objects, object)
+end
+
+"""
+    Context()
+Empty constructor, defaults to using opencl, GPU0 and Tahoe as the rendering plugin.
+
+* `resource::rpr_creation_flags_t = RPR_CREATION_FLAGS_ENABLE_GPU0`
+* `plugin::PluginType=Northstar`: can be Tahoe, Northstar or Hybrid or HybridPro. Everything is tested with Northstar, which is a complete rewrite of Tahoe. Hybrid is for real time rendering and only supports Uber material.
+* `singleton = true`:  set to true, to only allow one context at the same time. This is useful, to immediately free all old resources when creating a new context, instead of relying on the GC.
+"""
+function Context(; plugin=Northstar, resource=RPR_CREATION_FLAGS_ENABLE_GPU0, singleton=true)
+    return Context(plugin, resource, singleton)
 end
 
 """
@@ -29,69 +100,21 @@ arguments:
 """
 macro rpr_wrapper_type(name, typ, target, args, super)
     argnames = args.args
-    add_to_context = if argnames[1] == :context
-        :(push!(context.objects, object))
-    else
-        :()
-    end
+    parent = argnames[1]
     expr = quote
-        mutable struct $name <: $super{$typ}
+        mutable struct $name{PT} <: $super{$typ}
             pointer::$typ
-            $name(pointer::$typ) = new(pointer)
+            parent::PT
+            $name(pointer::$typ, parent::PT) where {PT} = new{PT}(pointer, parent)
             function $name($(argnames...))
-                object = new($target($(argnames...)))
-                $add_to_context
+                ptr = $target($(argnames...))
+                object = new{typeof($parent)}(ptr, $parent)
+                add_to_context!($parent, object)
                 return object
             end
         end
     end
     return esc(expr)
-end
-
-mutable struct Context <: RPRObject{rpr_context}
-    pointer::rpr_context
-    objects::Base.IdSet{RPRObject}
-    function Context(api_version, pluginIDs, pluginCount, creation_flags, props=C_NULL, cache_path=C_NULL)
-        ptr = rprCreateContext(api_version, pluginIDs, pluginCount, creation_flags, props, cache_path)
-        return new(ptr, Base.IdSet{RPRObject}())
-    end
-end
-
-
-"""
-Shortcut for Context creation. Leaves empty:
-`props`     Context properties, reserved for future use
-`cache_path`Full path to kernel cache created by RadeonProRender, NULL means to use current folder
-"""
-function Context(api_version, pluginIDs, creation_flags)
-    return Context(api_version, pluginIDs, length(pluginIDs), creation_flags, C_NULL, C_NULL)
-end
-
-const ACTIVE_CONTEXT = Base.RefValue{Context}()
-
-"""
-    Context()
-Empty constructor, defaults to using opencl, GPU0 and Tahoe as the rendering plugin.
-
-* `resource::rpr_creation_flags_t` = RPR_CREATION_FLAGS_ENABLE_GPU0
-* plugin = RadeonProRender_jll.libTahoe64, can use libNorthstar64 or Hybrid or HybridPro. Everything is tested with libTahoe, which seems to be the most stable. `libNorthstar64` also seems to be working but documentation on it is almost non existing. It seems to be AMDs ray tracer, using Vulkan/Directx and AMDs hardware ray tracing acceleration on new AMD GPUs.
-* singleton = true, set to true, to only allow one context at the same time. This is useful, to immediately free all old resources when creating a new context, instead of relying on the GC.
-"""
-function Context(; resource=RPR_CREATION_FLAGS_ENABLE_GPU0, plugin = libTahoe64, singleton=true)
-
-    id = rprRegisterPlugin(plugin)
-    @assert(id != -1)
-    plugin_ids = [id]
-    ctx = Context(RPR_API_VERSION, plugin_ids, resource)
-    rprContextSetActivePlugin(ctx, id)
-    if singleton
-        if isassigned(ACTIVE_CONTEXT)
-            @info("releasing old context")
-            release(ACTIVE_CONTEXT[])
-        end
-        ACTIVE_CONTEXT[] = ctx
-    end
-    return ctx
 end
 
 function release(context::Context)
@@ -100,7 +123,7 @@ function release(context::Context)
         return
     end
     scenes = Scene[]
-    for object in context.objects
+    for object in copy(context.objects)
         if object isa Scene
             push!(scenes, object)
         else
@@ -123,13 +146,13 @@ end
 @rpr_wrapper_type PostEffect rpr_post_effect rprContextCreatePostEffect (context, type) RPRObject
 
 function set!(pe::PostEffect, param::String, x::Number)
-    rprPostEffectSetParameter1f(pe, param, x)
+    return rprPostEffectSetParameter1f(pe, param, x)
 end
 
 mutable struct VoxelGrid <: RPRObject{rpr_grid}
     pointer::rpr_grid
-    grid_values::Vector{Float32}
-    grid_indices::Vector{UInt64}
+    parent::Context
+    referenced_memory::Any
 end
 
 function VoxelGrid(context::Context, nx, ny, nz, grid_values::AbstractArray, grid_indices::AbstractArray)
@@ -138,79 +161,72 @@ function VoxelGrid(context::Context, nx, ny, nz, grid_values::AbstractArray, gri
     grid_indices = convert(Vector{UInt64}, vec(grid_indices))
     valuesf0 = convert(Vector{Float32}, vec(grid_values))
 
-    rprContextCreateGrid(context, grid_ptr,
-        nx, ny, nz,
-        grid_indices, length(grid_indices),
-        RPR.RPR_GRID_INDICES_TOPOLOGY_I_U64,
-        valuesf0, sizeof(valuesf0), 0
-    )
-    grid = VoxelGrid(grid_ptr[], valuesf0, grid_indices)
-    push!(context.objects, grid)
+    rprContextCreateGrid(context, grid_ptr, nx, ny, nz, grid_indices, length(grid_indices),
+                         RPR.RPR_GRID_INDICES_TOPOLOGY_I_U64, valuesf0, sizeof(valuesf0), 0)
+    grid = VoxelGrid(grid_ptr[], context, (valuesf0, grid_indices))
+    add_to_context!(context, grid)
     return grid
 end
 
-function VoxelGrid(context, values::AbstractArray{<: Number, 3})
+function VoxelGrid(context, values::AbstractArray{<:Number,3})
     indices = UInt64.((1:length(values)) .- 1)
     return VoxelGrid(context, size(values)..., values, indices)
 end
 
 mutable struct Curve <: RPRObject{rpr_curve}
     pointer::rpr_curve
-    referenced_memory
+    parent::Context
+    referenced_memory::Any
 end
 
-function Curve(context::Context, control_points::AbstractVector,
-                indices::AbstractVector, radius::AbstractVector,
-                uvs::AbstractVector, segments_per_curve::AbstractVector,
-                creationFlag_tapered=0)
-
+function Curve(context::Context, control_points::AbstractVector, indices::AbstractVector,
+               radius::AbstractVector, uvs::AbstractVector, segments_per_curve::AbstractVector,
+               creationFlag_tapered=0)
     curve_ref = Ref{rpr_curve}()
     control_pointsf0 = convert(Vector{Point3f}, control_points)
     indices_i = convert(Vector{RPR.rpr_int}, indices)
     segments_per_curve_i = convert(Vector{RPR.rpr_int}, segments_per_curve)
     uvs_f0 = convert(Vector{Vec2f}, uvs)
     radiusf0 = convert(Vector{Float32}, radius)
-    rprContextCreateCurve(context, curve_ref,
-        length(control_pointsf0), control_pointsf0, sizeof(Point3f),
-        length(indices_i), length(segments_per_curve_i), indices_i, radiusf0, uvs_f0, segments_per_curve_i,
-        creationFlag_tapered
-    )
-    curve = Curve(curve_ref[], (control_pointsf0, indices_i, segments_per_curve_i, uvs_f0, radiusf0))
-    push!(context.objects, curve)
+    rprContextCreateCurve(context, curve_ref, length(control_pointsf0), control_pointsf0, sizeof(Point3f),
+                          length(indices_i), length(segments_per_curve_i), indices_i, radiusf0, uvs_f0,
+                          segments_per_curve_i, creationFlag_tapered)
+    curve = Curve(curve_ref[], context, (control_pointsf0, indices_i, segments_per_curve_i, uvs_f0, radiusf0))
+    add_to_context!(context, curve)
     return curve
 end
 
 @rpr_wrapper_type HeteroVolume rpr_hetero_volume rprContextCreateHeteroVolume (context,) RPRObject
 
 function set_albedo_lookup!(volume::HeteroVolume, colors::AbstractVector)
-    RPR.rprHeteroVolumeSetAlbedoLookup(volume, convert(Vector{RGB{Float32}}, colors), length(colors))
+    return RPR.rprHeteroVolumeSetAlbedoLookup(volume, convert(Vector{RGB{Float32}}, colors), length(colors))
 end
 
 function set_albedo_grid!(volume::HeteroVolume, albedo::VoxelGrid)
-    RPR.rprHeteroVolumeSetAlbedoGrid(volume, albedo)
+    return RPR.rprHeteroVolumeSetAlbedoGrid(volume, albedo)
 end
 
 function set_density_lookup!(volume::HeteroVolume, density::AbstractVector)
-    RPR.rprHeteroVolumeSetDensityLookup(volume, convert(Vector{Vec3f}, density), length(density))
+    return RPR.rprHeteroVolumeSetDensityLookup(volume, convert(Vector{Vec3f}, density), length(density))
 end
 
 function set_density_grid!(volume::HeteroVolume, density::VoxelGrid)
-    RPR.rprHeteroVolumeSetDensityGrid(volume, density)
+    return RPR.rprHeteroVolumeSetDensityGrid(volume, density)
 end
 
 function Base.push!(scene::Scene, volume::HeteroVolume)
-    rprSceneAttachHeteroVolume(scene, volume)
+    return rprSceneAttachHeteroVolume(scene, volume)
 end
 
 mutable struct Shape <: RPRObject{rpr_shape}
     pointer::rpr_shape
-    referenced_arrays
+    parent::Context
+    referenced_arrays::Any
 end
 
 function set!(shape::Shape, volume::HeteroVolume)
-    rprShapeSetHeteroVolume(shape, volume)
+    return rprShapeSetHeteroVolume(shape, volume)
 end
-
 
 """
 Abstract AbstractLight Type
@@ -223,7 +239,6 @@ abstract type AbstractLight{PtrType} <: RPRObject{PtrType} end
 @rpr_wrapper_type SkyLight rpr_light rprContextCreateSkyLight (context,) AbstractLight
 @rpr_wrapper_type SpotLight rpr_light rprContextCreateSpotLight (context,) AbstractLight
 
-
 """
 Default shape constructor which works with every Geometry from the package
 GeometryTypes (Meshes and geometry primitives alike).
@@ -231,6 +246,9 @@ GeometryTypes (Meshes and geometry primitives alike).
 function Shape(context::Context, meshlike; kw...)
     m = uv_normal_mesh(meshlike; kw...)
     v, n, fs, uv = decompose(Point3f, m), normals(m), faces(m), texturecoordinates(m)
+    if isnothing(n)
+        n = normals(v, fs)
+    end
     return Shape(context, v, n, fs, uv)
 end
 
@@ -257,15 +275,14 @@ function Shape(context::Context, vertices, normals, faces, uvs)
     @assert eltype(uvraw) == Vec2f
 
     foreach(i -> checkbounds(vertices, i + 1), iraw)
-    yield()
-
+    yield() # grrr, why you!!
     rpr_mesh = rprContextCreateMesh(context, vraw, length(vertices), sizeof(Point3f), nraw, length(normals),
                                     sizeof(Vec3f), uvraw, length(uvs), sizeof(Vec2f), iraw, sizeof(rpr_int),
                                     iraw, sizeof(rpr_int), iraw, sizeof(rpr_int), facelens, length(faces))
 
     jl_references = (vraw, nraw, uvraw, iraw, facelens)
-    shape = Shape(rpr_mesh, jl_references)
-    push!(context.objects, shape)
+    shape = Shape(rpr_mesh, context, jl_references)
+    add_to_context!(context, shape)
     return shape
 end
 @specialize
@@ -274,8 +291,8 @@ end
 Creating a shape from a shape is interpreted as creating an instance.
 """
 function Shape(context::Context, shape::Shape)
-    inst = Shape(rprContextCreateInstance(context, shape), nothing)
-    push!(context.objects, inst)
+    inst = Shape(rprContextCreateInstance(context, shape), context, nothing)
+    add_to_context!(context, inst)
     return inst
 end
 
@@ -298,22 +315,23 @@ FrameBuffer wrapper type
 """
 mutable struct FrameBuffer <: RPRObject{rpr_framebuffer}
     pointer::rpr_framebuffer
+    parent::Context
 end
 
 function FrameBuffer(context::Context, c::Type{C}, dims::NTuple{2,Int}) where {C<:Colorant}
     desc = Ref(RPR.rpr_framebuffer_desc(dims...))
     fmt = RPR.rpr_framebuffer_format(length(c), RPR_COMPONENT_TYPE_FLOAT32)
-    frame_buffer = FrameBuffer(rprContextCreateFrameBuffer(context, fmt, desc))
-    push!(context.objects, frame_buffer)
+    frame_buffer = FrameBuffer(RPR.rprContextCreateFrameBuffer(context, fmt, desc), context)
+    add_to_context!(context, frame_buffer)
     return frame_buffer
 end
 
 function get_data(framebuffer::FrameBuffer)
     framebuffer_size = Ref{Cint}()
-    RPR.rprFrameBufferGetInfo(framebuffer, RPR.RPR_FRAMEBUFFER_DATA, 0 , C_NULL, framebuffer_size)
+    RPR.rprFrameBufferGetInfo(framebuffer, RPR.RPR_FRAMEBUFFER_DATA, 0, C_NULL, framebuffer_size)
     data = zeros(RGBA{Float32}, framebuffer_size[] ÷ sizeof(RGBA{Float32}))
     @assert sizeof(data) == framebuffer_size[]
-    RPR.rprFrameBufferGetInfo(framebuffer, RPR.RPR_FRAMEBUFFER_DATA, framebuffer_size[], data , C_NULL)
+    RPR.rprFrameBufferGetInfo(framebuffer, RPR.RPR_FRAMEBUFFER_DATA, framebuffer_size[], data, C_NULL)
     return data
 end
 
@@ -322,7 +340,8 @@ Image wrapper type
 """
 mutable struct Image <: RPRObject{rpr_image}
     pointer::rpr_image
-    used_refs
+    parent::Context
+    referenced_memory::Any
 end
 
 """
@@ -355,17 +374,22 @@ Automatically creates an Image from a matrix of colors
 """
 function Image(context::Context, image::Array{T,N}) where {T,N}
     desc_ref = Ref(rpr_image_desc(image))
-    img = Image(rprContextCreateImage(context, rpr_image_format(image), desc_ref, image), (image, desc_ref))
-    push!(context.objects, img)
+    img = Image(rprContextCreateImage(context, rpr_image_format(image), desc_ref, image), context,
+                (image, desc_ref))
+    add_to_context!(context, img)
     return img
+end
+
+function Image(context::Context, image::AbstractArray)
+    return Image(context, collect(image))
 end
 
 """
 Automatically loads an image from the given `path`
 """
 function Image(context::Context, path::AbstractString)
-    img = Image(rprContextCreateImageFromFile(context, path), nothing)
-    push!(context.objects, img)
+    img = Image(rprContextCreateImageFromFile(context, path), context, nothing)
+    add_to_context!(context, img)
     return img
 end
 
@@ -722,11 +746,10 @@ Customizable defaults for the most common tonemapping operations
 """
 function set_standard_tonemapping!(context; typ=RPR.RPR_TONEMAPPING_OPERATOR_PHOTOLINEAR,
                                    photolinear_sensitivity=0.5f0, photolinear_exposure=0.5f0,
-                                   photolinear_fstop=2f0, reinhard02_prescale=1.0f0,
+                                   photolinear_fstop=2.0f0, reinhard02_prescale=1.0f0,
                                    reinhard02_postscale=1.0f0, reinhard02_burn=1.0f0, linear_scale=1.0f0,
-                                   aacellsize=4.0, imagefilter_type=RPR.RPR_FILTER_BLACKMANHARRIS, aasamples=4.0)
-
-
+                                   aacellsize=4.0, imagefilter_type=RPR.RPR_FILTER_BLACKMANHARRIS,
+                                   aasamples=4.0)
     norm = PostEffect(context, RPR.RPR_POST_EFFECT_NORMALIZATION)
     set!(context, norm)
     tonemap = PostEffect(context, RPR.RPR_POST_EFFECT_TONE_MAP)
@@ -754,5 +777,4 @@ function set_standard_tonemapping!(context; typ=RPR.RPR_TONEMAPPING_OPERATOR_PHO
     # set!(bloom, "radius", 0.4f0)
     # set!(bloom, "threshold", 0.2f0)
     return
-
 end
