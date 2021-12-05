@@ -1370,6 +1370,16 @@ function rprCreateContext(api_version, pluginIDs, pluginCount, creation_flags, p
     return out_context[]
 end
 
+function rprMaterialXSetFile(material, resourcePath)
+    return check_error(ccall((:rprMaterialXSetFile, libRadeonProRender64), rpr_status,
+                             (rpr_material_node, Ptr{rpr_char}), material, resourcePath))
+end
+
+function rprMaterialXAddDependencyMtlx(context, resourcePath)
+    return check_error(ccall((:rprMaterialXAddDependencyMtlx, libRadeonProRender64), rpr_status,
+                             (rpr_context, Ptr{rpr_char}), context, resourcePath))
+end
+
 function rprContextSetActivePlugin(context, pluginID)
     return check_error(ccall((:rprContextSetActivePlugin, libRadeonProRender64), rpr_status,
                              (rpr_context, rpr_int), context, pluginID))

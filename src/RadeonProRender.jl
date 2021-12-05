@@ -31,4 +31,6 @@ export setsubdivisions!
 export setdisplacementscale!
 export lookat!
 
+export Tahoe, Northstar, Hybrid, HybridPro
+
 end
