@@ -82,6 +82,21 @@ const ALL_MATERIALS = [:Diffuse => RPR.RPR_MATERIAL_NODE_DIFFUSE,
                        :MatxFractal3d => RPR.RPR_MATERIAL_NODE_MATX_FRACTAL3D,
                        :MatxMix => RPR.RPR_MATERIAL_NODE_MATX_MIX, :Matx => RPR.RPR_MATERIAL_NODE_MATX]
 
+const ALL_MATERIALS_DICT = Dict(ALL_MATERIALS)
+
+function Material(matsys::MaterialSystem, @nospecialize(attributes))
+    type = if haskey(attributes, :type)
+        attributes[:type]
+    else
+        :Uber # default, since it supports most attributes & is the only one supported by all backends
+    end
+    material_enum = get(ALL_MATERIALS_DICT, type) do
+        error("Material type: $(type) not supported. Choose from RadeonProRender.ALL_MATERIALS")
+    end
+    delete!(attributes, :type)
+    return Material{material_enum}(matsys; attributes...)
+end
+
 for (name, enum) in ALL_MATERIALS
     @eval const $(Symbol(name, :Material)) = Material{$(enum)}
 end
@@ -120,13 +135,65 @@ function Base.setproperty!(material::T, field::Symbol, value::Vec4) where {T<:Ma
 end
 
 function Base.setproperty!(material::T, field::Symbol, value::Vec3) where {T<:Material}
-    set!(material.node, field2enum(T, field), value..., 0.0)
-    getfield(material, :parameters)[field] = value
+    setproperty!(material, field, Vec4f(value..., 0.0))
     return
 end
 
+convert_to_type(matsys::MaterialSystem, ::Type{<:Number}, value) = Vec4f(value)
+convert_to_type(matsys::MaterialSystem, ::Type{<:Number}, value::Material) = value
+convert_to_type(matsys::MaterialSystem, ::Type{<:Colorant}, value) = to_color(value)
+convert_to_type(matsys::MaterialSystem, ::Type{<:Colorant}, value::Material) = value
+
+function convert_to_type(matsys::MaterialSystem, ::Type{<: Number}, value::AbstractMatrix)
+    convert_to_type(Material, Float32.(value))
+end
+
+function convert_to_type(matsys::MaterialSystem, ::Type{<: Colorant}, value::AbstractMatrix{<:Number})
+    convert_to_type(Float32, value)
+end
+
+function convert_to_type(matsys::MaterialSystem, ::Type{<: Colorant}, value::AbstractMatrix{<:Colorant{3}})
+    convert_to_type(Material, convert(Matrix{RGB{Float32}}, value))
+end
+
+function convert_to_type(matsys::MaterialSystem, ::Type{<: Colorant}, value::AbstractMatrix{<:Colorant{4}})
+    convert_to_type(Material, convert(Matrix{RGBA{Float32}}, value))
+end
+
+function convert_to_type(matsys::MaterialSystem, ::Type{<: Material}, value::AbstractMatrix)
+    return Texture(matsys, value)
+end
+
+function convert_to_type(matsys::MaterialSystem, ::Type{<: Image}, value::Image)
+    return value
+end
+
+function convert_to_type(matsys::MaterialSystem, ::Type{<: Image}, value::AbstractMatrix)
+    return Texture(matsys, value)
+end
+
+function convert_to_type(matsys::MaterialSystem, ::Type{<: Union{Colorant, Image}}, value::Material)
+    return value
+end
+
+function convert_to_type(matsys::MaterialSystem, ::Type{<: Colorant}, value::Material)
+    return value
+end
+
+function convert_to_type(matsys::MaterialSystem, typ, value)
+    return value
+end
+
 function Base.setproperty!(material::T, field::Symbol, value) where {T<:Material}
-    set!(material.node, field2enum(T, field), value)
+    info = material_field_info()
+    field_enum = field2enum(T, field)
+    field_type = info[field_enum]
+    if field_type isa Tuple
+        type, range = field_type
+        field_type = type # ignore range for now
+    end
+    matsys = material.matsys
+    set!(material.node, field_enum, convert_to_type(matsys, field_type, value))
     getfield(material, :parameters)[field] = value
     return
 end
@@ -287,23 +354,34 @@ end
 
 function material_field_info()
     f01 = (Float32, (0, 1))
-    return Dict(RPR.RPR_MATERIAL_INPUT_COLOR => RGB, RPR.RPR_MATERIAL_INPUT_COLOR0 => Material,
-                RPR.RPR_MATERIAL_INPUT_COLOR1 => Material, RPR.RPR_MATERIAL_INPUT_NORMAL => Vec3,
-                RPR.RPR_MATERIAL_INPUT_UV => Vec2, RPR.RPR_MATERIAL_INPUT_DATA => Image,
-                RPR.RPR_MATERIAL_INPUT_ROUGHNESS => f01, RPR.RPR_MATERIAL_INPUT_IOR => (Float32, (1, 5)),
-                RPR.RPR_MATERIAL_INPUT_ROUGHNESS_X => f01, RPR.RPR_MATERIAL_INPUT_ROUGHNESS_Y => f01,
-                RPR.RPR_MATERIAL_INPUT_ROTATION => f01, RPR.RPR_MATERIAL_INPUT_WEIGHT => f01,
+    return Dict(RPR.RPR_MATERIAL_INPUT_COLOR => RGB,
+                RPR.RPR_MATERIAL_INPUT_COLOR0 => Material,
+                RPR.RPR_MATERIAL_INPUT_COLOR1 => Material,
+                RPR.RPR_MATERIAL_INPUT_NORMAL => Vec3,
+                RPR.RPR_MATERIAL_INPUT_UV => Vec2,
+                RPR.RPR_MATERIAL_INPUT_DATA => Image,
+                RPR.RPR_MATERIAL_INPUT_ROUGHNESS => f01,
+                RPR.RPR_MATERIAL_INPUT_IOR => (Float32, (1, 5)),
+                RPR.RPR_MATERIAL_INPUT_ROUGHNESS_X => f01,
+                RPR.RPR_MATERIAL_INPUT_ROUGHNESS_Y => f01,
+                RPR.RPR_MATERIAL_INPUT_ROTATION => f01,
+                RPR.RPR_MATERIAL_INPUT_WEIGHT => f01,
                 RPR.RPR_MATERIAL_INPUT_OP => RPR.rpr_material_node_arithmetic_operation,
                 # RPR.RPR_MATERIAL_INPUT_INVEC => ,
                 # RPR.RPR_MATERIAL_INPUT_UV_SCALE => ,
-                # RPR.RPR_MATERIAL_INPUT_VALUE => ,
-                RPR.RPR_MATERIAL_INPUT_REFLECTANCE => f01, RPR.RPR_MATERIAL_INPUT_SCALE => f01,
-                RPR.RPR_MATERIAL_INPUT_SCATTERING => RGBA, RPR.RPR_MATERIAL_INPUT_ABSORBTION => RGBA,
-                RPR.RPR_MATERIAL_INPUT_EMISSION => RGBA, RPR.RPR_MATERIAL_INPUT_G => (Float32, (-1, 1)), #	Forward or back scattering.
-                RPR.RPR_MATERIAL_INPUT_MULTISCATTER => Bool, RPR.RPR_MATERIAL_INPUT_COLOR2 => RGBA,
+                RPR.RPR_MATERIAL_INPUT_VALUE => RPR.rpr_material_node_lookup_value,
+                RPR.RPR_MATERIAL_INPUT_REFLECTANCE => f01,
+                RPR.RPR_MATERIAL_INPUT_SCALE => f01,
+                RPR.RPR_MATERIAL_INPUT_SCATTERING => RGBA,
+                RPR.RPR_MATERIAL_INPUT_ABSORBTION => RGBA,
+                RPR.RPR_MATERIAL_INPUT_EMISSION => RGBA,
+                 RPR.RPR_MATERIAL_INPUT_G => (Float32, (-1, 1)), #	Forward or back scattering.
+                RPR.RPR_MATERIAL_INPUT_MULTISCATTER => Bool,
+                RPR.RPR_MATERIAL_INPUT_COLOR2 => RGBA,
                 RPR.RPR_MATERIAL_INPUT_COLOR3 => RGBA,
                 RPR.RPR_MATERIAL_INPUT_ANISOTROPIC => (Float32, (-1, 1)), # amount forwards/backward
-                RPR.RPR_MATERIAL_INPUT_FRONTFACE => Material, RPR.RPR_MATERIAL_INPUT_BACKFACE => Material,
+                RPR.RPR_MATERIAL_INPUT_FRONTFACE => Material,
+                RPR.RPR_MATERIAL_INPUT_BACKFACE => Material,
                 # RPR.RPR_MATERIAL_INPUT_ORIGIN => ,
                 # RPR.RPR_MATERIAL_INPUT_ZAXIS => ,
                 # RPR.RPR_MATERIAL_INPUT_XAXIS => ,
@@ -312,7 +390,8 @@ function material_field_info()
                 # RPR.RPR_MATERIAL_INPUT_UV_TYPE => ,
                 # RPR.RPR_MATERIAL_INPUT_RADIUS => ,
                 # RPR.RPR_MATERIAL_INPUT_SIDE => ,
-                RPR.RPR_MATERIAL_INPUT_CAUSTICS => Bool, RPR.RPR_MATERIAL_INPUT_TRANSMISSION_COLOR => RGBA,
+                RPR.RPR_MATERIAL_INPUT_CAUSTICS => Bool,
+                RPR.RPR_MATERIAL_INPUT_TRANSMISSION_COLOR => RGBA,
                 RPR.RPR_MATERIAL_INPUT_THICKNESS => f01,
                 # RPR.RPR_MATERIAL_INPUT_0 => ,
                 # RPR.RPR_MATERIAL_INPUT_1 => ,
