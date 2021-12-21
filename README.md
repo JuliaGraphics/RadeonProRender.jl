@@ -1,14 +1,13 @@
 # RadeonProRender
 
-Julia wrapper for AMD's [RadeonProRender](http://developer.amd.com/tools-and-sdks/graphics-development/firepro-sdk/amd-firerender-technology/) library.
+Julia wrapper for AMD's [RadeonProRender](https://radeon-pro.github.io/RadeonProRenderDocs/en/index.html) library.
 
 ### Installation
-(Windows only for now!)
+(Windows and Linux only right now!)
 In the Julia REPL, execute
 
 ```Julia
-Pkg.clone("https://github.com/JuliaGraphics/RadeonProRender.jl.git")
-Pkg.checkout("GLVisualize")
+Pkg.add("RadeonProRender")
 ```
 
 # Displaced surface
