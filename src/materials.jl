@@ -145,19 +145,24 @@ convert_to_type(matsys::MaterialSystem, ::Type{<:Colorant}, value) = to_color(va
 convert_to_type(matsys::MaterialSystem, ::Type{<:Colorant}, value::Material) = value
 
 function convert_to_type(matsys::MaterialSystem, ::Type{<: Number}, value::AbstractMatrix)
-    convert_to_type(Material, Float32.(value))
+    convert_to_type(matsys, Material, Float32.(value))
 end
+
+function convert_to_type(matsys::MaterialSystem, ::Type{<: Number}, value::AbstractMatrix{<: Colorant})
+    convert_to_type(matsys, RGB, value)
+end
+
 
 function convert_to_type(matsys::MaterialSystem, ::Type{<: Colorant}, value::AbstractMatrix{<:Number})
-    convert_to_type(Float32, value)
+    convert_to_type(matsys, Float32, value)
 end
 
-function convert_to_type(matsys::MaterialSystem, ::Type{<: Colorant}, value::AbstractMatrix{<:Colorant{3}})
-    convert_to_type(Material, convert(Matrix{RGB{Float32}}, value))
+function convert_to_type(matsys::MaterialSystem, ::Type{<: Colorant}, value::AbstractMatrix{<:Color3})
+    convert_to_type(matsys, Material, convert(Matrix{RGB{Float32}}, value))
 end
 
-function convert_to_type(matsys::MaterialSystem, ::Type{<: Colorant}, value::AbstractMatrix{<:Colorant{4}})
-    convert_to_type(Material, convert(Matrix{RGBA{Float32}}, value))
+function convert_to_type(matsys::MaterialSystem, ::Type{<: Colorant}, value::AbstractMatrix{<:TransparentColor})
+    convert_to_type(matsys, Material, convert(Matrix{RGBA{Float32}}, value))
 end
 
 function convert_to_type(matsys::MaterialSystem, ::Type{<: Material}, value::AbstractMatrix)
@@ -173,10 +178,6 @@ function convert_to_type(matsys::MaterialSystem, ::Type{<: Image}, value::Abstra
 end
 
 function convert_to_type(matsys::MaterialSystem, ::Type{<: Union{Colorant, Image}}, value::Material)
-    return value
-end
-
-function convert_to_type(matsys::MaterialSystem, ::Type{<: Colorant}, value::Material)
     return value
 end
 
@@ -450,7 +451,7 @@ function material_field_info()
                 # RPR.RPR_MATERIAL_INPUT_TEMPERATURE => ,
                 # RPR.RPR_MATERIAL_INPUT_KELVIN => ,
                 RPR.RPR_MATERIAL_INPUT_UBER_DIFFUSE_COLOR => RGB,
-                RPR.RPR_MATERIAL_INPUT_UBER_DIFFUSE_WEIGHT => RGB,
+                RPR.RPR_MATERIAL_INPUT_UBER_DIFFUSE_WEIGHT => f01,
                 RPR.RPR_MATERIAL_INPUT_UBER_DIFFUSE_ROUGHNESS => f01,
                 RPR.RPR_MATERIAL_INPUT_UBER_DIFFUSE_NORMAL => Vec3f,
                 RPR.RPR_MATERIAL_INPUT_UBER_REFLECTION_COLOR => RGB,
