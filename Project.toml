@@ -1,7 +1,7 @@
 name = "RadeonProRender"
 uuid = "27029320-176d-4a42-b57d-56729d2ad457"
 authors = ["Simon Danisch"]
-version = "0.2"
+version = "0.2.1"
 
 [deps]
 CEnum = "fa961155-64e5-5f13-b03f-caf6b980ea82"
