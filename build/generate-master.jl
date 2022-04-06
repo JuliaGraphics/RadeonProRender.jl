@@ -3,7 +3,7 @@ using Clang.Generators
 
 cd(@__DIR__)
 # current version checked in is v2.2.9
-include_dir = normpath(joinpath(@__DIR__, "RadeonProRenderSDK", "inc"))
+include_dir = normpath(joinpath(@__DIR__, "RadeonProRenderSDK", "RadeonProRender", "inc"))
 # LIBCLANG_HEADERS are those headers to be wrapped.
 headers = joinpath.(include_dir, [
     "RadeonProRender_v2.h",
