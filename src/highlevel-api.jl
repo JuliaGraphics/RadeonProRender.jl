@@ -258,7 +258,6 @@ This is kind of magical and still under investigation.
 MWE:
 https://gist.github.com/SimonDanisch/475064ae102141554f65e926f3070630
 =#
-@nospecialize
 function Shape(context::Context, vertices, normals, faces, uvs)
     @assert length(vertices) == length(normals)
     @assert length(vertices) == length(uvs)
@@ -275,7 +274,6 @@ function Shape(context::Context, vertices, normals, faces, uvs)
     @assert eltype(uvraw) == Vec2f
 
     foreach(i -> checkbounds(vertices, i + 1), iraw)
-    yield() # grrr, why you!!
     rpr_mesh = rprContextCreateMesh(context, vraw, length(vertices), sizeof(Point3f), nraw, length(normals),
                                     sizeof(Vec3f), uvraw, length(uvs), sizeof(Vec2f), iraw, sizeof(rpr_int),
                                     iraw, sizeof(rpr_int), iraw, sizeof(rpr_int), facelens, length(faces))
@@ -285,7 +283,6 @@ function Shape(context::Context, vertices, normals, faces, uvs)
     add_to_context!(context, shape)
     return shape
 end
-@specialize
 
 """
 Creating a shape from a shape is interpreted as creating an instance.
