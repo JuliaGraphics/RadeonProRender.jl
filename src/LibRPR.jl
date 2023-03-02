@@ -1607,7 +1607,13 @@ end
 function rprContextCreateMesh(context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces)
     out_mesh = Ref{rpr_shape}()
     #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
-    check_error(ccall((:rprContextCreateMesh, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_float}, Cint, rpr_int, Ptr{rpr_float}, Cint, rpr_int, Ptr{rpr_float}, Cint, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, Cint, Ptr{rpr_shape}), context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces, out_mesh))
+    check_error(ccall((:rprContextCreateMesh, libRadeonProRender64), rpr_status,
+                      (rpr_context, Ptr{Float32}, Csize_t, Cint, Ptr{Float32}, Csize_t, Cint,
+                       Ptr{Float32}, Csize_t, Cint, Ptr{Cint}, Cint, Ptr{Cint}, Cint,
+                       Ptr{Cint}, Cint, Ptr{Cint}, Csize_t, Ptr{rpr_shape}), context, vertices, num_vertices,
+                      vertex_stride, normals, num_normals, normal_stride, texcoords, num_texcoords,
+                      texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride,
+                      texcoord_indices, tidx_stride, num_face_vertices, num_faces, out_mesh))
     #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
     return out_mesh[]
 end
