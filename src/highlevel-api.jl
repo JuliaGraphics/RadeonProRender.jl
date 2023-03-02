@@ -262,29 +262,24 @@ function Shape(context::Context, vertices, normals, faces, uvs)
     @assert length(vertices) == length(normals)
     @assert length(vertices) == length(uvs)
 
-    vraw = decompose(Point3f, vertices)::Vector{Point3f}
-    nraw = decompose(Vec3f, normals)::Vector{Vec3f}
+    vraw = decompose(Point3f, vertices)
+    nraw = decompose(Vec3f, normals)
     uvraw = map(uv -> Vec2f(1 - uv[2], 1 - uv[1]), uvs)
-    TF = TriangleFace{OffsetInteger{-1, rpr_int}}
-    f = decompose(TF, faces)::Vector{TF}
+    f = decompose(TriangleFace{OffsetInteger{-1,rpr_int}}, faces)
+    iraw = collect(reinterpret(rpr_int, f))
     facelens = fill(rpr_int(3), length(faces))
 
-    # foreach(i -> checkbounds(vertices, i + 1), irawv)
-    # check_error(ccall((:rprContextCreateMesh, libRadeonProRender64), rpr_status,
-    #                   (rpr_context, Ptr{rpr_float}, Cint, rpr_int, Ptr{rpr_float}, Cint, rpr_int,
-    #                    Ptr{rpr_float}, Cint, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, rpr_int,
-    #                    Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, Cint, Ptr{rpr_shape}), context, vertices,
-    #                   num_vertices, vertex_stride, normals, num_normals, normal_stride, texcoords,
-    #                   num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices,
-    #                   nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces, out_mesh))
-    out_mesh = Ref{rpr_shape}()
-    jl_references = (vraw, nraw, uvraw, f, facelens, out_mesh)
-    rprContextCreateMesh(out_mesh, context, vraw,
-                         length(vertices), sizeof(Point3f), nraw, length(normals),
-                         sizeof(Vec3f), uvraw, length(uvs), sizeof(Vec2f), f, sizeof(rpr_int)*3,
-                         f, sizeof(rpr_int)*3, f, sizeof(rpr_int)*3, facelens, length(faces))
+    @assert eltype(vraw) == Point3f
+    @assert eltype(nraw) == Vec3f
+    @assert eltype(uvraw) == Vec2f
 
-    shape = Shape(out_mesh[], context, jl_references)
+    foreach(i -> checkbounds(vertices, i + 1), iraw)
+    rpr_mesh = rprContextCreateMesh(context, vraw, length(vertices), sizeof(Point3f), nraw, length(normals),
+                                    sizeof(Vec3f), uvraw, length(uvs), sizeof(Vec2f), iraw, sizeof(rpr_int),
+                                    iraw, sizeof(rpr_int), iraw, sizeof(rpr_int), facelens, length(faces))
+
+    jl_references = (vraw, nraw, uvraw, iraw, facelens)
+    shape = Shape(rpr_mesh, context, jl_references)
     add_to_context!(context, shape)
     return shape
 end
