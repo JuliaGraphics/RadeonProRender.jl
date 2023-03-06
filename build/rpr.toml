@@ -4,3 +4,5 @@ output_file_path = "../src/LibRPR.jl"
 module_name = "RPR"
 jll_pkg_name = "RadeonProRender_jll"
 export_symbol_prefixes = ["RPR", "rpr"]
+extract_c_comment_style = "doxygen"
+prologue_file_path = "./error-checking.jl"
