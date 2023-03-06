@@ -20,9 +20,8 @@ options = load_options(joinpath(@__DIR__, "rpr.toml"))
 args = get_default_args()
 
 push!(args, "-I$include_dir")
-# gcc = replace(args[3], "-isystem" => "")
-# push!(args, "-I$(joinpath(gcc, "c++", "4.8.5"))")
 push!(args, "-D__APPLE__")
+push!(args, "-DRPR_API_USE_HEADER_V2")
 ctx = create_context(headers, args, options)
 # run generator
 build!(ctx, BUILDSTAGE_NO_PRINTING)
@@ -60,7 +59,6 @@ function rewrite!(dag::ExprDAG)
 end
 
 rewrite!(ctx.dag)
-
 
 cd(@__DIR__)
 build!(ctx, BUILDSTAGE_PRINTING_ONLY)
