@@ -18,10 +18,11 @@ options = load_options(joinpath(@__DIR__, "rpr.toml"))
 args = get_default_args()
 
 push!(args, "-I$include_dir")
-push!(args, "-I/usr/include/c++/9/")
-push!(args, "-lstdc++")
-ctx = create_context(headers, args, options)
+gcc = replace(args[3], "-isystem" => "")
+push!(args, "-I$(joinpath(gcc, "c++", "4.8.5"))")
 
+# push!(args, "-I/usr/include/c++/9/")
+ctx = create_context(headers, args, options)
 # run generator
 build!(ctx, BUILDSTAGE_NO_PRINTING)
 
