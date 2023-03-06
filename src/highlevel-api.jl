@@ -324,7 +324,7 @@ function FrameBuffer(context::Context, c::Type{C}, dims::NTuple{2,Int}) where {C
 end
 
 function get_data(framebuffer::FrameBuffer)
-    framebuffer_size = Ref{Cint}()
+    framebuffer_size = Ref{Csize_t}()
     RPR.rprFrameBufferGetInfo(framebuffer, RPR.RPR_FRAMEBUFFER_DATA, 0, C_NULL, framebuffer_size)
     data = zeros(RGBA{Float32}, framebuffer_size[] ÷ sizeof(RGBA{Float32}))
     @assert sizeof(data) == framebuffer_size[]
