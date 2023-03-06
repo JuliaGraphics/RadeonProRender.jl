@@ -16,8 +16,10 @@ options = load_options(joinpath(@__DIR__, "rpr.toml"))
 
 # add compiler flags, e.g. "-DXXXXXXXXX"
 args = get_default_args()
-push!(args, "-I$include_dir")
 
+push!(args, "-I$include_dir")
+push!(args, "-I/usr/include/c++/9/")
+push!(args, "-lstdc++")
 ctx = create_context(headers, args, options)
 
 # run generator

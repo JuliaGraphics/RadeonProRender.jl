@@ -157,6 +157,7 @@ const rpr_environment_override = rpr_uint
     RPR_ERROR_COMPUTE_API_NOT_SUPPORTED = -1
     RPR_ERROR_OUT_OF_SYSTEM_MEMORY = -2
     RPR_ERROR_OUT_OF_VIDEO_MEMORY = -3
+    RPR_ERROR_SHADER_COMPILATION = -4
     RPR_ERROR_INVALID_LIGHTPATH_EXPR = -5
     RPR_ERROR_INVALID_IMAGE = -6
     RPR_ERROR_INVALID_AA_METHOD = -7
@@ -219,6 +220,7 @@ end
     RPR_CREATION_FLAGS_ENABLE_GPU14 = 131072
     RPR_CREATION_FLAGS_ENABLE_GPU15 = 262144
     RPR_CREATION_FLAGS_ENABLE_HIP = 524288
+    RPR_CREATION_FLAGS_ENABLE_OPENCL = 1048576
     RPR_CREATION_FLAGS_ENABLE_DEBUG = -2147483648
 end
 
@@ -447,6 +449,7 @@ end
     RPR_CAMERA_MOTION_TRANSFORMS_COUNT = 535
     RPR_CAMERA_MOTION_TRANSFORMS = 536
     RPR_CAMERA_POST_SCALE = 537
+    RPR_CAMERA_UV_DISTORTION = 538
     RPR_CAMERA_NAME = 7829367
     RPR_CAMERA_UNIQUE_ID = 7829368
     RPR_CAMERA_CUSTOM_PTR = 7829369
@@ -1085,6 +1088,15 @@ end
     RPR_MATERIAL_NODE_OP_AND = 39
     RPR_MATERIAL_NODE_OP_OR = 40
     RPR_MATERIAL_NODE_OP_TERNARY = 41
+    RPR_MATERIAL_NODE_OP_EXP = 42
+    RPR_MATERIAL_NODE_OP_ROTATE2D = 43
+    RPR_MATERIAL_NODE_OP_ROTATE3D = 44
+    RPR_MATERIAL_NODE_OP_NOP = 45
+    RPR_MATERIAL_NODE_OP_CEIL = 4138
+    RPR_MATERIAL_NODE_OP_ROUND = 4139
+    RPR_MATERIAL_NODE_OP_SIGN = 4140
+    RPR_MATERIAL_NODE_OP_SQRT = 4143
+    RPR_MATERIAL_NODE_OP_CLAMP = 4149
 end
 
 @cenum rpr_material_node_lookup_value::UInt32 begin
@@ -1418,9 +1430,9 @@ end
 
 function rprCreateContext(api_version, pluginIDs, pluginCount, creation_flags, props, cache_path)
     out_context = Ref{rpr_context}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
-    check_error(ccall((:rprCreateContext, libRadeonProRender64), rpr_status, (rpr_uint, Ptr{rpr_int}, Cint, rpr_creation_flags, Ptr{rpr_context_properties}, Ptr{rpr_char}, Ptr{rpr_context}), api_version, pluginIDs, pluginCount, creation_flags, props, cache_path, out_context))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
+    check_error(ccall((:rprCreateContext, libRadeonProRender64), rpr_status, (rpr_uint, Ptr{rpr_int}, Csize_t, rpr_creation_flags, Ptr{rpr_context_properties}, Ptr{rpr_char}, Ptr{rpr_context}), api_version, pluginIDs, pluginCount, creation_flags, props, cache_path, out_context))
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_context[]
 end
 
@@ -1429,18 +1441,18 @@ function rprContextSetActivePlugin(context, pluginID)
 end
 
 function rprContextGetInfo(context, context_info, size, data, size_ret)
-    check_error(ccall((:rprContextGetInfo, libRadeonProRender64), rpr_status, (rpr_context, rpr_context_info, Cint, Ptr{Cvoid}, Ptr{Cint}), context, context_info, size, data, size_ret))
+    check_error(ccall((:rprContextGetInfo, libRadeonProRender64), rpr_status, (rpr_context, rpr_context_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), context, context_info, size, data, size_ret))
 end
 
 function rprContextGetParameterInfo(context, param_idx, parameter_info, size, data, size_ret)
-    check_error(ccall((:rprContextGetParameterInfo, libRadeonProRender64), rpr_status, (rpr_context, Cint, rpr_parameter_info, Cint, Ptr{Cvoid}, Ptr{Cint}), context, param_idx, parameter_info, size, data, size_ret))
+    check_error(ccall((:rprContextGetParameterInfo, libRadeonProRender64), rpr_status, (rpr_context, Cint, rpr_parameter_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), context, param_idx, parameter_info, size, data, size_ret))
 end
 
 function rprContextGetAOV(context, aov)
     out_fb = Ref{rpr_framebuffer}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextGetAOV, libRadeonProRender64), rpr_status, (rpr_context, rpr_aov, Ptr{rpr_framebuffer}), context, aov, out_fb))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_fb[]
 end
 
@@ -1477,7 +1489,7 @@ function rprContextSetUserTexture(context, index, gpuCode, cpuCode)
 end
 
 function rprContextGetUserTexture(context, index, bufferSizeByte, buffer, size_ret)
-    check_error(ccall((:rprContextGetUserTexture, libRadeonProRender64), rpr_status, (rpr_context, rpr_int, Cint, Ptr{Cvoid}, Ptr{Cint}), context, index, bufferSizeByte, buffer, size_ret))
+    check_error(ccall((:rprContextGetUserTexture, libRadeonProRender64), rpr_status, (rpr_context, rpr_int, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), context, index, bufferSizeByte, buffer, size_ret))
 end
 
 function rprContextSetScene(context, scene)
@@ -1486,9 +1498,9 @@ end
 
 function rprContextGetScene(arg0)
     out_scene = Ref{rpr_scene}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextGetScene, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_scene}), arg0, out_scene))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_scene[]
 end
 
@@ -1525,7 +1537,7 @@ function rprContextSetInternalParameter1u(context, pluginIndex, paramName, x)
 end
 
 function rprContextSetInternalParameterBuffer(context, pluginIndex, paramName, buffer, bufferSizeByte)
-    check_error(ccall((:rprContextSetInternalParameterBuffer, libRadeonProRender64), rpr_status, (rpr_context, rpr_uint, Ptr{rpr_char}, Ptr{Cvoid}, Cint), context, pluginIndex, paramName, buffer, bufferSizeByte))
+    check_error(ccall((:rprContextSetInternalParameterBuffer, libRadeonProRender64), rpr_status, (rpr_context, rpr_uint, Ptr{rpr_char}, Ptr{Cvoid}, Csize_t), context, pluginIndex, paramName, buffer, bufferSizeByte))
 end
 
 function rprContextGetInternalParameter4f(context, pluginIndex, paramName, x, y, z, w)
@@ -1537,7 +1549,7 @@ function rprContextGetInternalParameter1u(context, pluginIndex, paramName, x)
 end
 
 function rprContextGetInternalParameterBuffer(context, pluginIndex, paramName, bufferSizeByte, buffer, size_ret)
-    check_error(ccall((:rprContextGetInternalParameterBuffer, libRadeonProRender64), rpr_status, (rpr_context, rpr_uint, Ptr{rpr_char}, Cint, Ptr{Cvoid}, Ptr{Cint}), context, pluginIndex, paramName, bufferSizeByte, buffer, size_ret))
+    check_error(ccall((:rprContextGetInternalParameterBuffer, libRadeonProRender64), rpr_status, (rpr_context, rpr_uint, Ptr{rpr_char}, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), context, pluginIndex, paramName, bufferSizeByte, buffer, size_ret))
 end
 
 function rprContextRender(context)
@@ -1558,102 +1570,102 @@ end
 
 function rprContextCreateImage(context, format, image_desc, data)
     out_image = Ref{rpr_image}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextCreateImage, libRadeonProRender64), rpr_status, (rpr_context, rpr_image_format, Ptr{rpr_image_desc}, Ptr{Cvoid}, Ptr{rpr_image}), context, format, image_desc, data, out_image))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_image[]
 end
 
 function rprContextCreateBuffer(context, buffer_desc, data)
     out_buffer = Ref{rpr_buffer}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextCreateBuffer, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_buffer_desc}, Ptr{Cvoid}, Ptr{rpr_buffer}), context, buffer_desc, data, out_buffer))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_buffer[]
 end
 
 function rprContextCreateImageFromFile(context, path)
     out_image = Ref{rpr_image}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextCreateImageFromFile, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}, Ptr{rpr_image}), context, path, out_image))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_image[]
 end
 
 function rprContextCreateImageFromFileMemory(context, extension, data, dataSizeByte)
     out_image = Ref{rpr_image}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
-    check_error(ccall((:rprContextCreateImageFromFileMemory, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}, Ptr{Cvoid}, Cint, Ptr{rpr_image}), context, extension, data, dataSizeByte, out_image))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
+    check_error(ccall((:rprContextCreateImageFromFileMemory, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}, Ptr{Cvoid}, Csize_t, Ptr{rpr_image}), context, extension, data, dataSizeByte, out_image))
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_image[]
 end
 
 function rprContextCreateScene(context)
     out_scene = Ref{rpr_scene}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextCreateScene, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_scene}), context, out_scene))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_scene[]
 end
 
 function rprContextCreateInstance(context, shape)
     out_instance = Ref{rpr_shape}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextCreateInstance, libRadeonProRender64), rpr_status, (rpr_context, rpr_shape, Ptr{rpr_shape}), context, shape, out_instance))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_instance[]
 end
 
 function rprContextCreateMesh(context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces)
     out_mesh = Ref{rpr_shape}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
-    check_error(ccall((:rprContextCreateMesh, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_float}, Cint, rpr_int, Ptr{rpr_float}, Cint, rpr_int, Ptr{rpr_float}, Cint, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, Cint, Ptr{rpr_shape}), context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces, out_mesh))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
+    check_error(ccall((:rprContextCreateMesh, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_float}, Csize_t, rpr_int, Ptr{rpr_float}, Csize_t, rpr_int, Ptr{rpr_float}, Csize_t, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, Csize_t, Ptr{rpr_shape}), context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces, out_mesh))
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_mesh[]
 end
 
 function rprContextCreateMeshEx(context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, perVertexFlag, num_perVertexFlags, perVertexFlag_stride, numberOfTexCoordLayers, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces)
     out_mesh = Ref{rpr_shape}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
-    check_error(ccall((:rprContextCreateMeshEx, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_float}, Cint, rpr_int, Ptr{rpr_float}, Cint, rpr_int, Ptr{rpr_int}, Cint, rpr_int, rpr_int, Ptr{Ptr{rpr_float}}, Ptr{Cint}, Ptr{rpr_int}, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{Ptr{rpr_int}}, Ptr{rpr_int}, Ptr{rpr_int}, Cint, Ptr{rpr_shape}), context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, perVertexFlag, num_perVertexFlags, perVertexFlag_stride, numberOfTexCoordLayers, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces, out_mesh))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
+    check_error(ccall((:rprContextCreateMeshEx, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_float}, Csize_t, rpr_int, Ptr{rpr_float}, Csize_t, rpr_int, Ptr{rpr_int}, Csize_t, rpr_int, rpr_int, Ptr{Ptr{rpr_float}}, Ptr{Csize_t}, Ptr{rpr_int}, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{Ptr{rpr_int}}, Ptr{rpr_int}, Ptr{rpr_int}, Csize_t, Ptr{rpr_shape}), context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, perVertexFlag, num_perVertexFlags, perVertexFlag_stride, numberOfTexCoordLayers, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces, out_mesh))
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_mesh[]
 end
 
 function rprContextCreateMeshEx2(context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, perVertexFlag, num_perVertexFlags, perVertexFlag_stride, numberOfTexCoordLayers, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces, mesh_properties)
     out_mesh = Ref{rpr_shape}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
-    check_error(ccall((:rprContextCreateMeshEx2, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_float}, Cint, rpr_int, Ptr{rpr_float}, Cint, rpr_int, Ptr{rpr_int}, Cint, rpr_int, rpr_int, Ptr{Ptr{rpr_float}}, Ptr{Cint}, Ptr{rpr_int}, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{Ptr{rpr_int}}, Ptr{rpr_int}, Ptr{rpr_int}, Cint, Ptr{rpr_mesh_info}, Ptr{rpr_shape}), context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, perVertexFlag, num_perVertexFlags, perVertexFlag_stride, numberOfTexCoordLayers, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces, mesh_properties, out_mesh))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
+    check_error(ccall((:rprContextCreateMeshEx2, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_float}, Csize_t, rpr_int, Ptr{rpr_float}, Csize_t, rpr_int, Ptr{rpr_int}, Csize_t, rpr_int, rpr_int, Ptr{Ptr{rpr_float}}, Ptr{Csize_t}, Ptr{rpr_int}, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{Ptr{rpr_int}}, Ptr{rpr_int}, Ptr{rpr_int}, Csize_t, Ptr{rpr_mesh_info}, Ptr{rpr_shape}), context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, perVertexFlag, num_perVertexFlags, perVertexFlag_stride, numberOfTexCoordLayers, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces, mesh_properties, out_mesh))
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_mesh[]
 end
 
 function rprContextCreateCamera(context)
     out_camera = Ref{rpr_camera}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextCreateCamera, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_camera}), context, out_camera))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_camera[]
 end
 
 function rprContextCreateFrameBuffer(context, format, fb_desc)
     out_fb = Ref{rpr_framebuffer}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextCreateFrameBuffer, libRadeonProRender64), rpr_status, (rpr_context, rpr_framebuffer_format, Ptr{rpr_framebuffer_desc}, Ptr{rpr_framebuffer}), context, format, fb_desc, out_fb))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_fb[]
 end
 
 function rprContextGetFunctionPtr(context, function_name)
     out_function_ptr = Ref{Ptr{Cvoid}}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextGetFunctionPtr, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}, Ptr{Ptr{Cvoid}}), context, function_name, out_function_ptr))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_function_ptr[]
 end
 
 function rprCameraGetInfo(camera, camera_info, size, data, size_ret)
-    check_error(ccall((:rprCameraGetInfo, libRadeonProRender64), rpr_status, (rpr_camera, rpr_camera_info, Cint, Ptr{Cvoid}, Ptr{Cint}), camera, camera_info, size, data, size_ret))
+    check_error(ccall((:rprCameraGetInfo, libRadeonProRender64), rpr_status, (rpr_camera, rpr_camera_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), camera, camera_info, size, data, size_ret))
 end
 
 function rprCameraSetFocalLength(camera, flength)
@@ -1736,8 +1748,12 @@ function rprCameraSetFarPlane(camera, far)
     check_error(ccall((:rprCameraSetFarPlane, libRadeonProRender64), rpr_status, (rpr_camera, rpr_float), camera, far))
 end
 
+function rprCameraSetUVDistortion(camera, distortionMap)
+    check_error(ccall((:rprCameraSetUVDistortion, libRadeonProRender64), rpr_status, (rpr_camera, rpr_image), camera, distortionMap))
+end
+
 function rprImageGetInfo(image, image_info, size, data, size_ret)
-    check_error(ccall((:rprImageGetInfo, libRadeonProRender64), rpr_status, (rpr_image, rpr_image_info, Cint, Ptr{Cvoid}, Ptr{Cint}), image, image_info, size, data, size_ret))
+    check_error(ccall((:rprImageGetInfo, libRadeonProRender64), rpr_status, (rpr_image, rpr_image_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), image, image_info, size, data, size_ret))
 end
 
 function rprImageSetWrap(image, type)
@@ -1845,7 +1861,7 @@ function rprShapeSetMaterial(shape, node)
 end
 
 function rprShapeSetMaterialFaces(shape, node, face_indices, num_faces)
-    check_error(ccall((:rprShapeSetMaterialFaces, libRadeonProRender64), rpr_status, (rpr_shape, rpr_material_node, Ptr{rpr_int}, Cint), shape, node, face_indices, num_faces))
+    check_error(ccall((:rprShapeSetMaterialFaces, libRadeonProRender64), rpr_status, (rpr_shape, rpr_material_node, Ptr{rpr_int}, Csize_t), shape, node, face_indices, num_faces))
 end
 
 function rprShapeSetVolumeMaterial(shape, node)
@@ -1917,42 +1933,42 @@ function rprLightSetGroupId(light, groupId)
 end
 
 function rprShapeGetInfo(arg0, arg1, arg2, arg3, arg4)
-    check_error(ccall((:rprShapeGetInfo, libRadeonProRender64), rpr_status, (rpr_shape, rpr_shape_info, Cint, Ptr{Cvoid}, Ptr{Cint}), arg0, arg1, arg2, arg3, arg4))
+    check_error(ccall((:rprShapeGetInfo, libRadeonProRender64), rpr_status, (rpr_shape, rpr_shape_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), arg0, arg1, arg2, arg3, arg4))
 end
 
 function rprMeshGetInfo(mesh, mesh_info, size, data, size_ret)
-    check_error(ccall((:rprMeshGetInfo, libRadeonProRender64), rpr_status, (rpr_shape, rpr_mesh_info, Cint, Ptr{Cvoid}, Ptr{Cint}), mesh, mesh_info, size, data, size_ret))
+    check_error(ccall((:rprMeshGetInfo, libRadeonProRender64), rpr_status, (rpr_shape, rpr_mesh_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), mesh, mesh_info, size, data, size_ret))
 end
 
 function rprCurveGetInfo(curve, curve_info, size, data, size_ret)
-    check_error(ccall((:rprCurveGetInfo, libRadeonProRender64), rpr_status, (rpr_curve, rpr_curve_parameter, Cint, Ptr{Cvoid}, Ptr{Cint}), curve, curve_info, size, data, size_ret))
+    check_error(ccall((:rprCurveGetInfo, libRadeonProRender64), rpr_status, (rpr_curve, rpr_curve_parameter, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), curve, curve_info, size, data, size_ret))
 end
 
 function rprHeteroVolumeGetInfo(heteroVol, heteroVol_info, size, data, size_ret)
-    check_error(ccall((:rprHeteroVolumeGetInfo, libRadeonProRender64), rpr_status, (rpr_hetero_volume, rpr_hetero_volume_parameter, Cint, Ptr{Cvoid}, Ptr{Cint}), heteroVol, heteroVol_info, size, data, size_ret))
+    check_error(ccall((:rprHeteroVolumeGetInfo, libRadeonProRender64), rpr_status, (rpr_hetero_volume, rpr_hetero_volume_parameter, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), heteroVol, heteroVol_info, size, data, size_ret))
 end
 
 function rprGridGetInfo(grid, grid_info, size, data, size_ret)
-    check_error(ccall((:rprGridGetInfo, libRadeonProRender64), rpr_status, (rpr_grid, rpr_grid_parameter, Cint, Ptr{Cvoid}, Ptr{Cint}), grid, grid_info, size, data, size_ret))
+    check_error(ccall((:rprGridGetInfo, libRadeonProRender64), rpr_status, (rpr_grid, rpr_grid_parameter, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), grid, grid_info, size, data, size_ret))
 end
 
 function rprBufferGetInfo(buffer, buffer_info, size, data, size_ret)
-    check_error(ccall((:rprBufferGetInfo, libRadeonProRender64), rpr_status, (rpr_buffer, rpr_buffer_info, Cint, Ptr{Cvoid}, Ptr{Cint}), buffer, buffer_info, size, data, size_ret))
+    check_error(ccall((:rprBufferGetInfo, libRadeonProRender64), rpr_status, (rpr_buffer, rpr_buffer_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), buffer, buffer_info, size, data, size_ret))
 end
 
 function rprInstanceGetBaseShape(shape)
     out_shape = Ref{rpr_shape}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprInstanceGetBaseShape, libRadeonProRender64), rpr_status, (rpr_shape, Ptr{rpr_shape}), shape, out_shape))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_shape[]
 end
 
 function rprContextCreatePointLight(context)
     out_light = Ref{rpr_light}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextCreatePointLight, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_light}), context, out_light))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_light[]
 end
 
@@ -2010,9 +2026,9 @@ end
 
 function rprContextCreateDirectionalLight(context)
     out_light = Ref{rpr_light}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextCreateDirectionalLight, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_light}), context, out_light))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_light[]
 end
 
@@ -2026,9 +2042,9 @@ end
 
 function rprContextCreateEnvironmentLight(context)
     out_light = Ref{rpr_light}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextCreateEnvironmentLight, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_light}), context, out_light))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_light[]
 end
 
@@ -2054,17 +2070,17 @@ end
 
 function rprEnvironmentLightGetEnvironmentLightOverride(in_ibl, overrideType)
     out_iblOverride = Ref{rpr_light}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprEnvironmentLightGetEnvironmentLightOverride, libRadeonProRender64), rpr_status, (rpr_light, rpr_environment_override, Ptr{rpr_light}), in_ibl, overrideType, out_iblOverride))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_iblOverride[]
 end
 
 function rprContextCreateSkyLight(context)
     out_light = Ref{rpr_light}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextCreateSkyLight, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_light}), context, out_light))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_light[]
 end
 
@@ -2109,7 +2125,7 @@ function rprIESLightSetImageFromIESdata(env_light, iesData, nx, ny)
 end
 
 function rprLightGetInfo(light, info, size, data, size_ret)
-    check_error(ccall((:rprLightGetInfo, libRadeonProRender64), rpr_status, (rpr_light, rpr_light_info, Cint, Ptr{Cvoid}, Ptr{Cint}), light, info, size, data, size_ret))
+    check_error(ccall((:rprLightGetInfo, libRadeonProRender64), rpr_status, (rpr_light, rpr_light_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), light, info, size, data, size_ret))
 end
 
 function rprSceneClear(scene)
@@ -2149,7 +2165,7 @@ function rprCurveSetTransform(curve, transpose, transform)
 end
 
 function rprContextCreateCurve(context, out_curve, num_controlPoints, controlPointsData, controlPointsStride, num_indices, curveCount, indicesData, radius, textureUV, segmentPerCurve, creationFlag_tapered)
-    check_error(ccall((:rprContextCreateCurve, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_curve}, Cint, Ptr{rpr_float}, rpr_int, Cint, rpr_uint, Ptr{rpr_uint}, Ptr{rpr_float}, Ptr{rpr_float}, Ptr{rpr_int}, rpr_uint), context, out_curve, num_controlPoints, controlPointsData, controlPointsStride, num_indices, curveCount, indicesData, radius, textureUV, segmentPerCurve, creationFlag_tapered))
+    check_error(ccall((:rprContextCreateCurve, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_curve}, Csize_t, Ptr{rpr_float}, rpr_int, Csize_t, rpr_uint, Ptr{rpr_uint}, Ptr{rpr_float}, Ptr{rpr_float}, Ptr{rpr_int}, rpr_uint), context, out_curve, num_controlPoints, controlPointsData, controlPointsStride, num_indices, curveCount, indicesData, radius, textureUV, segmentPerCurve, creationFlag_tapered))
 end
 
 function rprSceneAttachLight(scene, light)
@@ -2166,14 +2182,14 @@ end
 
 function rprSceneGetEnvironmentLight(in_scene)
     out_light = Ref{rpr_light}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprSceneGetEnvironmentLight, libRadeonProRender64), rpr_status, (rpr_scene, Ptr{rpr_light}), in_scene, out_light))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_light[]
 end
 
 function rprSceneGetInfo(scene, info, size, data, size_ret)
-    check_error(ccall((:rprSceneGetInfo, libRadeonProRender64), rpr_status, (rpr_scene, rpr_scene_info, Cint, Ptr{Cvoid}, Ptr{Cint}), scene, info, size, data, size_ret))
+    check_error(ccall((:rprSceneGetInfo, libRadeonProRender64), rpr_status, (rpr_scene, rpr_scene_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), scene, info, size, data, size_ret))
 end
 
 function rprSceneSetBackgroundImage(scene, image)
@@ -2182,9 +2198,9 @@ end
 
 function rprSceneGetBackgroundImage(scene)
     out_image = Ref{rpr_image}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprSceneGetBackgroundImage, libRadeonProRender64), rpr_status, (rpr_scene, Ptr{rpr_image}), scene, out_image))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_image[]
 end
 
@@ -2194,9 +2210,9 @@ end
 
 function rprSceneGetCameraRight(scene)
     out_camera = Ref{rpr_camera}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprSceneGetCameraRight, libRadeonProRender64), rpr_status, (rpr_scene, Ptr{rpr_camera}), scene, out_camera))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_camera[]
 end
 
@@ -2206,14 +2222,14 @@ end
 
 function rprSceneGetCamera(scene)
     out_camera = Ref{rpr_camera}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprSceneGetCamera, libRadeonProRender64), rpr_status, (rpr_scene, Ptr{rpr_camera}), scene, out_camera))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_camera[]
 end
 
 function rprFrameBufferGetInfo(framebuffer, info, size, data, size_ret)
-    check_error(ccall((:rprFrameBufferGetInfo, libRadeonProRender64), rpr_status, (rpr_framebuffer, rpr_framebuffer_info, Cint, Ptr{Cvoid}, Ptr{Cint}), framebuffer, info, size, data, size_ret))
+    check_error(ccall((:rprFrameBufferGetInfo, libRadeonProRender64), rpr_status, (rpr_framebuffer, rpr_framebuffer_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), framebuffer, info, size, data, size_ret))
 end
 
 function rprFrameBufferClear(frame_buffer)
@@ -2237,34 +2253,34 @@ function rprContextResolveFrameBuffer(context, src_frame_buffer, dst_frame_buffe
 end
 
 function rprMaterialSystemGetInfo(in_material_system, type, in_size, in_data)
-    out_size = Ref{Cint}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
-    check_error(ccall((:rprMaterialSystemGetInfo, libRadeonProRender64), rpr_status, (rpr_material_system, rpr_material_system_info, Cint, Ptr{Cvoid}, Ptr{Cint}), in_material_system, type, in_size, in_data, out_size))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    out_size = Ref{Csize_t}()
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
+    check_error(ccall((:rprMaterialSystemGetInfo, libRadeonProRender64), rpr_status, (rpr_material_system, rpr_material_system_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), in_material_system, type, in_size, in_data, out_size))
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_size[]
 end
 
 function rprContextCreateMaterialSystem(in_context, type)
     out_matsys = Ref{rpr_material_system}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextCreateMaterialSystem, libRadeonProRender64), rpr_status, (rpr_context, rpr_material_system_type, Ptr{rpr_material_system}), in_context, type, out_matsys))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_matsys[]
 end
 
 function rprMaterialSystemGetSize(in_context)
     out_size = Ref{rpr_uint}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprMaterialSystemGetSize, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_uint}), in_context, out_size))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_size[]
 end
 
 function rprMaterialSystemCreateNode(in_matsys, in_type)
     out_node = Ref{rpr_material_node}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprMaterialSystemCreateNode, libRadeonProRender64), rpr_status, (rpr_material_system, rpr_material_node_type, Ptr{rpr_material_node}), in_matsys, in_type, out_node))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_node[]
 end
 
@@ -2281,7 +2297,7 @@ function rprMaterialNodeSetInputFByKey(in_node, in_input, in_value_x, in_value_y
 end
 
 function rprMaterialNodeSetInputDataByKey(in_node, in_input, data, dataSizeByte)
-    check_error(ccall((:rprMaterialNodeSetInputDataByKey, libRadeonProRender64), rpr_status, (rpr_material_node, rpr_material_node_input, Ptr{Cvoid}, Cint), in_node, in_input, data, dataSizeByte))
+    check_error(ccall((:rprMaterialNodeSetInputDataByKey, libRadeonProRender64), rpr_status, (rpr_material_node, rpr_material_node_input, Ptr{Cvoid}, Csize_t), in_node, in_input, data, dataSizeByte))
 end
 
 function rprMaterialNodeSetInputUByKey(in_node, in_input, in_value)
@@ -2305,42 +2321,42 @@ function rprMaterialNodeSetInputGridDataByKey(in_node, in_input, grid)
 end
 
 function rprMaterialNodeGetInfo(in_node, in_info, in_size, in_data)
-    out_size = Ref{Cint}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
-    check_error(ccall((:rprMaterialNodeGetInfo, libRadeonProRender64), rpr_status, (rpr_material_node, rpr_material_node_info, Cint, Ptr{Cvoid}, Ptr{Cint}), in_node, in_info, in_size, in_data, out_size))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    out_size = Ref{Csize_t}()
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
+    check_error(ccall((:rprMaterialNodeGetInfo, libRadeonProRender64), rpr_status, (rpr_material_node, rpr_material_node_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), in_node, in_info, in_size, in_data, out_size))
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_size[]
 end
 
 function rprMaterialNodeGetInputInfo(in_node, in_input_idx, in_info, in_size, in_data)
-    out_size = Ref{Cint}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
-    check_error(ccall((:rprMaterialNodeGetInputInfo, libRadeonProRender64), rpr_status, (rpr_material_node, rpr_int, rpr_material_node_input_info, Cint, Ptr{Cvoid}, Ptr{Cint}), in_node, in_input_idx, in_info, in_size, in_data, out_size))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    out_size = Ref{Csize_t}()
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
+    check_error(ccall((:rprMaterialNodeGetInputInfo, libRadeonProRender64), rpr_status, (rpr_material_node, rpr_int, rpr_material_node_input_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), in_node, in_input_idx, in_info, in_size, in_data, out_size))
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_size[]
 end
 
 function rprContextCreateComposite(context, in_type)
     out_composite = Ref{rpr_composite}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextCreateComposite, libRadeonProRender64), rpr_status, (rpr_context, rpr_composite_type, Ptr{rpr_composite}), context, in_type, out_composite))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_composite[]
 end
 
 function rprContextCreateLUTFromFile(context, fileLutPath)
     out_lut = Ref{rpr_lut}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextCreateLUTFromFile, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}, Ptr{rpr_lut}), context, fileLutPath, out_lut))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_lut[]
 end
 
 function rprContextCreateLUTFromData(context, lutData)
     out_lut = Ref{rpr_lut}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextCreateLUTFromData, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}, Ptr{rpr_lut}), context, lutData, out_lut))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_lut[]
 end
 
@@ -2373,7 +2389,7 @@ function rprCompositeCompute(composite, fb)
 end
 
 function rprCompositeGetInfo(composite, composite_info, size, data, size_ret)
-    check_error(ccall((:rprCompositeGetInfo, libRadeonProRender64), rpr_status, (rpr_composite, rpr_composite_info, Cint, Ptr{Cvoid}, Ptr{Cint}), composite, composite_info, size, data, size_ret))
+    check_error(ccall((:rprCompositeGetInfo, libRadeonProRender64), rpr_status, (rpr_composite, rpr_composite_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), composite, composite_info, size, data, size_ret))
 end
 
 function rprObjectDelete(obj)
@@ -2394,9 +2410,9 @@ end
 
 function rprContextCreatePostEffect(context, type)
     out_effect = Ref{rpr_post_effect}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextCreatePostEffect, libRadeonProRender64), rpr_status, (rpr_context, rpr_post_effect_type, Ptr{rpr_post_effect}), context, type, out_effect))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_effect[]
 end
 
@@ -2430,25 +2446,25 @@ end
 
 function rprContextGetAttachedPostEffect(context, i)
     out_effect = Ref{rpr_post_effect}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextGetAttachedPostEffect, libRadeonProRender64), rpr_status, (rpr_context, rpr_uint, Ptr{rpr_post_effect}), context, i, out_effect))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_effect[]
 end
 
 function rprPostEffectGetInfo(effect, info, size, data, size_ret)
-    check_error(ccall((:rprPostEffectGetInfo, libRadeonProRender64), rpr_status, (rpr_post_effect, rpr_post_effect_info, Cint, Ptr{Cvoid}, Ptr{Cint}), effect, info, size, data, size_ret))
+    check_error(ccall((:rprPostEffectGetInfo, libRadeonProRender64), rpr_status, (rpr_post_effect, rpr_post_effect_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), effect, info, size, data, size_ret))
 end
 
 function rprContextCreateGrid(context, out_grid, gridSizeX, gridSizeY, gridSizeZ, indicesList, numberOfIndices, indicesListTopology, gridData, gridDataSizeByte, gridDataTopology___unused)
-    check_error(ccall((:rprContextCreateGrid, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_grid}, Cint, Cint, Cint, Ptr{Cvoid}, Cint, rpr_grid_indices_topology, Ptr{Cvoid}, Cint, rpr_uint), context, out_grid, gridSizeX, gridSizeY, gridSizeZ, indicesList, numberOfIndices, indicesListTopology, gridData, gridDataSizeByte, gridDataTopology___unused))
+    check_error(ccall((:rprContextCreateGrid, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_grid}, Csize_t, Csize_t, Csize_t, Ptr{Cvoid}, Csize_t, rpr_grid_indices_topology, Ptr{Cvoid}, Csize_t, rpr_uint), context, out_grid, gridSizeX, gridSizeY, gridSizeZ, indicesList, numberOfIndices, indicesListTopology, gridData, gridDataSizeByte, gridDataTopology___unused))
 end
 
 function rprContextCreateHeteroVolume(context)
     out_heteroVolume = Ref{rpr_hetero_volume}()
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     check_error(ccall((:rprContextCreateHeteroVolume, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_hetero_volume}), context, out_heteroVolume))
-    #= /mnt/c/Users/sdani/SimiWorld/ProgrammerLife/MakieDev/dev/RadeonProRender/build/generate-master.jl:39 =#
+    #= /home/simi/MakieDev/dev/RadeonProRender/build/generate-master.jl:41 =#
     return out_heteroVolume[]
 end
 
@@ -2496,15 +2512,17 @@ function rprHeteroVolumeSetDensityScale(heteroVolume, scale)
     check_error(ccall((:rprHeteroVolumeSetDensityScale, libRadeonProRender64), rpr_status, (rpr_hetero_volume, rpr_float), heteroVolume, scale))
 end
 
-const RPR_VERSION_MAJOR = 2
+const _GLIBCXX_CSTDDEF = 1
 
-const RPR_VERSION_MINOR = 2
+const RPR_VERSION_MAJOR = 3
 
-const RPR_VERSION_REVISION = 17
+const RPR_VERSION_MINOR = 1
 
-const RPR_VERSION_BUILD = 0xc1dd1d1b
+const RPR_VERSION_REVISION = 0x00
 
-const RPR_VERSION_MAJOR_MINOR_REVISION = 0x00200217
+const RPR_VERSION_BUILD = 0x0a9c8434
+
+const RPR_VERSION_MAJOR_MINOR_REVISION = 0x00300100
 
 const RPR_API_VERSION = RPR_VERSION_MAJOR_MINOR_REVISION
 
