@@ -1,13 +1,15 @@
 using Clang
 using Clang.Generators
-
 cd(@__DIR__)
+
+
 # current version checked in is v2.2.9
 include_dir = normpath(joinpath(@__DIR__, "RadeonProRenderSDK", "RadeonProRender", "inc"))
 # LIBCLANG_HEADERS are those headers to be wrapped.
 headers = joinpath.(include_dir, [
     "RadeonProRender_v2.h",
-    # "RadeonProRender_GL.h",
+    "RadeonProRender_MaterialX.h"
+    # "RRadeonProRender_v2adeonProRender_GL.h",
     # "RadeonProRender_VK.h"
 ])
 
@@ -18,10 +20,8 @@ options = load_options(joinpath(@__DIR__, "rpr.toml"))
 args = get_default_args()
 
 push!(args, "-I$include_dir")
-gcc = replace(args[3], "-isystem" => "")
-push!(args, "-I$(joinpath(gcc, "c++", "4.8.5"))")
-
-# push!(args, "-I/usr/include/c++/9/")
+push!(args, "-D__APPLE__")
+push!(args, "-DRPR_API_USE_HEADER_V2")
 ctx = create_context(headers, args, options)
 # run generator
 build!(ctx, BUILDSTAGE_NO_PRINTING)
@@ -59,13 +59,6 @@ function rewrite!(dag::ExprDAG)
 end
 
 rewrite!(ctx.dag)
-
-quote
-    function check_error(error_code)
-        error_code == RPR_SUCCESS && return
-        return error("Error code returned: $(error_code)")
-    end
-end
 
 cd(@__DIR__)
 build!(ctx, BUILDSTAGE_PRINTING_ONLY)
