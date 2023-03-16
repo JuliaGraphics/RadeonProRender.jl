@@ -46,11 +46,19 @@ mutable struct Context <: RPRObject{rpr_context}
     pointer::rpr_context
     objects::Base.IdSet{RPRObject}
     plugin::PluginType
-    function Context(plugin::PluginType, creation_flags, singleton=true, props=C_NULL, cache_path=C_NULL)
+    function Context(plugin::PluginType, creation_flags, singleton=true, cache_path=C_NULL)
         id = RPR.rprRegisterPlugin(plugin_path(plugin))
         @assert(id != -1)
         plugin_ids = [id]
-        ctx_ptr = RPR.rprCreateContext(RPR.RPR_API_VERSION, plugin_ids, 1, creation_flags, props, cache_path)
+        bin = assetpath("hipbin")
+
+        GC.@preserve bin begin
+            props = rpr_context_properties[convert(Ptr{Cvoid},
+                                                   UInt64(RPR.RPR_CONTEXT_PRECOMPILED_BINARY_PATH)),
+                                           pointer(bin),
+                                           convert(Ptr{Cvoid}, 0)]
+            ctx_ptr = RPR.rprCreateContext(RPR.RPR_API_VERSION, plugin_ids, 1, creation_flags, props, cache_path)
+        end
         RPR.rprContextSetActivePlugin(ctx_ptr, id)
         ctx = new(ctx_ptr, Base.IdSet{RPRObject}(), plugin)
         if singleton

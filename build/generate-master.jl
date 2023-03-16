@@ -1,16 +1,14 @@
 using Clang
 using Clang.Generators
-cd(@__DIR__)
-
+using RadeonProRender_jll
 
 # current version checked in is v2.2.9
-include_dir = normpath(joinpath(@__DIR__, "RadeonProRenderSDK", "RadeonProRender", "inc"))
+include_dir = joinpath(RadeonProRender_jll.artifact_dir, "include")
 # LIBCLANG_HEADERS are those headers to be wrapped.
 headers = joinpath.(include_dir, [
     "RadeonProRender_v2.h",
-    "RadeonProRender_MaterialX.h"
-    # "RRadeonProRender_v2adeonProRender_GL.h",
-    # "RadeonProRender_VK.h"
+    "RadeonProRender_MaterialX.h",
+    "RadeonProRender_GL.h"
 ])
 
 # wrapper generator options

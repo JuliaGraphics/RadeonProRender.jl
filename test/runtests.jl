@@ -2,7 +2,7 @@ using Test
 using RadeonProRender, GeometryBasics, Colors
 const RPR = RadeonProRender
 
-context = RPR.Context(resource=RPR.RPR_CREATION_FLAGS_ENABLE_CPU)
+context = RPR.Context(resource=RPR.RPR_CREATION_FLAGS_ENABLE_CPU, plugin=RPR.Northstar)
 scene = RPR.Scene(context)
 matsys = RPR.MaterialSystem(context, 0)
 camera = RPR.Camera(context)
