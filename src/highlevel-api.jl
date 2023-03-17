@@ -50,14 +50,16 @@ mutable struct Context <: RPRObject{rpr_context}
         id = RPR.rprRegisterPlugin(plugin_path(plugin))
         @assert(id != -1)
         plugin_ids = [id]
-        bin = assetpath("hipbin")
-
-        GC.@preserve bin begin
-            props = rpr_context_properties[convert(Ptr{Cvoid},
-                                                   UInt64(RPR.RPR_CONTEXT_PRECOMPILED_BINARY_PATH)),
-                                           pointer(bin),
-                                           convert(Ptr{Cvoid}, 0)]
-            ctx_ptr = RPR.rprCreateContext(RPR.RPR_API_VERSION, plugin_ids, 1, creation_flags, props, cache_path)
+        if plugin == HybridPro
+            # No hip needed here
+            ctx_ptr = RPR.rprCreateContext(RPR.RPR_API_VERSION, plugin_ids, 1, creation_flags, C_NULL, cache_path)
+        else
+            bin = assetpath("hipbin")
+            GC.@preserve bin begin
+                binpath_ptr = convert(Ptr{Cvoid}, UInt64(RPR.RPR_CONTEXT_PRECOMPILED_BINARY_PATH))
+                props = rpr_context_properties[binpath_ptr, pointer(bin), convert(Ptr{Cvoid}, 0)]
+                ctx_ptr = RPR.rprCreateContext(RPR.RPR_API_VERSION, plugin_ids, 1, creation_flags, props, cache_path)
+            end
         end
         RPR.rprContextSetActivePlugin(ctx_ptr, id)
         ctx = new(ctx_ptr, Base.IdSet{RPRObject}(), plugin)
@@ -755,23 +757,26 @@ function set_standard_tonemapping!(context; typ=RPR.RPR_TONEMAPPING_OPERATOR_PHO
                                    reinhard02_postscale=1.0f0, reinhard02_burn=1.0f0, linear_scale=1.0f0,
                                    aacellsize=4.0, imagefilter_type=RPR.RPR_FILTER_BLACKMANHARRIS,
                                    aasamples=4.0)
-    norm = PostEffect(context, RPR.RPR_POST_EFFECT_NORMALIZATION)
-    set!(context, norm)
-    tonemap = PostEffect(context, RPR.RPR_POST_EFFECT_TONE_MAP)
-    set!(context, tonemap)
-    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_TYPE, typ)
-    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_LINEAR_SCALE, linear_scale)
-    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_SENSITIVITY, photolinear_sensitivity)
-    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_EXPOSURE, photolinear_exposure)
-    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_FSTOP, photolinear_fstop)
-    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_REINHARD02_PRE_SCALE, reinhard02_prescale)
-    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_REINHARD02_POST_SCALE, reinhard02_postscale)
-    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_REINHARD02_BURN, reinhard02_burn)
-    set!(context, RPR.RPR_CONTEXT_IMAGE_FILTER_TYPE, imagefilter_type)
 
-    gamma = PostEffect(context, RPR.RPR_POST_EFFECT_GAMMA_CORRECTION)
-    set!(context, gamma)
-    set!(context, RPR.RPR_CONTEXT_DISPLAY_GAMMA, 1.0)
+    if context.plugin != HybridPro
+        norm = PostEffect(context, RPR.RPR_POST_EFFECT_NORMALIZATION)
+        set!(context, norm)
+        tonemap = PostEffect(context, RPR.RPR_POST_EFFECT_TONE_MAP)
+        set!(context, tonemap)
+        set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_TYPE, typ)
+        set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_LINEAR_SCALE, linear_scale)
+        set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_SENSITIVITY, photolinear_sensitivity)
+        set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_EXPOSURE, photolinear_exposure)
+        set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_FSTOP, photolinear_fstop)
+        set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_REINHARD02_PRE_SCALE, reinhard02_prescale)
+        set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_REINHARD02_POST_SCALE, reinhard02_postscale)
+        set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_REINHARD02_BURN, reinhard02_burn)
+        set!(context, RPR.RPR_CONTEXT_IMAGE_FILTER_TYPE, imagefilter_type)
+
+        gamma = PostEffect(context, RPR.RPR_POST_EFFECT_GAMMA_CORRECTION)
+        set!(context, gamma)
+        set!(context, RPR.RPR_CONTEXT_DISPLAY_GAMMA, 1.0)
+    end
     # set!(context, "aacellsize", aacellsize)
     # set!(context, "aasamples", aasamples)
     # set!(context, RPR.RPR_CONTEXT_AA_ENABLED, UInt(1))
