@@ -50,16 +50,17 @@ mutable struct Context <: RPRObject{rpr_context}
         id = RPR.rprRegisterPlugin(plugin_path(plugin))
         @assert(id != -1)
         plugin_ids = [id]
-        if plugin == HybridPro
-            # No hip needed here
-            ctx_ptr = RPR.rprCreateContext(RPR.RPR_API_VERSION, plugin_ids, 1, creation_flags, C_NULL, cache_path)
-        else
+        if plugin == Northstar
             bin = assetpath("hipbin")
             GC.@preserve bin begin
                 binpath_ptr = convert(Ptr{Cvoid}, UInt64(RPR.RPR_CONTEXT_PRECOMPILED_BINARY_PATH))
                 props = rpr_context_properties[binpath_ptr, pointer(bin), convert(Ptr{Cvoid}, 0)]
-                ctx_ptr = RPR.rprCreateContext(RPR.RPR_API_VERSION, plugin_ids, 1, creation_flags, props, cache_path)
+                ctx_ptr = RPR.rprCreateContext(RPR.RPR_API_VERSION, plugin_ids, 1, creation_flags, props,
+                                               cache_path)
             end
+        else
+            # No hip needed here
+            ctx_ptr = RPR.rprCreateContext(RPR.RPR_API_VERSION, plugin_ids, 1, creation_flags, C_NULL, cache_path)
         end
         RPR.rprContextSetActivePlugin(ctx_ptr, id)
         ctx = new(ctx_ptr, Base.IdSet{RPRObject}(), plugin)
