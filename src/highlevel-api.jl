@@ -304,6 +304,29 @@ function Shape(context::Context, shape::Shape)
     return inst
 end
 
+
+"""
+    VolumeCube(context::Context)
+
+Creates a cube that can be used for rendering a volume!
+"""
+function VolumeCube(context::Context)
+    mesh_props = Vector{UInt32}(undef, 16)
+    mesh_props[1] = UInt32(RPR.RPR_MESH_VOLUME_FLAG)
+    mesh_props[2] = UInt32(1) # enable the Volume flag for the Mesh
+    mesh_props[3] = UInt32(0)
+    # Volume shapes don't need any vertices data: the bounds of volume will only be defined by the grid.
+    # Also, make sure to enable the RPR_MESH_VOLUME_FLAG
+    rpr_mesh = RPR.rprContextCreateMeshEx2(context,
+                                           C_NULL, 0, 0,
+                                           C_NULL, 0, 0,
+                                           C_NULL, 0, 0, 0,
+                                           C_NULL, C_NULL, C_NULL, C_NULL, 0,
+                                           C_NULL, 0, C_NULL, C_NULL, C_NULL, 0,
+                                           mesh_props)
+    return Shape(rpr_mesh, context, [])
+end
+
 """
 Create layered shader give two shaders and respective IORs
 """
@@ -374,7 +397,8 @@ Creates the correct `rpr_image_desc` for a given array.
 """
 function rpr_image_desc(image::Array{T,N}) where {T,N}
     row_pitch = size(image, 1) * sizeof(T)
-    return RPR.rpr_image_desc(ntuple(i -> N < i ? 0 : size(image, i), 3)..., row_pitch, 0)
+    imsize = N == 1 ? (1, 1, 0) : ntuple(i -> N < i ? 0 : size(image, i), 3)
+    return RPR.rpr_image_desc(imsize..., row_pitch, 0)
 end
 
 """
@@ -491,6 +515,11 @@ function set!(shape::Shape, image::Image)
     return rprShapeSetDisplacementImage(shape, image)
 end
 
+function set!(shape::Shape, volume::VolumeMaterial)
+    rprShapeSetVolumeMaterial(shape, volume.node)
+    return
+end
+
 function set!(shape::Shape, context::Context, image::Array)
     return set!(shape, Image(context, image))
 end
@@ -533,6 +562,11 @@ end
 function set!(material::MaterialNode, parameter::rpr_material_node_input, material2::MaterialNode)
     return rprMaterialNodeSetInputNByKey(material, parameter, material2)
 end
+
+function set!(shape::MaterialNode, parameter::rpr_material_node_input, grid::VoxelGrid)
+    return rprMaterialNodeSetInputGridDataByKey(shape, parameter, grid)
+end
+
 
 function set!(material::MaterialNode, parameter::rpr_material_node_input, image::Image)
     return rprMaterialNodeSetInputImageDataByKey(material, parameter, image)

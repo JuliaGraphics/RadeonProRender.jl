@@ -288,7 +288,14 @@ end
 function material_info(::Type{VolumeMaterial})
     return (scattering=RPR.RPR_MATERIAL_INPUT_SCATTERING, absorption=RPR.RPR_MATERIAL_INPUT_ABSORBTION,
             emission=RPR.RPR_MATERIAL_INPUT_EMISSION, scatter_direction=RPR.RPR_MATERIAL_INPUT_G,
-            multiscatter=RPR.RPR_MATERIAL_INPUT_MULTISCATTER)
+            multiscatter=RPR.RPR_MATERIAL_INPUT_MULTISCATTER,
+            densitygrid=RPR.RPR_MATERIAL_INPUT_DENSITYGRID,
+            density=RPR_MATERIAL_INPUT_DENSITY,
+            color=RPR_MATERIAL_INPUT_COLOR)
+end
+
+function material_info(::Type{GridSamplerMaterial})
+    return (data=RPR.RPR_MATERIAL_INPUT_DATA,)
 end
 
 function material_info(::Type{MicrofacetAnisotropicReflectionMaterial})
@@ -445,8 +452,8 @@ function material_field_info()
                 # RPR.RPR_MATERIAL_INPUT_RANDOMNESS => ,
                 # RPR.RPR_MATERIAL_INPUT_DIMENSION => ,
                 # RPR.RPR_MATERIAL_INPUT_OUTTYPE => ,
-                # RPR.RPR_MATERIAL_INPUT_DENSITY => ,
-                # RPR.RPR_MATERIAL_INPUT_DENSITYGRID => ,
+                RPR.RPR_MATERIAL_INPUT_DENSITY => Vec4f,
+                RPR.RPR_MATERIAL_INPUT_DENSITYGRID => VoxelGrid,
                 # RPR.RPR_MATERIAL_INPUT_DISPLACEMENT => ,
                 # RPR.RPR_MATERIAL_INPUT_TEMPERATURE => ,
                 # RPR.RPR_MATERIAL_INPUT_KELVIN => ,
