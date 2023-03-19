@@ -140,6 +140,7 @@ function Base.setproperty!(material::T, field::Symbol, value::Vec3) where {T<:Ma
 end
 
 convert_to_type(matsys::MaterialSystem, ::Type{<:Number}, value) = Vec4f(value)
+convert_to_type(matsys::MaterialSystem, ::Type{<:Number}, value::CEnum.Cenum) = value
 convert_to_type(matsys::MaterialSystem, ::Type{<:Number}, value::Material) = value
 convert_to_type(matsys::MaterialSystem, ::Type{<:Colorant}, value) = to_color(value)
 convert_to_type(matsys::MaterialSystem, ::Type{<:Colorant}, value::Material) = value
