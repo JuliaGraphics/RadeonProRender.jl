@@ -6,7 +6,7 @@ struct Material{Typ} <: RPRMaterial
     matsys::MaterialSystem
 end
 
-function set!(shape::Shape, material::Material)
+function set!(shape::Union{Curve, Shape}, material::Material)
     return set!(shape, material.node)
 end
 
