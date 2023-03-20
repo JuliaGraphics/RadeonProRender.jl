@@ -515,11 +515,6 @@ function set!(shape::Shape, image::Image)
     return rprShapeSetDisplacementImage(shape, image)
 end
 
-function set!(shape::Shape, volume::VolumeMaterial)
-    rprShapeSetVolumeMaterial(shape, volume.node)
-    return
-end
-
 function set!(shape::Shape, context::Context, image::Array)
     return set!(shape, Image(context, image))
 end
