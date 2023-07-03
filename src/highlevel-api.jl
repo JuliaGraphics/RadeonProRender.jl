@@ -42,15 +42,52 @@ function plugin_path(plugin::PluginType)
     end
 end
 
+
+# Aliases for the incredibly long creation flag names
+const GPU0 = RPR_CREATION_FLAGS_ENABLE_GPU0
+const GPU1 = RPR_CREATION_FLAGS_ENABLE_GPU1
+const GPU2 = RPR_CREATION_FLAGS_ENABLE_GPU2
+const GPU3 = RPR_CREATION_FLAGS_ENABLE_GPU3
+const CPU = RPR_CREATION_FLAGS_ENABLE_CPU
+const GL_INTEROP = RPR_CREATION_FLAGS_ENABLE_GL_INTEROP
+const GPU4 = RPR_CREATION_FLAGS_ENABLE_GPU4
+const GPU5 = RPR_CREATION_FLAGS_ENABLE_GPU5
+const GPU6 = RPR_CREATION_FLAGS_ENABLE_GPU6
+const GPU7 = RPR_CREATION_FLAGS_ENABLE_GPU7
+const METAL = RPR_CREATION_FLAGS_ENABLE_METAL
+const GPU8 = RPR_CREATION_FLAGS_ENABLE_GPU8
+const GPU9 = RPR_CREATION_FLAGS_ENABLE_GPU9
+const GPU10 = RPR_CREATION_FLAGS_ENABLE_GPU10
+const GPU11 = RPR_CREATION_FLAGS_ENABLE_GPU11
+const GPU12 = RPR_CREATION_FLAGS_ENABLE_GPU12
+const GPU13 = RPR_CREATION_FLAGS_ENABLE_GPU13
+const GPU14 = RPR_CREATION_FLAGS_ENABLE_GPU14
+const GPU15 = RPR_CREATION_FLAGS_ENABLE_GPU15
+const HIP = RPR_CREATION_FLAGS_ENABLE_HIP
+const OPENCL = RPR_CREATION_FLAGS_ENABLE_OPENCL
+const DEBUG = RPR_CREATION_FLAGS_ENABLE_DEBUG
+
+
 mutable struct Context <: RPRObject{rpr_context}
     pointer::rpr_context
     objects::Base.IdSet{RPRObject}
     plugin::PluginType
-    function Context(plugin::PluginType, creation_flags, singleton=true, props=C_NULL, cache_path=C_NULL)
+    function Context(plugin::PluginType, creation_flags, singleton=true, cache_path=C_NULL)
         id = RPR.rprRegisterPlugin(plugin_path(plugin))
         @assert(id != -1)
         plugin_ids = [id]
-        ctx_ptr = RPR.rprCreateContext(RPR.RPR_API_VERSION, plugin_ids, 1, creation_flags, props, cache_path)
+        if plugin == Northstar
+            hipbin = artifact"hipbin"
+            GC.@preserve hipbin begin
+                binpath_ptr = convert(Ptr{Cvoid}, UInt64(RPR.RPR_CONTEXT_PRECOMPILED_BINARY_PATH))
+                props = rpr_context_properties[binpath_ptr, pointer(hipbin), convert(Ptr{Cvoid}, 0)]
+                ctx_ptr = RPR.rprCreateContext(RPR.RPR_API_VERSION, plugin_ids, 1, creation_flags, props,
+                                               cache_path)
+            end
+        else
+            # No hip needed here
+            ctx_ptr = RPR.rprCreateContext(RPR.RPR_API_VERSION, plugin_ids, 1, creation_flags, C_NULL, cache_path)
+        end
         RPR.rprContextSetActivePlugin(ctx_ptr, id)
         ctx = new(ctx_ptr, Base.IdSet{RPRObject}(), plugin)
         if singleton
@@ -293,6 +330,29 @@ function Shape(context::Context, shape::Shape)
     return inst
 end
 
+
+"""
+    VolumeCube(context::Context)
+
+Creates a cube that can be used for rendering a volume!
+"""
+function VolumeCube(context::Context)
+    mesh_props = Vector{UInt32}(undef, 16)
+    mesh_props[1] = UInt32(RPR.RPR_MESH_VOLUME_FLAG)
+    mesh_props[2] = UInt32(1) # enable the Volume flag for the Mesh
+    mesh_props[3] = UInt32(0)
+    # Volume shapes don't need any vertices data: the bounds of volume will only be defined by the grid.
+    # Also, make sure to enable the RPR_MESH_VOLUME_FLAG
+    rpr_mesh = RPR.rprContextCreateMeshEx2(context,
+                                           C_NULL, 0, 0,
+                                           C_NULL, 0, 0,
+                                           C_NULL, 0, 0, 0,
+                                           C_NULL, C_NULL, C_NULL, C_NULL, 0,
+                                           C_NULL, 0, C_NULL, C_NULL, C_NULL, 0,
+                                           mesh_props)
+    return Shape(rpr_mesh, context, [])
+end
+
 """
 Create layered shader give two shaders and respective IORs
 """
@@ -363,7 +423,8 @@ Creates the correct `rpr_image_desc` for a given array.
 """
 function rpr_image_desc(image::Array{T,N}) where {T,N}
     row_pitch = size(image, 1) * sizeof(T)
-    return RPR.rpr_image_desc(ntuple(i -> N < i ? 0 : size(image, i), 3)..., row_pitch, 0)
+    imsize = N == 1 ? (1, 1, 0) : ntuple(i -> N < i ? 0 : size(image, i), 3)
+    return RPR.rpr_image_desc(imsize..., row_pitch, 0)
 end
 
 """
@@ -522,6 +583,11 @@ end
 function set!(material::MaterialNode, parameter::rpr_material_node_input, material2::MaterialNode)
     return rprMaterialNodeSetInputNByKey(material, parameter, material2)
 end
+
+function set!(shape::MaterialNode, parameter::rpr_material_node_input, grid::VoxelGrid)
+    return rprMaterialNodeSetInputGridDataByKey(shape, parameter, grid)
+end
+
 
 function set!(material::MaterialNode, parameter::rpr_material_node_input, image::Image)
     return rprMaterialNodeSetInputImageDataByKey(material, parameter, image)
@@ -747,23 +813,26 @@ function set_standard_tonemapping!(context; typ=RPR.RPR_TONEMAPPING_OPERATOR_PHO
                                    reinhard02_postscale=1.0f0, reinhard02_burn=1.0f0, linear_scale=1.0f0,
                                    aacellsize=4.0, imagefilter_type=RPR.RPR_FILTER_BLACKMANHARRIS,
                                    aasamples=4.0)
-    norm = PostEffect(context, RPR.RPR_POST_EFFECT_NORMALIZATION)
-    set!(context, norm)
-    tonemap = PostEffect(context, RPR.RPR_POST_EFFECT_TONE_MAP)
-    set!(context, tonemap)
-    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_TYPE, typ)
-    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_LINEAR_SCALE, linear_scale)
-    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_SENSITIVITY, photolinear_sensitivity)
-    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_EXPOSURE, photolinear_exposure)
-    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_FSTOP, photolinear_fstop)
-    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_REINHARD02_PRE_SCALE, reinhard02_prescale)
-    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_REINHARD02_POST_SCALE, reinhard02_postscale)
-    set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_REINHARD02_BURN, reinhard02_burn)
-    set!(context, RPR.RPR_CONTEXT_IMAGE_FILTER_TYPE, imagefilter_type)
 
-    gamma = PostEffect(context, RPR.RPR_POST_EFFECT_GAMMA_CORRECTION)
-    set!(context, gamma)
-    set!(context, RPR.RPR_CONTEXT_DISPLAY_GAMMA, 1.0)
+    if context.plugin != HybridPro
+        norm = PostEffect(context, RPR.RPR_POST_EFFECT_NORMALIZATION)
+        set!(context, norm)
+        tonemap = PostEffect(context, RPR.RPR_POST_EFFECT_TONE_MAP)
+        set!(context, tonemap)
+        set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_TYPE, typ)
+        set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_LINEAR_SCALE, linear_scale)
+        set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_SENSITIVITY, photolinear_sensitivity)
+        set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_EXPOSURE, photolinear_exposure)
+        set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_FSTOP, photolinear_fstop)
+        set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_REINHARD02_PRE_SCALE, reinhard02_prescale)
+        set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_REINHARD02_POST_SCALE, reinhard02_postscale)
+        set!(context, RPR.RPR_CONTEXT_TONE_MAPPING_REINHARD02_BURN, reinhard02_burn)
+        set!(context, RPR.RPR_CONTEXT_IMAGE_FILTER_TYPE, imagefilter_type)
+
+        gamma = PostEffect(context, RPR.RPR_POST_EFFECT_GAMMA_CORRECTION)
+        set!(context, gamma)
+        set!(context, RPR.RPR_CONTEXT_DISPLAY_GAMMA, 1.0)
+    end
     # set!(context, "aacellsize", aacellsize)
     # set!(context, "aasamples", aasamples)
     # set!(context, RPR.RPR_CONTEXT_AA_ENABLED, UInt(1))

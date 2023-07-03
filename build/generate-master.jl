@@ -1,16 +1,14 @@
 using Clang
 using Clang.Generators
-cd(@__DIR__)
-
+using RadeonProRender_jll
 
 # current version checked in is v2.2.9
-include_dir = normpath(joinpath(@__DIR__, "RadeonProRenderSDK", "RadeonProRender", "inc"))
+include_dir = joinpath(RadeonProRender_jll.artifact_dir, "include")
 # LIBCLANG_HEADERS are those headers to be wrapped.
 headers = joinpath.(include_dir, [
     "RadeonProRender_v2.h",
-    "RadeonProRender_MaterialX.h"
-    # "RRadeonProRender_v2adeonProRender_GL.h",
-    # "RadeonProRender_VK.h"
+    "RadeonProRender_MaterialX.h",
+    "RadeonProRender_GL.h"
 ])
 
 # wrapper generator options
@@ -25,6 +23,15 @@ push!(args, "-DRPR_API_USE_HEADER_V2")
 ctx = create_context(headers, args, options)
 # run generator
 build!(ctx, BUILDSTAGE_NO_PRINTING)
+
+isline(ex) = Meta.isexpr(ex, :line) || isa(ex, LineNumberNode)
+striplines!(@nospecialize(expr)) = isline(expr) ? false : true
+
+function striplines!(expr::Expr)
+    isline(expr) && return false
+    args = filter!(striplines!, expr.args)
+    return true
+end
 
 function rewrite!(e::Expr)
     if Meta.isexpr(e, :function)
@@ -47,7 +54,8 @@ function rewrite!(e::Expr)
         end
         e.args[2] = new_body
     end
-    return e
+    striplines!(e)
+    return
 end
 
 function rewrite!(dag::ExprDAG)
