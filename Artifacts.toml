@@ -1,0 +1,6 @@
+[hipbin]
+git-tree-sha1 = "696b0a233a3b614c831a7057d06cfa607c23dc14"
+
+    [[hipbin.download]]
+    url = "https://github.com/GPUOpen-LibrariesAndSDKs/RadeonProRenderSDKKernels/archive/e6908ad8e6d91170ece814f67cfaae8f24b3daed.tar.gz"
+    sha256 = "06362fb306f552c3904a5f306b051a119aca9217355f12004b0c5631df334c61"
