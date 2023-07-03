@@ -23,11 +23,14 @@ push!(args, "-DRPR_API_USE_HEADER_V2")
 ctx = create_context(headers, args, options)
 # run generator
 build!(ctx, BUILDSTAGE_NO_PRINTING)
+
 isline(ex) = Meta.isexpr(ex, :line) || isa(ex, LineNumberNode)
-striplines(@nospecialize(expr)) = expr
-function striplines(expr::Expr)
-    args = [striplines(elem) for elem in expr.args if !isline(elem)]
-    return Expr(expr.head, args...)
+striplines!(@nospecialize(expr)) = isline(expr) ? false : true
+
+function striplines!(expr::Expr)
+    isline(expr) && return false
+    args = filter!(striplines!, expr.args)
+    return true
 end
 
 function rewrite!(e::Expr)
