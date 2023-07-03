@@ -51,10 +51,10 @@ mutable struct Context <: RPRObject{rpr_context}
         @assert(id != -1)
         plugin_ids = [id]
         if plugin == Northstar
-            bin = artifact"hipbin"
-            GC.@preserve bin begin
+            hipbin = artifact"hipbin"
+            GC.@preserve hipbin begin
                 binpath_ptr = convert(Ptr{Cvoid}, UInt64(RPR.RPR_CONTEXT_PRECOMPILED_BINARY_PATH))
-                props = rpr_context_properties[binpath_ptr, pointer(bin), convert(Ptr{Cvoid}, 0)]
+                props = rpr_context_properties[binpath_ptr, pointer(hipbin), convert(Ptr{Cvoid}, 0)]
                 ctx_ptr = RPR.rprCreateContext(RPR.RPR_API_VERSION, plugin_ids, 1, creation_flags, props,
                                                cache_path)
             end

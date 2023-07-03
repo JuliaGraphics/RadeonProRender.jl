@@ -1,6 +1,6 @@
 [hipbin]
-git-tree-sha1 = "696b0a233a3b614c831a7057d06cfa607c23dc14"
+git-tree-sha1 = "db099cd93b222a4c1e84789a90bc0125a6243314"
 
     [[hipbin.download]]
-    url = "https://github.com/GPUOpen-LibrariesAndSDKs/RadeonProRenderSDKKernels/archive/e6908ad8e6d91170ece814f67cfaae8f24b3daed.tar.gz"
-    sha256 = "06362fb306f552c3904a5f306b051a119aca9217355f12004b0c5631df334c61"
+    url = "https://github.com/JuliaGraphics/RadeonProRender.jl/releases/download/binaries-v3.1.2/hipbin.tar.gz"
+    sha256 = "c77184e21b5530c6c6f7e329ace037f193dfb18b37877c2dae561a3d36fc815f"
