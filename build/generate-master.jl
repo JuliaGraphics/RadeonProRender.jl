@@ -23,6 +23,12 @@ push!(args, "-DRPR_API_USE_HEADER_V2")
 ctx = create_context(headers, args, options)
 # run generator
 build!(ctx, BUILDSTAGE_NO_PRINTING)
+isline(ex) = Meta.isexpr(ex, :line) || isa(ex, LineNumberNode)
+striplines(@nospecialize(expr)) = expr
+function striplines(expr::Expr)
+    args = [striplines(elem) for elem in expr.args if !isline(elem)]
+    return Expr(expr.head, args...)
+end
 
 function rewrite!(e::Expr)
     if Meta.isexpr(e, :function)
@@ -45,7 +51,8 @@ function rewrite!(e::Expr)
         end
         e.args[2] = new_body
     end
-    return e
+    striplines!(e)
+    return
 end
 
 function rewrite!(dag::ExprDAG)

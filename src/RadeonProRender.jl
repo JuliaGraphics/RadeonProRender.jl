@@ -5,6 +5,7 @@ using Colors
 using CEnum
 using RadeonProRender_jll
 using Printf
+using Pkg.Artifacts
 
 assetpath(paths...) = normpath(joinpath(@__DIR__, "..", "assets", paths...))
 

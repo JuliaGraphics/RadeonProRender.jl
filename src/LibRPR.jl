@@ -1034,6 +1034,11 @@ end
 @cenum rpr_interpolation_mode::UInt32 begin
     RPR_INTERPOLATION_MODE_NONE = 0
     RPR_INTERPOLATION_MODE_LINEAR = 1
+    RPR_INTERPOLATION_MODE_EXPONENTIAL_UP = 2
+    RPR_INTERPOLATION_MODE_EXPONENTIAL_DOWN = 3
+    RPR_INTERPOLATION_MODE_SMOOTH = 4
+    RPR_INTERPOLATION_MODE_BUMP = 5
+    RPR_INTERPOLATION_MODE_SPIKE = 6
 end
 
 @cenum rpr_ubermaterial_ior_mode::UInt32 begin
@@ -1463,9 +1468,7 @@ RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCreateContext(api_version, pluginIDs, pluginCount, creation_flags, props, cache_path)
     out_context = Ref{rpr_context}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprCreateContext, libRadeonProRender64), rpr_status, (rpr_uint, Ptr{rpr_int}, Csize_t, rpr_creation_flags, Ptr{rpr_context_properties}, Ptr{rpr_char}, Ptr{rpr_context}), api_version, pluginIDs, pluginCount, creation_flags, props, cache_path, out_context))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_context[]
 end
 
@@ -1532,9 +1535,7 @@ RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextGetAOV(context, aov)
     out_fb = Ref{rpr_framebuffer}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextGetAOV, libRadeonProRender64), rpr_status, (rpr_context, rpr_aov, Ptr{rpr_framebuffer}), context, aov, out_fb))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_fb[]
 end
 
@@ -1716,9 +1717,7 @@ RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextGetScene(arg0)
     out_scene = Ref{rpr_scene}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextGetScene, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_scene}), arg0, out_scene))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_scene[]
 end
 
@@ -1880,9 +1879,7 @@ RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateImage(context, format, image_desc, data)
     out_image = Ref{rpr_image}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateImage, libRadeonProRender64), rpr_status, (rpr_context, rpr_image_format, Ptr{rpr_image_desc}, Ptr{Cvoid}, Ptr{rpr_image}), context, format, image_desc, data, out_image))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_image[]
 end
 
@@ -1905,9 +1902,7 @@ RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateBuffer(context, buffer_desc, data)
     out_buffer = Ref{rpr_buffer}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateBuffer, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_buffer_desc}, Ptr{Cvoid}, Ptr{rpr_buffer}), context, buffer_desc, data, out_buffer))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_buffer[]
 end
 
@@ -1933,9 +1928,7 @@ RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateImageFromFile(context, path)
     out_image = Ref{rpr_image}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateImageFromFile, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}, Ptr{rpr_image}), context, path, out_image))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_image[]
 end
 
@@ -1946,9 +1939,7 @@ similar to [`rprContextCreateImageFromFile`](@ref), except that the file input a
 """
 function rprContextCreateImageFromFileMemory(context, extension, data, dataSizeByte)
     out_image = Ref{rpr_image}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateImageFromFileMemory, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}, Ptr{Cvoid}, Csize_t, Ptr{rpr_image}), context, extension, data, dataSizeByte, out_image))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_image[]
 end
 
@@ -1970,9 +1961,7 @@ RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateScene(context)
     out_scene = Ref{rpr_scene}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateScene, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_scene}), context, out_scene))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_scene[]
 end
 
@@ -1994,9 +1983,7 @@ RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateInstance(context, shape)
     out_instance = Ref{rpr_shape}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateInstance, libRadeonProRender64), rpr_status, (rpr_context, rpr_shape, Ptr{rpr_shape}), context, shape, out_instance))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_instance[]
 end
 
@@ -2035,25 +2022,19 @@ RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateMesh(context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces)
     out_mesh = Ref{rpr_shape}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateMesh, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_float}, Csize_t, rpr_int, Ptr{rpr_float}, Csize_t, rpr_int, Ptr{rpr_float}, Csize_t, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, Csize_t, Ptr{rpr_shape}), context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces, out_mesh))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_mesh[]
 end
 
 function rprContextCreateMeshEx(context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, perVertexFlag, num_perVertexFlags, perVertexFlag_stride, numberOfTexCoordLayers, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces)
     out_mesh = Ref{rpr_shape}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateMeshEx, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_float}, Csize_t, rpr_int, Ptr{rpr_float}, Csize_t, rpr_int, Ptr{rpr_int}, Csize_t, rpr_int, rpr_int, Ptr{Ptr{rpr_float}}, Ptr{Csize_t}, Ptr{rpr_int}, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{Ptr{rpr_int}}, Ptr{rpr_int}, Ptr{rpr_int}, Csize_t, Ptr{rpr_shape}), context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, perVertexFlag, num_perVertexFlags, perVertexFlag_stride, numberOfTexCoordLayers, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces, out_mesh))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_mesh[]
 end
 
 function rprContextCreateMeshEx2(context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, perVertexFlag, num_perVertexFlags, perVertexFlag_stride, numberOfTexCoordLayers, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces, mesh_properties)
     out_mesh = Ref{rpr_shape}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateMeshEx2, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_float}, Csize_t, rpr_int, Ptr{rpr_float}, Csize_t, rpr_int, Ptr{rpr_int}, Csize_t, rpr_int, rpr_int, Ptr{Ptr{rpr_float}}, Ptr{Csize_t}, Ptr{rpr_int}, Ptr{rpr_int}, rpr_int, Ptr{rpr_int}, rpr_int, Ptr{Ptr{rpr_int}}, Ptr{rpr_int}, Ptr{rpr_int}, Csize_t, Ptr{rpr_mesh_info}, Ptr{rpr_shape}), context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, perVertexFlag, num_perVertexFlags, perVertexFlag_stride, numberOfTexCoordLayers, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces, mesh_properties, out_mesh))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_mesh[]
 end
 
@@ -2074,9 +2055,7 @@ RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateCamera(context)
     out_camera = Ref{rpr_camera}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateCamera, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_camera}), context, out_camera))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_camera[]
 end
 
@@ -2101,9 +2080,7 @@ RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateFrameBuffer(context, format, fb_desc)
     out_fb = Ref{rpr_framebuffer}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateFrameBuffer, libRadeonProRender64), rpr_status, (rpr_context, rpr_framebuffer_format, Ptr{rpr_framebuffer_desc}, Ptr{rpr_framebuffer}), context, format, fb_desc, out_fb))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_fb[]
 end
 
@@ -2114,9 +2091,7 @@ Loads extension function from context
 """
 function rprContextGetFunctionPtr(context, function_name)
     out_function_ptr = Ref{Ptr{Cvoid}}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextGetFunctionPtr, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}, Ptr{Ptr{Cvoid}}), context, function_name, out_function_ptr))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_function_ptr[]
 end
 
@@ -3181,9 +3156,7 @@ Shape object
 """
 function rprInstanceGetBaseShape(shape)
     out_shape = Ref{rpr_shape}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprInstanceGetBaseShape, libRadeonProRender64), rpr_status, (rpr_shape, Ptr{rpr_shape}), shape, out_shape))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_shape[]
 end
 
@@ -3202,9 +3175,7 @@ Light object
 """
 function rprContextCreatePointLight(context)
     out_light = Ref{rpr_light}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreatePointLight, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_light}), context, out_light))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_light[]
 end
 
@@ -3398,9 +3369,7 @@ light id of a newly created light
 """
 function rprContextCreateDirectionalLight(context)
     out_light = Ref{rpr_light}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateDirectionalLight, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_light}), context, out_light))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_light[]
 end
 
@@ -3449,9 +3418,7 @@ Light object
 """
 function rprContextCreateEnvironmentLight(context)
     out_light = Ref{rpr_light}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateEnvironmentLight, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_light}), context, out_light))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_light[]
 end
 
@@ -3549,9 +3516,7 @@ end
 
 function rprEnvironmentLightGetEnvironmentLightOverride(in_ibl, overrideType)
     out_iblOverride = Ref{rpr_light}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprEnvironmentLightGetEnvironmentLightOverride, libRadeonProRender64), rpr_status, (rpr_light, rpr_environment_override, Ptr{rpr_light}), in_ibl, overrideType, out_iblOverride))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_iblOverride[]
 end
 
@@ -3570,9 +3535,7 @@ Light object
 """
 function rprContextCreateSkyLight(context)
     out_light = Ref{rpr_light}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateSkyLight, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_light}), context, out_light))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_light[]
 end
 
@@ -3933,9 +3896,7 @@ end
 
 function rprSceneGetEnvironmentLight(in_scene)
     out_light = Ref{rpr_light}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprSceneGetEnvironmentLight, libRadeonProRender64), rpr_status, (rpr_scene, Ptr{rpr_light}), in_scene, out_light))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_light[]
 end
 
@@ -3987,9 +3948,7 @@ Image object
 """
 function rprSceneGetBackgroundImage(scene)
     out_image = Ref{rpr_image}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprSceneGetBackgroundImage, libRadeonProRender64), rpr_status, (rpr_scene, Ptr{rpr_image}), scene, out_image))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_image[]
 end
 
@@ -4023,9 +3982,7 @@ camera id for the camera if any, NULL otherwise
 """
 function rprSceneGetCameraRight(scene)
     out_camera = Ref{rpr_camera}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprSceneGetCameraRight, libRadeonProRender64), rpr_status, (rpr_scene, Ptr{rpr_camera}), scene, out_camera))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_camera[]
 end
 
@@ -4059,9 +4016,7 @@ camera id for the camera if any, NULL otherwise
 """
 function rprSceneGetCamera(scene)
     out_camera = Ref{rpr_camera}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprSceneGetCamera, libRadeonProRender64), rpr_status, (rpr_scene, Ptr{rpr_camera}), scene, out_camera))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_camera[]
 end
 
@@ -4182,9 +4137,7 @@ Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT
 """
 function rprMaterialSystemGetInfo(in_material_system, type, in_size, in_data)
     out_size = Ref{Csize_t}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprMaterialSystemGetInfo, libRadeonProRender64), rpr_status, (rpr_material_system, rpr_material_system_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), in_material_system, type, in_size, in_data, out_size))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_size[]
 end
 
@@ -4197,9 +4150,7 @@ Possible error codes: RPR\\_ERROR\\_INTERNAL\\_ERROR
 """
 function rprContextCreateMaterialSystem(in_context, type)
     out_matsys = Ref{rpr_material_system}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateMaterialSystem, libRadeonProRender64), rpr_status, (rpr_context, rpr_material_system_type, Ptr{rpr_material_system}), in_context, type, out_matsys))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_matsys[]
 end
 
@@ -4212,9 +4163,7 @@ Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT
 """
 function rprMaterialSystemGetSize(in_context)
     out_size = Ref{rpr_uint}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprMaterialSystemGetSize, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_uint}), in_context, out_size))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_size[]
 end
 
@@ -4227,9 +4176,7 @@ Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT
 """
 function rprMaterialSystemCreateNode(in_matsys, in_type)
     out_node = Ref{rpr_material_node}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprMaterialSystemCreateNode, libRadeonProRender64), rpr_status, (rpr_material_system, rpr_material_node_type, Ptr{rpr_material_node}), in_matsys, in_type, out_node))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_node[]
 end
 
@@ -4324,41 +4271,31 @@ end
 
 function rprMaterialNodeGetInfo(in_node, in_info, in_size, in_data)
     out_size = Ref{Csize_t}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprMaterialNodeGetInfo, libRadeonProRender64), rpr_status, (rpr_material_node, rpr_material_node_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), in_node, in_info, in_size, in_data, out_size))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_size[]
 end
 
 function rprMaterialNodeGetInputInfo(in_node, in_input_idx, in_info, in_size, in_data)
     out_size = Ref{Csize_t}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprMaterialNodeGetInputInfo, libRadeonProRender64), rpr_status, (rpr_material_node, rpr_int, rpr_material_node_input_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), in_node, in_input_idx, in_info, in_size, in_data, out_size))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_size[]
 end
 
 function rprContextCreateComposite(context, in_type)
     out_composite = Ref{rpr_composite}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateComposite, libRadeonProRender64), rpr_status, (rpr_context, rpr_composite_type, Ptr{rpr_composite}), context, in_type, out_composite))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_composite[]
 end
 
 function rprContextCreateLUTFromFile(context, fileLutPath)
     out_lut = Ref{rpr_lut}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateLUTFromFile, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}, Ptr{rpr_lut}), context, fileLutPath, out_lut))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_lut[]
 end
 
 function rprContextCreateLUTFromData(context, lutData)
     out_lut = Ref{rpr_lut}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateLUTFromData, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}, Ptr{rpr_lut}), context, lutData, out_lut))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_lut[]
 end
 
@@ -4464,9 +4401,7 @@ Light object
 """
 function rprContextCreatePostEffect(context, type)
     out_effect = Ref{rpr_post_effect}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreatePostEffect, libRadeonProRender64), rpr_status, (rpr_context, rpr_post_effect_type, Ptr{rpr_post_effect}), context, type, out_effect))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_effect[]
 end
 
@@ -4500,9 +4435,7 @@ end
 
 function rprContextGetAttachedPostEffect(context, i)
     out_effect = Ref{rpr_post_effect}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextGetAttachedPostEffect, libRadeonProRender64), rpr_status, (rpr_context, rpr_uint, Ptr{rpr_post_effect}), context, i, out_effect))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_effect[]
 end
 
@@ -4516,9 +4449,7 @@ end
 
 function rprContextCreateHeteroVolume(context)
     out_heteroVolume = Ref{rpr_hetero_volume}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateHeteroVolume, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_hetero_volume}), context, out_heteroVolume))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_heteroVolume[]
 end
 
@@ -4642,9 +4573,24 @@ function rprMaterialXAddDependencyMtlx(in_context, resourcePath)
 end
 
 """
+    rprMaterialXAddDependencyMtlxAsBuffer(in_context, buffer, bufferSize)
+
+Add a dependency Mtlx file. Same than [`rprMaterialXAddDependencyMtlx`](@ref), but input a file buffer instead of the file.
+
+-----> Note: This function is part of the 'Version 2' MaterialX API that replaces 'Version 1'
+
+'buffer' represents the content of a XML string defining the MaterialX material. The size of the buffer is defined by 'bufferSize', not by a null-terminated character.
+
+example: [`rprMaterialXAddDependencyMtlxAsBuffer`](@ref)(context, inbuffer, size); [`rprMaterialXSetFile`](@ref)(material, "materialx.mtlx"); During the parsing of "materialx.mtlx" inside the [`rprMaterialXSetFile`](@ref) call, 'inbuffer' is also parsed and used as a dependancy file.
+"""
+function rprMaterialXAddDependencyMtlxAsBuffer(in_context, buffer, bufferSize)
+    check_error(ccall((:rprMaterialXAddDependencyMtlxAsBuffer, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}, Csize_t), in_context, buffer, bufferSize))
+end
+
+"""
     rprMaterialXCleanDependencyMtlx(in_context)
 
-Clean the list created by [`rprMaterialXAddDependencyMtlx`](@ref) calls
+Clean the list created by [`rprMaterialXAddDependencyMtlx`](@ref) / [`rprMaterialXAddDependencyMtlxAsBuffer`](@ref) calls
 
 -----> Note: This function is part of the 'Version 2' MaterialX API that replaces 'Version 1'
 """
@@ -4736,9 +4682,7 @@ const rpr_gl_platform_info = rpr_uint
 
 function rprContextCreateFramebufferFromGLTexture2D(context, target, miplevel, texture)
     out_fb = Ref{rpr_framebuffer}()
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     check_error(ccall((:rprContextCreateFramebufferFromGLTexture2D, libRadeonProRender64), rpr_status, (rpr_context, rpr_GLenum, rpr_GLint, rpr_GLuint, Ptr{rpr_framebuffer}), context, target, miplevel, texture, out_fb))
-    #= c:\Users\sdani\SimiWorld\ProgrammerLife\MakieDev\dev\RadeonProRender\build\generate-master.jl:40 =#
     return out_fb[]
 end
 
@@ -4746,11 +4690,11 @@ const RPR_VERSION_MAJOR = 3
 
 const RPR_VERSION_MINOR = 1
 
-const RPR_VERSION_REVISION = 0x00
+const RPR_VERSION_REVISION = 2
 
-const RPR_VERSION_BUILD = 0x0a9c8434
+const RPR_VERSION_BUILD = 0xd1cb11d8
 
-const RPR_VERSION_MAJOR_MINOR_REVISION = 0x00300100
+const RPR_VERSION_MAJOR_MINOR_REVISION = 0x00300102
 
 const RPR_API_VERSION = RPR_VERSION_MAJOR_MINOR_REVISION
 
