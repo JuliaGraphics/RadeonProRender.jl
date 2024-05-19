@@ -419,6 +419,8 @@ end
     RPR_CONTEXT_FIRST_ITERATION_TIME_CALLBACK_DATA = 412
     RPR_CONTEXT_IMAGE_FILTER_RADIUS = 413
     RPR_CONTEXT_PRECOMPILED_BINARY_PATH = 414
+    RPR_CONTEXT_REFLECTION_ENERGY_COMPENSATION_ENABLED = 415
+    RPR_CONTEXT_NORMALIZE_LIGHT_INTENSITY_ENABLED = 416
     RPR_CONTEXT_NAME = 7829367
     RPR_CONTEXT_UNIQUE_ID = 7829368
     RPR_CONTEXT_CUSTOM_PTR = 7829369
@@ -4498,44 +4500,6 @@ function rprHeteroVolumeSetDensityScale(heteroVolume, scale)
 end
 
 """
-    rprLoadMaterialX(in_context, in_matsys, xmlData, incudeData, includeCount, resourcePaths, resourcePathsCount, imageAlreadyCreated_count, imageAlreadyCreated_paths, imageAlreadyCreated_list, listNodesOut, listNodesOut_count, listImagesOut, listImagesOut_count, rootNodeOut, rootDisplacementNodeOut)
-
-Parse a MaterialX XML data, and create the Material graph composed of rpr\\_material\\_nodes, and rpr\\_images
-
------> This function is part of the 'Version 1' API - deprecated and replaced by the 'Version 2' API
-
-This function is NOT traced. However internally it's calling some RPR API to build the graph, those calls are traced.
-
-### Parameters
-* `xmlData`: null-terminated string of the MaterialX XML data
-* `resourcePaths`: and resourcePathsCount list of paths used for image loading
-* `imageAlreadyCreated_count`:
-* `imageAlreadyCreated_paths`:
-* `imageAlreadyCreated_list`: We can specify a list of [`rpr_image`](@ref) that are already loaded.  If [`rprLoadMaterialX`](@ref) finds any images in the XML belonging to this list it will use it directly instead of creating it with [`rprContextCreateImageFromFile`](@ref) Those images will not be added in the listImagesOut list. example to add an image in the imageAlreadyCreated list: imageAlreadyCreated\\_count = 1 imageAlreadyCreated\\_paths[0] = "../../Textures/UVCheckerMap13-1024.png" // same path specified in the 'value' of the image in the XML imageAlreadyCreated\\_list[0] = ([`rpr_image`](@ref)) existing\\_rpr\\_image imageAlreadyCreated\\_paths and imageAlreadyCreated\\_list must have the same size.
-* `listNodesOut`:
-* `listImagesOut`: Thoses 2 buffers are allocated by [`rprLoadMaterialX`](@ref), then you should use [`rprLoadMaterialX_free`](@ref) to free them. they contain the list of rpr\\_material and [`rpr_image`](@ref) created by [`rprLoadMaterialX`](@ref).
-* `rootNodeOut`: Closure node in the material graph. Index inside listNodesOut. Could be -1 if an error occured. This is the material that should be assigned to shape: [`rprShapeSetMaterial`](@ref)(shape,listNodesOut[rootNodeOut]);
-"""
-function rprLoadMaterialX(in_context, in_matsys, xmlData, incudeData, includeCount, resourcePaths, resourcePathsCount, imageAlreadyCreated_count, imageAlreadyCreated_paths, imageAlreadyCreated_list, listNodesOut, listNodesOut_count, listImagesOut, listImagesOut_count, rootNodeOut, rootDisplacementNodeOut)
-    check_error(ccall((:rprLoadMaterialX, libRadeonProRender64), rpr_status, (rpr_context, rpr_material_system, Ptr{Cchar}, Ptr{Ptr{Cchar}}, Cint, Ptr{Ptr{Cchar}}, Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{rpr_image}, Ptr{Ptr{rpr_material_node}}, Ptr{rpr_uint}, Ptr{Ptr{rpr_image}}, Ptr{rpr_uint}, Ptr{rpr_uint}, Ptr{rpr_uint}), in_context, in_matsys, xmlData, incudeData, includeCount, resourcePaths, resourcePathsCount, imageAlreadyCreated_count, imageAlreadyCreated_paths, imageAlreadyCreated_list, listNodesOut, listNodesOut_count, listImagesOut, listImagesOut_count, rootNodeOut, rootDisplacementNodeOut))
-end
-
-"""
-    rprLoadMaterialX_free(listNodes, listImages)
-
-Free the buffers allocated by [`rprLoadMaterialX`](@ref)
-
------> This function is part of the 'Version 1' API - deprecated and replaced by the 'Version 2' API
-
-It does NOT call any [`rprObjectDelete`](@ref) Internally it's doing a simple: delete[] listNodes; delete[] listImages;
-
-This function is NOT traced.
-"""
-function rprLoadMaterialX_free(listNodes, listImages)
-    check_error(ccall((:rprLoadMaterialX_free, libRadeonProRender64), rpr_status, (Ptr{rpr_material_node}, Ptr{rpr_image}), listNodes, listImages))
-end
-
-"""
     rprMaterialXAddResourceFolder(in_context, resourcePath)
 
 Add resource search path.
@@ -4668,6 +4632,17 @@ function rprMaterialXBindGeomPropToPrimvar(in_context, geompropvalue, key)
     check_error(ccall((:rprMaterialXBindGeomPropToPrimvar, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}, rpr_uint), in_context, geompropvalue, key))
 end
 
+"""
+    rprMaterialXTexcoord(material, offsetx, offsety, offsetz, scalex, scaley, scalez, uvSet)
+
+function to transform the final UV applied on the shape, call it before [`rprMaterialXSetFile`](@ref).
+
+example: // the UV set 0 (Base UV) of matx is first translated by (0.7,0.6,0.0) and then scaled by (2,1.5,1) [`rprMaterialXTexcoord`](@ref)( matx, 0.7f, 0.6f, 0.0f, 2.0f, 1.5f, 1.0f, 0 ); [`rprMaterialXSetFile`](@ref)( matx, "materialx.mtlx");
+"""
+function rprMaterialXTexcoord(material, offsetx, offsety, offsetz, scalex, scaley, scalez, uvSet)
+    check_error(ccall((:rprMaterialXTexcoord, libRadeonProRender64), rpr_status, (rpr_material_node, rpr_float, rpr_float, rpr_float, rpr_float, rpr_float, rpr_float, rpr_int), material, offsetx, offsety, offsetz, scalex, scaley, scalez, uvSet))
+end
+
 const rpr_GLuint = Cuint
 
 const rpr_GLint = Cint
@@ -4690,11 +4665,11 @@ const RPR_VERSION_MAJOR = 3
 
 const RPR_VERSION_MINOR = 1
 
-const RPR_VERSION_REVISION = 2
+const RPR_VERSION_REVISION = 5
 
-const RPR_VERSION_BUILD = 0xd1cb11d8
+const RPR_VERSION_BUILD = 0x92dd2edd
 
-const RPR_VERSION_MAJOR_MINOR_REVISION = 0x00300102
+const RPR_VERSION_MAJOR_MINOR_REVISION = 0x00300105
 
 const RPR_API_VERSION = RPR_VERSION_MAJOR_MINOR_REVISION
 
