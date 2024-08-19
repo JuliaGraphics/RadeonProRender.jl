@@ -500,8 +500,8 @@ function setportal!(light::AbstractLight, portal::AbstractGeometry)
     return setportal!(light, Shape(portal))
 end
 
-function setportal!(light::EnvironmentLight, portal::Shape)
-    return rprEnvironmentLightSetPortal(light, portal)
+function setportal!(scene, light::EnvironmentLight, portal::Shape)
+    return rprEnvironmentLightAttachPortal(scene, light, portal)
 end
 
 function setportal!(light::SkyLight, portal::Shape)
