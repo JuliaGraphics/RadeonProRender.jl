@@ -293,23 +293,37 @@ https://gist.github.com/SimonDanisch/475064ae102141554f65e926f3070630
 =#
 function Shape(context::Context, vertices, normals, faces, uvs)
     @assert length(vertices) == length(normals)
-    @assert length(vertices) == length(uvs)
+    @assert isnothing(uvs) || (length(vertices) == length(uvs))
 
     vraw = decompose(Point3f, vertices)
+    @assert eltype(vraw) == Point3f
+
     nraw = decompose(Vec3f, normals)
-    uvraw = map(uv -> Vec2f(1 - uv[2], 1 - uv[1]), uvs)
+    @assert eltype(nraw) == Vec3f
+    
+    if isnothing(uvs)
+        uvraw = C_NULL
+        uvlength = 0
+        uvbytesize = 0
+    else
+        uvraw = map(uv -> Vec2f(1 - uv[2], 1 - uv[1]), uvs)
+        @assert eltype(uvraw) == Vec2f
+        uvlength = length(uvs)
+        uvbytesize = sizeof(Vec2f)
+    end
+
     f = decompose(TriangleFace{OffsetInteger{-1,rpr_int}}, faces)
     iraw = collect(reinterpret(rpr_int, f))
     facelens = fill(rpr_int(3), length(faces))
 
-    @assert eltype(vraw) == Point3f
-    @assert eltype(nraw) == Vec3f
-    @assert eltype(uvraw) == Vec2f
 
     foreach(i -> checkbounds(vertices, i + 1), iraw)
-    rpr_mesh = rprContextCreateMesh(context, vraw, length(vertices), sizeof(Point3f), nraw, length(normals),
-                                    sizeof(Vec3f), uvraw, length(uvs), sizeof(Vec2f), iraw, sizeof(rpr_int),
-                                    iraw, sizeof(rpr_int), iraw, sizeof(rpr_int), facelens, length(faces))
+    rpr_mesh = rprContextCreateMesh(context, 
+        vraw, length(vertices), sizeof(Point3f), 
+        nraw, length(normals), sizeof(Vec3f), 
+        uvraw, uvlength, uvbytesize, 
+        iraw, sizeof(rpr_int), iraw, sizeof(rpr_int), iraw, sizeof(rpr_int), facelens, length(faces)
+    )
 
     jl_references = (vraw, nraw, uvraw, iraw, facelens)
     shape = Shape(rpr_mesh, context, jl_references)
