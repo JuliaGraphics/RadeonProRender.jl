@@ -419,6 +419,8 @@ end
     RPR_CONTEXT_FIRST_ITERATION_TIME_CALLBACK_DATA = 412
     RPR_CONTEXT_IMAGE_FILTER_RADIUS = 413
     RPR_CONTEXT_PRECOMPILED_BINARY_PATH = 414
+    RPR_CONTEXT_REFLECTION_ENERGY_COMPENSATION_ENABLED = 415
+    RPR_CONTEXT_NORMALIZE_LIGHT_INTENSITY_ENABLED = 416
     RPR_CONTEXT_NAME = 7829367
     RPR_CONTEXT_UNIQUE_ID = 7829368
     RPR_CONTEXT_CUSTOM_PTR = 7829369
@@ -1437,9 +1439,9 @@ Register rendering plugin
 
 <Description>
 
-### Parameters
+# Arguments
 * `path`: Path of plugin to load (for UNICODE, supports UTF-8 encoding)
-### Returns
+# Returns
 unique identifier of plugin, -1 otherwise
 """
 function rprRegisterPlugin(path)
@@ -1455,7 +1457,7 @@ Rendering context is a root concept encapsulating the render states and responsi
 
 RPR\\_ERROR\\_COMPUTE\\_API\\_NOT\\_SUPPORTED RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_INVALID\\_API\\_VERSION RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `api_version`: Api version constant
 * `context_type`: Determines compute API to use, OPENCL only is supported for now
 * `creation_flags`: Determines multi-gpu or cpu-gpu configuration
@@ -1463,7 +1465,7 @@ RPR\\_ERROR\\_COMPUTE\\_API\\_NOT\\_SUPPORTED RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_
 * `cache_path`: Full path to kernel cache created by Radeon ProRender, NULL means to use current folder (for UNICODE, supports UTF-8 encoding)
 * `cpu_thread_limit`:	Limit for the number of threads used for CPU rendering
 * `out_context`:	Pointer to context object
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCreateContext(api_version, pluginIDs, pluginCount, creation_flags, props, cache_path)
@@ -1488,13 +1490,13 @@ Query information about a context
 
 The workflow is usually two-step: query with the data == NULL and size = 0 to get the required buffer size in size\\_ret, then query with size\\_ret == NULL to fill the buffer with the data. Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `context`: The context to query
 * `context_info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextGetInfo(context, context_info, size, data, size_ret)
@@ -1508,14 +1510,14 @@ Query information about a context parameter
 
 The workflow is usually two-step: query with the data == NULL and size = 0 to get the required buffer size in size\\_ret, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `context`: The context to query
 * `param_idx`:	The index of the parameter - must be between 0 and (value stored by RPR\\_CONTEXT\\_PARAMETER\\_COUNT)-1
 * `parameter_info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextGetParameterInfo(context, param_idx, parameter_info, size, data, size_ret)
@@ -1527,10 +1529,10 @@ end
 
 Query the AOV
 
-### Parameters
+# Arguments
 * `context`: The context to get a frame buffer from
 * `out_fb`:	Pointer to framebuffer object
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextGetAOV(context, aov)
@@ -1544,11 +1546,11 @@ end
 
 Set AOV
 
-### Parameters
+# Arguments
 * `context`: The context to set AOV
 * `aov`:	AOV
 * `frame_buffer`: Frame buffer object to set
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextSetAOV(context, aov, frame_buffer)
@@ -1560,10 +1562,10 @@ end
 
 
 
-### Parameters
+# Arguments
 * `context`: The context to set
 * `renderLayerString`: Render layer name to attach
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextAttachRenderLayer(context, renderLayerString)
@@ -1575,10 +1577,10 @@ end
 
 
 
-### Parameters
+# Arguments
 * `context`: The context to set
 * `renderLayerString`: Render layer name to detach
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextDetachRenderLayer(context, renderLayerString)
@@ -1590,10 +1592,10 @@ end
 
 Set a LPE ( Light Path Expression ) to a framebuffer. Note that this framebuffer should also be assigned to a LPE AOV: RPR\\_AOV\\_LPE\\_0 , RPR\\_AOV\\_LPE\\_1 ....
 
-### Parameters
+# Arguments
 * `frame_buffer`: Frame buffer object to set
 * `lpe`: Light Path Expression
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprFrameBufferSetLPE(frame_buffer, lpe)
@@ -1605,14 +1607,14 @@ end
 
 Set AOV Index Lookup Color change the color of AOV rendering IDs, like : RPR\\_AOV\\_MATERIAL\\_ID , RPR\\_AOV\\_OBJECT\\_ID, RPR\\_AOV\\_OBJECT\\_GROUP\\_ID. for example, you can render all the shapes with ObjectGroupID=4 in the Red color inside the RPR\\_AOV\\_OBJECT\\_GROUP\\_ID AOV
 
-### Parameters
+# Arguments
 * `context`: The context to set AOV index lookup
 * `key`:	id
 * `colorR`:	red channel
 * `colorG`:	green channel
 * `colorB`:	blue channel
 * `colorA`:	alpha channel
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextSetAOVindexLookup(context, key, colorR, colorG, colorB, colorA)
@@ -1636,14 +1638,14 @@ Notes: - In order to disable the 'index' cutting plane, set (A,B,C,D) = (0,0,0,0
 
 - Plane equation is Ax + By + Cz + D = 0
 
-### Parameters
+# Arguments
 * `context`:	The context to set the Cutting Plane
 * `index`:	cutting plane index ( starts from 0 )
 * `a`:	equation plane A
 * `b`:	equation plane B
 * `c`:	equation plane C
 * `d`:	equation plane D
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextSetCuttingPlane(context, index, a, b, c, d)
@@ -1692,10 +1694,10 @@ Set the scene
 
 The scene is a collection of objects and lights along with all the data required to shade those. The scene is used by the context to render the image.
 
-### Parameters
+# Arguments
 * `context`: The context to set the scene
 * `scene`: The scene to set
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextSetScene(context, scene)
@@ -1709,10 +1711,10 @@ Get the current scene
 
 The scene is a collection of objects and lights along with all the data required to shade those. The scene is used by the context ro render the image.
 
-### Parameters
+# Arguments
 * `context`: The context to get the scene from
 * `out_scene`: Pointer to scene object
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextGetScene(arg0)
@@ -1728,11 +1730,11 @@ Set context parameter
 
 Parameters are used to control rendering modes, global sampling and AA settings, etc
 
-### Parameters
+# Arguments
 * `context`: The context to set the value to
 * `in_input`:	Param name, can be any RPR\\_CONTEXT\\_* value
 * `x,y,z,w`:	Parameter value
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextSetParameterByKey1u(context, in_input, x)
@@ -1801,9 +1803,9 @@ Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_OUT\
 
 if you have the RPR\\_ERROR\\_MATERIAL\\_STACK\\_OVERFLOW error, you have created a shader graph with too many nodes. you can check the nodes limit with [`rprContextGetInfo`](@ref)(,RPR\\_CONTEXT\\_MATERIAL\\_STACK\\_SIZE,)
 
-### Parameters
+# Arguments
 * `context`: The context object
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextRender(context)
@@ -1828,13 +1830,13 @@ The call is blocking and the image is ready when returned. The context accumulat
 
 RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_INTERNAL\\_ERROR
 
-### Parameters
+# Arguments
 * `context`: The context to use for the rendering
 * `xmin`: X coordinate of the top left corner of a tile
 * `xmax`: X coordinate of the bottom right corner of a tile
 * `ymin`: Y coordinate of the top left corner of a tile
 * `ymax`: Y coordinate of the bottom right corner of a tile
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextRenderTile(context, xmin, xmax, ymin, ymax)
@@ -1850,9 +1852,9 @@ This function should be called after all context objects have been destroyed. It
 
 RPR\\_ERROR\\_INTERNAL\\_ERROR
 
-### Parameters
+# Arguments
 * `context`: The context to wipe out
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextClearMemory(context)
@@ -1868,13 +1870,13 @@ Images are used as HDRI maps or inputs for various shading system nodes. Possibl
 
 RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_UNSUPPORTED\\_IMAGE\\_FORMAT RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `context`: The context to create image
 * `format`: Image format
 * `image_desc`: Image layout description
 * `data`: Image data in system memory, can be NULL in which case the memory is allocated
 * `out_image`: Pointer to image object
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateImage(context, format, image_desc, data)
@@ -1892,12 +1894,12 @@ Buffers are used as arbitrary input for other nodes
 
 RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_UNSUPPORTED\\_IMAGE\\_FORMAT RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `context`: The context to create image
 * `buffer_desc`: Buffer layout description
 * `data`: Image data in system memory, can be NULL in which case the memory is allocated
 * `out_buffer`: Pointer to buffer object
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateBuffer(context, buffer_desc, data)
@@ -1919,11 +1921,11 @@ Possible error codes are:
 
 RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_UNSUPPORTED\\_IMAGE\\_FORMAT RPR\\_ERROR\\_INVALID\\_PARAMETER RPR\\_ERROR\\_IO\\_ERROR
 
-### Parameters
+# Arguments
 * `context`: The context to create image
 * `path`: NULL terminated path to an image file (can be relative) (for UNICODE, supports UTF-8 encoding)
 * `out_image`: Pointer to image object
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateImageFromFile(context, path)
@@ -1954,9 +1956,9 @@ Possible error codes are:
 
 RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY
 
-### Parameters
+# Arguments
 * `out_scene`: Pointer to scene object
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateScene(context)
@@ -1974,11 +1976,11 @@ Possible error codes are:
 
 RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `context`: The context to create an instance for
 * `shape`: Parent shape for an instance
 * `out_instance`: Pointer to instance object
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateInstance(context, shape)
@@ -1998,7 +2000,7 @@ Possible error codes are:
 
 RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `vertices`: Pointer to position data (each position is described with 3 [`rpr_float`](@ref) numbers)
 * `num_vertices`: Number of entries in position array
 * `vertex_stride`: Number of bytes between the beginnings of two successive position entries
@@ -2017,7 +2019,7 @@ RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY
 * `num_face_vertices`: Pointer to an array of num\\_faces numbers describing number of vertices for each face (can be 3(triangle) or 4(quad))
 * `num_faces`: Number of faces in the mesh
 * `out_mesh`: Pointer to mesh object
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateMesh(context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces)
@@ -2047,10 +2049,10 @@ There are several camera types supported by a single [`rpr_camera`](@ref) type. 
 
 RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY
 
-### Parameters
+# Arguments
 * `context`: The context to create a camera for
 * `out_camera`: Pointer to camera object
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateCamera(context)
@@ -2070,12 +2072,12 @@ Possible error codes are:
 
 RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY
 
-### Parameters
+# Arguments
 * `context`: The context to create framebuffer
 * `format`: Framebuffer format
 * `fb_desc`: Framebuffer layout description
 * `status`: Pointer to framebuffer object
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateFrameBuffer(context, format, fb_desc)
@@ -2102,13 +2104,13 @@ Query information about a camera
 
 The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data. Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `camera`: The camera to query
 * `camera_info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCameraGetInfo(camera, camera_info, size, data, size_ret)
@@ -2120,10 +2122,10 @@ end
 
 Set camera focal length.
 
-### Parameters
+# Arguments
 * `camera`: The camera to set focal length
 * `flength`: Focal length in millimeters, default is 35mm
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetFocalLength(camera, flength)
@@ -2143,10 +2145,10 @@ end
 
 Set camera focus distance
 
-### Parameters
+# Arguments
 * `camera`: The camera to set focus distance
 * `fdist`: Focus distance in meters, default is 1m
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetFocusDistance(camera, fdist)
@@ -2158,11 +2160,11 @@ end
 
 Set world transform for the camera
 
-### Parameters
+# Arguments
 * `camera`: The camera to set transform for
 * `transpose`: Determines whether the basis vectors are in columns(false) or in rows(true) of the matrix
 * `transform`: Array of 16 [`rpr_float`](@ref) values (row-major form)
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetTransform(camera, transpose, transform)
@@ -2176,11 +2178,11 @@ Set sensor size for the camera
 
 Default sensor size is the one corresponding to full frame 36x24mm sensor
 
-### Parameters
+# Arguments
 * `camera`: The camera to set transform for
 * `width`: Sensor width in millimeters
 * `height`: Sensor height in millimeters
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetSensorSize(camera, width, height)
@@ -2192,7 +2194,7 @@ end
 
 Set camera transform in lookat form
 
-### Parameters
+# Arguments
 * `camera`: The camera to set transform for
 * `posx`: X component of the position
 * `posy`: Y component of the position
@@ -2203,7 +2205,7 @@ Set camera transform in lookat form
 * `upx`: X component of the up vector
 * `upy`: Y component of the up vector
 * `upz`: Z component of the up vector
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCameraLookAt(camera, posx, posy, posz, atx, aty, atz, upx, upy, upz)
@@ -2215,10 +2217,10 @@ end
 
 Set f-stop for the camera
 
-### Parameters
+# Arguments
 * `camera`: The camera to set f-stop for
 * `fstop`: f-stop value in mm^-1, default is FLT\\_MAX
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetFStop(camera, fstop)
@@ -2232,10 +2234,10 @@ Set the number of aperture blades
 
 Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `camera`: The camera to set aperture blades for
 * `num_blades`: Number of aperture blades 4 to 32
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetApertureBlades(camera, num_blades)
@@ -2249,10 +2251,10 @@ Set the exposure of a camera
 
 Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `camera`: The camera to set aperture blades for
 * `exposure`: Represents a time length in the same time scale than [`rprShapeSetMotionTransform`](@ref),[`rprCameraSetMotionTransform`](@ref)...
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetExposure(camera, exposure)
@@ -2266,10 +2268,10 @@ Set camera mode
 
 Camera modes include: RPR\\_CAMERA\\_MODE\\_PERSPECTIVE RPR\\_CAMERA\\_MODE\\_ORTHOGRAPHIC RPR\\_CAMERA\\_MODE\\_LATITUDE\\_LONGITUDE\\_360 RPR\\_CAMERA\\_MODE\\_LATITUDE\\_LONGITUDE\\_STEREO RPR\\_CAMERA\\_MODE\\_CUBEMAP RPR\\_CAMERA\\_MODE\\_CUBEMAP\\_STEREO RPR\\_CAMERA\\_MODE\\_FISHEYE
 
-### Parameters
+# Arguments
 * `camera`: The camera to set mode for
 * `mode`: Camera mode, default is RPR\\_CAMERA\\_MODE\\_PERSPECTIVE
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetMode(camera, mode)
@@ -2281,10 +2283,10 @@ end
 
 Set orthographic view volume width
 
-### Parameters
+# Arguments
 * `camera`: The camera to set volume width for
 * `width`: View volume width in meters, default is 1 meter
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetOrthoWidth(camera, width)
@@ -2312,10 +2314,10 @@ end
 
 Set orthographic view volume height
 
-### Parameters
+# Arguments
 * `camera`: The camera to set volume height for
 * `width`: View volume height in meters, default is 1 meter
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetOrthoHeight(camera, height)
@@ -2327,10 +2329,10 @@ end
 
 Set near plane of a camera
 
-### Parameters
+# Arguments
 * `camera`: The camera to set near plane for
 * `near`: Near plane distance in meters, default is 0.01f
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetNearPlane(camera, near)
@@ -2342,10 +2344,10 @@ end
 
 Set the post scale of camera ( 2D camera zoom )
 
-### Parameters
+# Arguments
 * `camera`: The camera to set
 * `scale`: post scale value.
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetPostScale(camera, scale)
@@ -2357,10 +2359,10 @@ end
 
 Set far plane of a camera
 
-### Parameters
+# Arguments
 * `camera`: The camera to set far plane for
 * `far`: Far plane distance in meters, default is 100000000.f
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetFarPlane(camera, far)
@@ -2372,10 +2374,10 @@ end
 
 Set distorion image for camera
 
-### Parameters
+# Arguments
 * `camera`: The camera to set UV Distortion for
 * `distortionMap`: distorion image
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetUVDistortion(camera, distortionMap)
@@ -2389,13 +2391,13 @@ Query information about an image
 
 The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `image`: An image object to query
 * `image_info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprImageGetInfo(image, image_info, size, data, size_ret)
@@ -2409,10 +2411,10 @@ end
 
 this is DEPRECATED in the Northstar plugin. In this plugin, the wrapping is done inside the RPR\\_MATERIAL\\_NODE\\_IMAGE\\_TEXTURE owning the image,  example: [`rprMaterialNodeSetInputUByKey`](@ref)(materialNodeTexture, RPR\\_MATERIAL\\_INPUT\\_WRAP\\_U, RPR\\_IMAGE\\_WRAP\\_TYPE\\_REPEAT);
 
-### Parameters
+# Arguments
 * `image`: The image to set wrap for
 * `type`:
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprImageSetWrap(image, type)
@@ -2444,7 +2446,7 @@ end
 
 Set a tile to an UDIM image.
 
-### Parameters
+# Arguments
 * `imageUdimRoot`: must be an UDIM image ( created with no data: [`rprContextCreateImage`](@ref)(context, {0,RPR\\_COMPONENT\\_TYPE\\_UINT8}, nullptr, nullptr, ); )
 * `tileIndex`: a valid UDIM index: 1001 , 1002, 1003 ... 1011, 1012, 1013 ... etc ...
 * `imageTile`: a valid classic [`rpr_image`](@ref)
@@ -2458,10 +2460,10 @@ end
 
 
 
-### Parameters
+# Arguments
 * `image`: The image to set filter for
 * `type`:
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprImageSetFilter(image, type)
@@ -2473,10 +2475,10 @@ end
 
 
 
-### Parameters
+# Arguments
 * `image`: The image to set gamma for
 * `type`:
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprImageSetGamma(image, type)
@@ -2488,10 +2490,10 @@ end
 
 
 
-### Parameters
+# Arguments
 * `image`: The image to set mipmap for
 * `enabled`: true (enable) or false (disable)
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprImageSetMipmapEnabled(image, enabled)
@@ -2503,11 +2505,11 @@ end
 
 Set shape world transform
 
-### Parameters
+# Arguments
 * `shape`: The shape to set transform for
 * `transpose`: Determines whether the basis vectors are in columns(false) or in rows(true) of the matrix
 * `transform`: Array of 16 [`rpr_float`](@ref) values (row-major form)
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetTransform(shape, transpose, transform)
@@ -2523,7 +2525,7 @@ example :  // indicesSet and values must have the same size [`rpr_int`](@ref) in
 
 setIndex can be between 0 and 3 : we can assign up to 4 floats for each vertex.
 
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetVertexValue(in_shape, setIndex, indices, values, indicesCount)
@@ -2539,10 +2541,10 @@ end
 
 Set shape subdivision
 
-### Parameters
+# Arguments
 * `shape`: The shape to set subdivision for
 * `factor`:	Number of subdivision steps to do
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetSubdivisionFactor(shape, factor)
@@ -2556,10 +2558,10 @@ Enable or Disable the auto ratio cap for subdivision
 
 autoRatioCap is a value from 0.0 to 1.0. autoRatioCap=1.0 means very large polygons, less tessellation. as it goes to 0.0, it does more tessellation. This value is ratio of the largest edge in the screen. Example: If you want to make an edge 10 pixels on 1080p, you need to set 10/1080.
 
-### Parameters
+# Arguments
 * `shape`: The shape to set
 * `autoRatioCap`: 0.0 to 1.0
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetSubdivisionAutoRatioCap(shape, autoRatioCap)
@@ -2571,10 +2573,10 @@ end
 
 
 
-### Parameters
+# Arguments
 * `shape`: The shape to set subdivision for
 * `factor`:
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetSubdivisionCreaseWeight(shape, factor)
@@ -2586,10 +2588,10 @@ end
 
 
 
-### Parameters
+# Arguments
 * `shape`: The shape to set
 * `renderLayerString`: Render layer name to attach
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeAttachRenderLayer(shape, renderLayerString)
@@ -2601,10 +2603,10 @@ end
 
 
 
-### Parameters
+# Arguments
 * `shape`: The shape to set
 * `renderLayerString`: Render layer name to detach
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeDetachRenderLayer(shape, renderLayerString)
@@ -2616,10 +2618,10 @@ end
 
 
 
-### Parameters
+# Arguments
 * `light`: The light to set
 * `renderLayerString`: Render layer name to attach
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprLightAttachRenderLayer(light, renderLayerString)
@@ -2631,10 +2633,10 @@ end
 
 
 
-### Parameters
+# Arguments
 * `light`: The light to set
 * `renderLayerString`: Render layer name to detach
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprLightDetachRenderLayer(light, renderLayerString)
@@ -2646,10 +2648,10 @@ end
 
 
 
-### Parameters
+# Arguments
 * `shape`: The shape to set subdivision for
 * `type`:
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetSubdivisionBoundaryInterop(shape, type)
@@ -2661,12 +2663,12 @@ end
 
 Call this function to automatically set the Subdivision Factor depending on the camera position, frame buffer size. You can retrieve the internally computed factor with [`rprShapeGetInfo`](@ref)(...,RPR\\_SHAPE\\_SUBDIVISION\\_FACTOR,...) You have to call this function each time you want to re-adapt the Subdivision Factor : internally the factor will NOT be automatically re-computed when camera/shape/framebuffer changes.
 
-### Parameters
+# Arguments
 * `shape`: The shape to set subdivision for
 * `framebuffer`: frame buffer used for factor adaptation
 * `camera`: camera used for factor adaptation
 * `factor`: factor to regulate the intensity of adaptation
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeAutoAdaptSubdivisionFactor(shape, framebuffer, camera, factor)
@@ -2678,10 +2680,10 @@ end
 
 Set displacement scale
 
-### Parameters
+# Arguments
 * `shape`: The shape to set subdivision for
 * `scale`:	The amount of displacement applied
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetDisplacementScale(shape, minscale, maxscale)
@@ -2693,10 +2695,10 @@ end
 
 Set object group ID (mainly for debugging).
 
-### Parameters
+# Arguments
 * `shape`: The shape to set
 * `objectGroupID`: The ID
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetObjectGroupID(shape, objectGroupID)
@@ -2708,10 +2710,10 @@ end
 
 Set object ID (mainly for debugging).
 
-### Parameters
+# Arguments
 * `shape`: The shape to set
 * `objectID`: The ID
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetObjectID(shape, objectID)
@@ -2723,10 +2725,10 @@ end
 
 Set light group ID when shape has an emissive material (mainly for debugging).
 
-### Parameters
+# Arguments
 * `shape`: The shape to set
 * `lightGroupID`: The ID
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetLightGroupID(shape, lightGroupID)
@@ -2740,10 +2742,10 @@ Set object rendering layer mask then, use rprContextSetParameter1u(context,"rend
 
 WARNING: this function is deprecated and will be removed in the future,  use [`rprShapeAttachRenderLayer`](@ref)/[`rprShapeDetachRenderLayer`](@ref) and [`rprContextAttachRenderLayer`](@ref)/[`rprContextDetachRenderLayer`](@ref) instead
 
-### Parameters
+# Arguments
 * `shape`: The shape to set
 * `layerMask`: The render mask
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetLayerMask(shape, layerMask)
@@ -2755,10 +2757,10 @@ end
 
 Set displacement texture
 
-### Parameters
+# Arguments
 * `shape`: The shape to set subdivision for
 * `materialNode`: Displacement texture , as material.
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetDisplacementMaterial(shape, materialNode)
@@ -2779,11 +2781,11 @@ end
 
 Set shape materials for specific faces
 
-### Parameters
+# Arguments
 * `shape`:	The shape to set the material for
 * `node`: The material to set
 * `face_indices`:
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetMaterialFaces(shape, node, face_indices, num_faces)
@@ -2812,11 +2814,11 @@ end
 
 Set visibility flag
 
-### Parameters
+# Arguments
 * `shape`: The shape to set visibility for
 * `visibilityFlag`: . one of the visibility flags : RPR\\_SHAPE\\_VISIBILITY\\_PRIMARY\\_ONLY\\_FLAG RPR\\_SHAPE\\_VISIBILITY\\_SHADOW RPR\\_SHAPE\\_VISIBILITY\\_REFLECTION RPR\\_SHAPE\\_VISIBILITY\\_REFRACTION RPR\\_SHAPE\\_VISIBILITY\\_TRANSPARENT RPR\\_SHAPE\\_VISIBILITY\\_DIFFUSE RPR\\_SHAPE\\_VISIBILITY\\_GLOSSY\\_REFLECTION RPR\\_SHAPE\\_VISIBILITY\\_GLOSSY\\_REFRACTION RPR\\_SHAPE\\_VISIBILITY\\_LIGHT RPR\\_SHAPE\\_VISIBILITY\\_RECEIVE\\_SHADOW
 * `visible`: set the flag to TRUE or FALSE
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetVisibilityFlag(shape, visibilityFlag, visible)
@@ -2828,11 +2830,11 @@ end
 
 Set visibility flag
 
-### Parameters
+# Arguments
 * `curve`: The curve to set visibility for
 * `visibilityFlag`: . one of the visibility flags : RPR\\_CURVE\\_VISIBILITY\\_PRIMARY\\_ONLY\\_FLAG RPR\\_CURVE\\_VISIBILITY\\_SHADOW RPR\\_CURVE\\_VISIBILITY\\_REFLECTION RPR\\_CURVE\\_VISIBILITY\\_REFRACTION RPR\\_CURVE\\_VISIBILITY\\_TRANSPARENT RPR\\_CURVE\\_VISIBILITY\\_DIFFUSE RPR\\_CURVE\\_VISIBILITY\\_GLOSSY\\_REFLECTION RPR\\_CURVE\\_VISIBILITY\\_GLOSSY\\_REFRACTION RPR\\_CURVE\\_VISIBILITY\\_LIGHT RPR\\_CURVE\\_VISIBILITY\\_RECEIVE\\_SHADOW
 * `visible`: set the flag to TRUE or FALSE
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCurveSetVisibilityFlag(curve, visibilityFlag, visible)
@@ -2846,10 +2848,10 @@ Set visibility flag
 
 This function sets all RPR\\_SHAPE\\_VISIBILITY\\_* flags to the 'visible' argument value Calling [`rprShapeSetVisibilityFlag`](@ref)(xxx,visible); on each flags would lead to the same result.
 
-### Parameters
+# Arguments
 * `shape`: The shape to set visibility for
 * `visible`: Determines if the shape is visible or not
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetVisibility(shape, visible)
@@ -2861,11 +2863,11 @@ end
 
 Set visibility flag for Light
 
-### Parameters
+# Arguments
 * `light`: The light to set visibility for
 * `visibilityFlag`: one of the visibility flags : - RPR\\_LIGHT\\_VISIBILITY\\_LIGHT
 * `visible`: set the flag to TRUE or FALSE
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprLightSetVisibilityFlag(light, visibilityFlag, visible)
@@ -2879,10 +2881,10 @@ Set visibility flag
 
 This function sets all RPR\\_CURVE\\_VISIBILITY\\_* flags to the 'visible' argument value Calling [`rprCurveSetVisibilityFlag`](@ref)(xxx,visible); on each flags would lead to the same result.
 
-### Parameters
+# Arguments
 * `curve`: The curve to set visibility for
 * `visible`: Determines if the curve is visible or not
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCurveSetVisibility(curve, visible)
@@ -2896,10 +2898,10 @@ Set visibility flag for specular refleacted rays
 
 This function sets both RPR\\_SHAPE\\_VISIBILITY\\_REFLECTION and RPR\\_SHAPE\\_VISIBILITY\\_REFRACTION flags to the 'visible' argument value Calling [`rprShapeSetVisibilityFlag`](@ref)(xxx,visible); on those 2 flags would lead to the same result.
 
-### Parameters
+# Arguments
 * `shape`: The shape to set visibility for
 * `visible`: Determines if the shape is visible or not
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetVisibilityInSpecular(shape, visible)
@@ -2911,10 +2913,10 @@ end
 
 Set shadow catcher flag
 
-### Parameters
+# Arguments
 * `shape`: The shape to set shadow catcher flag for
 * `shadowCatcher`: Determines if the shape behaves as shadow catcher
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetShadowCatcher(shape, shadowCatcher)
@@ -2926,12 +2928,12 @@ end
 
 Set shadow color
 
-### Parameters
+# Arguments
 * `shape`: The shape to set shadow color for
 * `r`: Red component of the color
 * `g`: Green component of the color
 * `b`: Blue component of the color
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetShadowColor(shape, r, g, b)
@@ -2943,10 +2945,10 @@ end
 
 Set Reflection catcher flag
 
-### Parameters
+# Arguments
 * `shape`: The shape to set Reflection catcher flag for
 * `reflectionCatcher`: Determines if the shape behaves as Reflection catcher
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetReflectionCatcher(shape, reflectionCatcher)
@@ -2958,10 +2960,10 @@ end
 
 Set 1 if ignore shape in the Contour rendering flag. ( This flag is used only if Contour is enabled )
 
-### Parameters
+# Arguments
 * `shape`: The shape to set
 * `ignoreInContour`: 0 or 1.
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetContourIgnore(shape, ignoreInContour)
@@ -2973,10 +2975,10 @@ end
 
 Set 1 if the shape should be treated as an environment light (finite sphere environment light).
 
-### Parameters
+# Arguments
 * `shape`: The shape to set
 * `envLight`: 0 or 1.
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetEnvironmentLight(shape, envLight)
@@ -2998,7 +3000,7 @@ Setting such flag will result in marking object as static. Such objects can be p
 
     Static flag can be set only before first call to [`rprContextRender`](@ref). By default all objects created as dynamic.
 
-### Parameters
+# Arguments
 * `in_shape`: shape to set flag on
 * `in_is_static`: is object static or not
 """
@@ -3011,11 +3013,11 @@ end
 
 Set light world transform
 
-### Parameters
+# Arguments
 * `light`: The light to set transform for
 * `transpose`: Determines whether the basis vectors are in columns(false) or in rows(true) of the matrix
 * `transform`: Array of 16 [`rpr_float`](@ref) values (row-major form)
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprLightSetTransform(light, transpose, transform)
@@ -3027,10 +3029,10 @@ end
 
 Set light group ID. This parameter can be used with RPR\\_AOV\\_LIGHT\\_GROUP0, RPR\\_AOV\\_LIGHT\\_GROUP1, ...
 
-### Parameters
+# Arguments
 * `light`: The light to set transform for
 * `groupId`: -1 to remove the group. or a value between 0 and 3.
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprLightSetGroupId(light, groupId)
@@ -3044,13 +3046,13 @@ Query information about a shape
 
 The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `shape`: The shape object to query
 * `material_info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprShapeGetInfo(arg0, arg1, arg2, arg3, arg4)
@@ -3064,13 +3066,13 @@ Query information about a mesh
 
 The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `shape`: The mesh to query
 * `mesh_info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprMeshGetInfo(mesh, mesh_info, size, data, size_ret)
@@ -3084,13 +3086,13 @@ Query information about a Curve
 
 The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `shape`: The Curve to query
 * `rpr_curve_parameter`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprCurveGetInfo(curve, curve_info, size, data, size_ret)
@@ -3104,13 +3106,13 @@ Query information about a hetero volume
 
 The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `heteroVol`: The heteroVolume to query
 * `heteroVol_info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprHeteroVolumeGetInfo(heteroVol, heteroVol_info, size, data, size_ret)
@@ -3128,13 +3130,13 @@ Query information about a Buffer
 
 The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `buffer`: The heteroVolume to query
 * `buffer_info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprBufferGetInfo(buffer, buffer_info, size, data, size_ret)
@@ -3148,10 +3150,10 @@ Get the parent shape for an instance
 
 Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `shape`: The shape to get a parent shape from
 * `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+# Returns
 Shape object
 """
 function rprInstanceGetBaseShape(shape)
@@ -3167,10 +3169,10 @@ Create point light
 
 Create analytic point light represented by a point in space. Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY
 
-### Parameters
+# Arguments
 * `context`: The context to create a light for
 * `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+# Returns
 Light object
 """
 function rprContextCreatePointLight(context)
@@ -3184,11 +3186,11 @@ end
 
 Set radiant power of a point light source
 
-### Parameters
+# Arguments
 * `r`: R component of a radiant power vector
 * `g`: G component of a radiant power vector
 * `b`: B component of a radiant power vector
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprPointLightSetRadiantPower3f(light, r, g, b)
@@ -3204,10 +3206,10 @@ Create analytic spot light
 
 Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY
 
-### Parameters
+# Arguments
 * `context`: The context to create a light for
 * `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+# Returns
 Light object
 """
 function rprContextCreateSpotLight(context, light)
@@ -3227,11 +3229,11 @@ end
 
 Set radiant power of a spot light source
 
-### Parameters
+# Arguments
 * `r`: R component of a radiant power vector
 * `g`: G component of a radiant power vector
 * `b`: B component of a radiant power vector
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSpotLightSetRadiantPower3f(light, r, g, b)
@@ -3254,11 +3256,11 @@ end
 
 Set Power for Sphere Light
 
-### Parameters
+# Arguments
 * `r`: R component of a radiant power vector
 * `g`: G component of a radiant power vector
 * `b`: B component of a radiant power vector
-### Returns
+# Returns
 status RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSphereLightSetRadiantPower3f(light, r, g, b)
@@ -3270,9 +3272,9 @@ end
 
 Set Radius for Sphere Light
 
-### Parameters
+# Arguments
 * `radius`: Radius to set
-### Returns
+# Returns
 status RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSphereLightSetRadius(light, radius)
@@ -3284,11 +3286,11 @@ end
 
 Set Power for Disk Light
 
-### Parameters
+# Arguments
 * `r`: R component of a radiant power vector
 * `g`: G component of a radiant power vector
 * `b`: B component of a radiant power vector
-### Returns
+# Returns
 status RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprDiskLightSetRadiantPower3f(light, r, g, b)
@@ -3300,9 +3302,9 @@ end
 
 Set Radius for Disk Light
 
-### Parameters
+# Arguments
 * `radius`: Radius to set
-### Returns
+# Returns
 status RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprDiskLightSetRadius(light, radius)
@@ -3314,9 +3316,9 @@ end
 
 Set Outer Angle for Disk Light
 
-### Parameters
+# Arguments
 * `angle`: Outer angle in radians
-### Returns
+# Returns
 status RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprDiskLightSetAngle(light, angle)
@@ -3328,9 +3330,9 @@ end
 
 Set Inner Angle for Disk Light
 
-### Parameters
+# Arguments
 * `innerAngle`: Inner angle in radians
-### Returns
+# Returns
 status RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprDiskLightSetInnerAngle(light, innerAngle)
@@ -3344,10 +3346,10 @@ Set cone shape for a spot light
 
 Spot light produces smooth penumbra in a region between inner and outer circles, the area inside the inner cicrle receives full power while the area outside the outer one is fully in shadow.
 
-### Parameters
+# Arguments
 * `iangle`: Inner angle of a cone in radians
 * `oangle`: Outer angle of a coner in radians, should be greater that or equal to inner angle
-### Returns
+# Returns
 status RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSpotLightSetConeShape(light, iangle, oangle)
@@ -3361,10 +3363,10 @@ Create directional light
 
 Create analytic directional light. Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY
 
-### Parameters
+# Arguments
 * `context`: The context to create a light for
 * `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+# Returns
 light id of a newly created light
 """
 function rprContextCreateDirectionalLight(context)
@@ -3378,11 +3380,11 @@ end
 
 Set radiant power of a directional light source
 
-### Parameters
+# Arguments
 * `r`: R component of a radiant power vector
 * `g`: G component of a radiant power vector
 * `b`: B component of a radiant power vector
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprDirectionalLightSetRadiantPower3f(light, r, g, b)
@@ -3394,9 +3396,9 @@ end
 
 Set softness of shadow produced by the light
 
-### Parameters
+# Arguments
 * `softnessAngle`: (in Radian) value should be between [ 0 ; pi/4 ]. 0.0 means sharp shadow
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprDirectionalLightSetShadowSoftnessAngle(light, softnessAngle)
@@ -3410,10 +3412,10 @@ Create an environment light
 
 Environment light is a light based on lightprobe. Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY
 
-### Parameters
+# Arguments
 * `context`: The context to create a light for
 * `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+# Returns
 Light object
 """
 function rprContextCreateEnvironmentLight(context)
@@ -3429,10 +3431,10 @@ Set image for an environment light
 
 Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER RPR\\_ERROR\\_UNSUPPORTED\\_IMAGE\\_FORMAT
 
-### Parameters
+# Arguments
 * `env_light`: Environment light
 * `image`: Image object to set
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprEnvironmentLightSetImage(env_light, image)
@@ -3444,10 +3446,10 @@ end
 
 Set intensity scale or an env light
 
-### Parameters
+# Arguments
 * `env_light`: Environment light
 * `intensity_scale`: Intensity scale
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprEnvironmentLightSetIntensityScale(env_light, intensity_scale)
@@ -3461,10 +3463,10 @@ Set portal for environment light to accelerate convergence of indoor scenes
 
 Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `env_light`: Environment light
 * `portal`: Portal mesh, might have multiple components
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprEnvironmentLightAttachPortal(scene, env_light, portal)
@@ -3478,10 +3480,10 @@ Remove portal for environment light.
 
 Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `env_light`: Environment light
 * `portal`: Portal mesh, that have been added to light.
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprEnvironmentLightDetachPortal(scene, env_light, portal)
@@ -3505,7 +3507,7 @@ This function sets overrides for different parts of IBL. overrideType argument c
 
 * RPR\\_ENVIRONMENT\\_LIGHT\\_OVERRIDE\\_IRRADIANCE
 
-### Parameters
+# Arguments
 * `in_ibl`: image based light created with [`rprContextCreateEnvironmentLight`](@ref)
 * `overrideType`: override parameter
 * `in_iblOverride`: image based light created with [`rprContextCreateEnvironmentLight`](@ref)
@@ -3527,10 +3529,10 @@ Create sky light
 
 Analytical sky model Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY
 
-### Parameters
+# Arguments
 * `context`: The context to create a light for
 * `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+# Returns
 Light object
 """
 function rprContextCreateSkyLight(context)
@@ -3544,10 +3546,10 @@ end
 
 Set turbidity of a sky light
 
-### Parameters
+# Arguments
 * `skylight`: Sky light
 * `turbidity`: Turbidity value
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSkyLightSetTurbidity(skylight, turbidity)
@@ -3559,10 +3561,10 @@ end
 
 Set albedo of a sky light
 
-### Parameters
+# Arguments
 * `skylight`: Sky light
 * `albedo`: Albedo value
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSkyLightSetAlbedo(skylight, albedo)
@@ -3574,10 +3576,10 @@ end
 
 Set scale of a sky light
 
-### Parameters
+# Arguments
 * `skylight`: Sky light
 * `scale`: Scale value
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSkyLightSetScale(skylight, scale)
@@ -3589,12 +3591,12 @@ end
 
 Set the direction of the sky light
 
-### Parameters
+# Arguments
 * `skylight`: Sky light
 * `x`: direction x
 * `y`: direction y
 * `z`: direction z
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSkyLightSetDirection(skylight, x, y, z)
@@ -3608,10 +3610,10 @@ Set portal for sky light to accelerate convergence of indoor scenes
 
 Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `skylight`: Sky light
 * `portal`: Portal mesh, might have multiple components
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSkyLightAttachPortal(scene, skylight, portal)
@@ -3625,10 +3627,10 @@ Remove portal for Sky light.
 
 Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `env_light`: Sky light
 * `portal`: Portal mesh, that have been added to light.
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSkyLightDetachPortal(scene, skylight, portal)
@@ -3644,10 +3646,10 @@ Create IES light
 
 Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY
 
-### Parameters
+# Arguments
 * `context`: The context to create a light for
 * `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+# Returns
 Light object
 """
 function rprContextCreateIESLight(context, light)
@@ -3659,11 +3661,11 @@ end
 
 Set radiant power of a IES light source
 
-### Parameters
+# Arguments
 * `r`: R component of a radiant power vector
 * `g`: G component of a radiant power vector
 * `b`: B component of a radiant power vector
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprIESLightSetRadiantPower3f(light, r, g, b)
@@ -3677,12 +3679,12 @@ Set image for an IES light
 
 Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER RPR\\_ERROR\\_UNSUPPORTED\\_IMAGE\\_FORMAT : If the format of the IES file is not supported by Radeon ProRender. RPR\\_ERROR\\_IO\\_ERROR : If the IES image path file doesn't exist.
 
-### Parameters
+# Arguments
 * `env_light`: Environment light
 * `imagePath`: Image path to set (for UNICODE, supports UTF-8 encoding)
 * `nx`:	resolution X of the IES image
 * `ny`: resolution Y of the IES image
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprIESLightSetImageFromFile(env_light, imagePath, nx, ny)
@@ -3696,12 +3698,12 @@ Set image for an IES light
 
 Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER RPR\\_ERROR\\_UNSUPPORTED\\_IMAGE\\_FORMAT : If the format of the IES data is not supported by Radeon ProRender.
 
-### Parameters
+# Arguments
 * `env_light`: Environment light
 * `iesData`: Image data string defining the IES. null terminated string. IES format.
 * `nx`:	resolution X of the IES image
 * `ny`: resolution Y of the IES image
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprIESLightSetImageFromIESdata(env_light, iesData, nx, ny)
@@ -3715,13 +3717,13 @@ Query information about a light
 
 The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `light`: The light to query
 * `light_info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprLightGetInfo(light, info, size, data, size_ret)
@@ -3735,9 +3737,9 @@ Remove all objects from a scene Also detaches the camera
 
 A scene is essentially a collection of shapes, lights and volume regions.
 
-### Parameters
+# Arguments
 * `scene`: The scene to clear
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSceneClear(scene)
@@ -3751,10 +3753,10 @@ Attach a shape to the scene
 
 A scene is essentially a collection of shapes, lights and volume regions.
 
-### Parameters
+# Arguments
 * `scene`: The scene to attach
 * `shape`: The shape to attach
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSceneAttachShape(scene, shape)
@@ -3768,9 +3770,9 @@ Detach a shape from the scene
 
 A scene is essentially a collection of shapes, lights and volume regions.
 
-### Parameters
+# Arguments
 * `scene`: The scene to dettach from
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSceneDetachShape(scene, shape)
@@ -3784,10 +3786,10 @@ Attach a heteroVolume to the scene
 
 A scene is essentially a collection of shapes, lights and volume regions.
 
-### Parameters
+# Arguments
 * `scene`: The scene to attach
 * `heteroVolume`: The heteroVolume to attach
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSceneAttachHeteroVolume(scene, heteroVolume)
@@ -3801,9 +3803,9 @@ Detach a heteroVolume from the scene
 
 A scene is essentially a collection of shapes, lights and volume regions.
 
-### Parameters
+# Arguments
 * `scene`: The scene to dettach from
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSceneDetachHeteroVolume(scene, heteroVolume)
@@ -3833,7 +3835,7 @@ Create a set of curves
 
 A [`rpr_curve`](@ref) is a set of curves A curve is a set of segments A segment is always composed of 4 3D points
 
-### Parameters
+# Arguments
 * `controlPointsData`: array of [`rpr_float`](@ref)[num\\_controlPoints*3]
 * `controlPointsStride`: in most of cases, for contiguous controlPointsData, should be set to 3*sizeof(float)
 * `num_indices`: should be set at : 4*(number of segments)
@@ -3854,10 +3856,10 @@ Attach a light to the scene
 
 A scene is essentially a collection of shapes, lights and volume regions
 
-### Parameters
+# Arguments
 * `scene`: The scene to attach
 * `light`: The light to attach
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSceneAttachLight(scene, light)
@@ -3871,10 +3873,10 @@ Detach a light from the scene
 
 A scene is essentially a collection of shapes, lights and volume regions
 
-### Parameters
+# Arguments
 * `scene`: The scene to dettach from
 * `light`: The light to detach
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSceneDetachLight(scene, light)
@@ -3886,7 +3888,7 @@ end
 
 Sets/gets environment override as active in scene
 
-### Parameters
+# Arguments
 * `in_scene`: scene
 * `in_light`: ibl
 """
@@ -3907,13 +3909,13 @@ Query information about a scene
 
 The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `scene`: The scene to query
 * `info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSceneGetInfo(scene, info, size, data, size_ret)
@@ -3925,10 +3927,10 @@ end
 
 Set background image for the scene which does not affect the scene lighting, it is shown as view-independent rectangular background Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `scene`: The scene to set background for
 * `image`: Background image
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSceneSetBackgroundImage(scene, image)
@@ -3940,10 +3942,10 @@ end
 
 Get background image
 
-### Parameters
+# Arguments
 * `scene`: The scene to get background image from
 * `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+# Returns
 Image object
 """
 function rprSceneGetBackgroundImage(scene)
@@ -3959,10 +3961,10 @@ Set right camera for the scene
 
 This is the main camera which for rays generation for the scene.
 
-### Parameters
+# Arguments
 * `scene`: The scene to set camera for
 * `camera`: Camera
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSceneSetCameraRight(scene, camera)
@@ -3974,10 +3976,10 @@ end
 
 Get right camera for the scene
 
-### Parameters
+# Arguments
 * `scene`: The scene to get camera for
 * `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+# Returns
 camera id for the camera if any, NULL otherwise
 """
 function rprSceneGetCameraRight(scene)
@@ -3993,10 +3995,10 @@ Set camera for the scene
 
 This is the main camera which for rays generation for the scene.
 
-### Parameters
+# Arguments
 * `scene`: The scene to set camera for
 * `camera`: Camera
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprSceneSetCamera(scene, camera)
@@ -4008,10 +4010,10 @@ end
 
 Get camera for the scene
 
-### Parameters
+# Arguments
 * `scene`: The scene to get camera for
 * `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+# Returns
 camera id for the camera if any, NULL otherwise
 """
 function rprSceneGetCamera(scene)
@@ -4027,13 +4029,13 @@ Query information about a framebuffer
 
 The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
 
-### Parameters
+# Arguments
 * `framebuffer`: Framebuffer object to query
 * `info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprFrameBufferGetInfo(framebuffer, info, size, data, size_ret)
@@ -4049,9 +4051,9 @@ Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT
 
 The call is blocking and the image is ready when returned
 
-### Parameters
+# Arguments
 * `frame_buffer`: Framebuffer to clear
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprFrameBufferClear(frame_buffer)
@@ -4067,10 +4069,10 @@ Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT
 
 The call is blocking and the image is ready when returned. If you want to fill with zeros, it's advised to use [`rprFrameBufferClear`](@ref).
 
-### Parameters
+# Arguments
 * `frame_buffer`: Framebuffer to clear
 * `r,g,b,a`: : the color to fill
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprFrameBufferFillWithColor(frame_buffer, r, g, b, a)
@@ -4084,10 +4086,10 @@ Save frame buffer to file. In case the file format is .bin, the header of the sa
 
 Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY
 
-### Parameters
+# Arguments
 * `frame_buffer`: Frame buffer to save
 * `file_path`: Path to file (for UNICODE, supports UTF-8 encoding)
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprFrameBufferSaveToFile(frame_buffer, file_path)
@@ -4349,10 +4351,10 @@ end
 
 Set material node name
 
-### Parameters
+# Arguments
 * `node`: Node to set the name for
 * `name`: NULL terminated string name
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprObjectSetName(node, name)
@@ -4364,10 +4366,10 @@ end
 
 Set a custom pointer to an RPR object ( [`rpr_shape`](@ref), [`rpr_image`](@ref) ... ) The custom pointer is not used internally by RPR. The API user only is responsible of it. An example of usage of this pointer is the C++ wrapper ( RadeonProRender.hpp )
 
-### Parameters
+# Arguments
 * `node`: Node to set the 'custom pointer' for
 * `customPtr`: Any 8 bytes value decided by the API user.
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprObjectSetCustomPointer(node, customPtr)
@@ -4379,7 +4381,7 @@ end
 
 outputs the 'custom pointer' set by [`rprObjectSetCustomPointer`](@ref). Equivalent of the calls : [`rprImageGetInfo`](@ref)(image,RPR\\_IMAGE\\_CUSTOM\\_PTR,...) for [`rpr_image`](@ref) , [`rprCameraGetInfo`](@ref)(camera,RPR\\_CAMERA\\_CUSTOM\\_PTR,...) for [`rpr_camera`](@ref) , ...etc...
 
-### Returns
+# Returns
 RPR\\_SUCCESS in case of success, error code otherwise
 """
 function rprObjectGetCustomPointer(node, customPtr_out)
@@ -4393,10 +4395,10 @@ Create post effect
 
 Create analytic point light represented by a point in space. Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY
 
-### Parameters
+# Arguments
 * `context`: The context to create a light for
 * `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+# Returns
 Light object
 """
 function rprContextCreatePostEffect(context, type)
@@ -4495,44 +4497,6 @@ end
 
 function rprHeteroVolumeSetDensityScale(heteroVolume, scale)
     check_error(ccall((:rprHeteroVolumeSetDensityScale, libRadeonProRender64), rpr_status, (rpr_hetero_volume, rpr_float), heteroVolume, scale))
-end
-
-"""
-    rprLoadMaterialX(in_context, in_matsys, xmlData, incudeData, includeCount, resourcePaths, resourcePathsCount, imageAlreadyCreated_count, imageAlreadyCreated_paths, imageAlreadyCreated_list, listNodesOut, listNodesOut_count, listImagesOut, listImagesOut_count, rootNodeOut, rootDisplacementNodeOut)
-
-Parse a MaterialX XML data, and create the Material graph composed of rpr\\_material\\_nodes, and rpr\\_images
-
------> This function is part of the 'Version 1' API - deprecated and replaced by the 'Version 2' API
-
-This function is NOT traced. However internally it's calling some RPR API to build the graph, those calls are traced.
-
-### Parameters
-* `xmlData`: null-terminated string of the MaterialX XML data
-* `resourcePaths`: and resourcePathsCount list of paths used for image loading
-* `imageAlreadyCreated_count`:
-* `imageAlreadyCreated_paths`:
-* `imageAlreadyCreated_list`: We can specify a list of [`rpr_image`](@ref) that are already loaded.  If [`rprLoadMaterialX`](@ref) finds any images in the XML belonging to this list it will use it directly instead of creating it with [`rprContextCreateImageFromFile`](@ref) Those images will not be added in the listImagesOut list. example to add an image in the imageAlreadyCreated list: imageAlreadyCreated\\_count = 1 imageAlreadyCreated\\_paths[0] = "../../Textures/UVCheckerMap13-1024.png" // same path specified in the 'value' of the image in the XML imageAlreadyCreated\\_list[0] = ([`rpr_image`](@ref)) existing\\_rpr\\_image imageAlreadyCreated\\_paths and imageAlreadyCreated\\_list must have the same size.
-* `listNodesOut`:
-* `listImagesOut`: Thoses 2 buffers are allocated by [`rprLoadMaterialX`](@ref), then you should use [`rprLoadMaterialX_free`](@ref) to free them. they contain the list of rpr\\_material and [`rpr_image`](@ref) created by [`rprLoadMaterialX`](@ref).
-* `rootNodeOut`: Closure node in the material graph. Index inside listNodesOut. Could be -1 if an error occured. This is the material that should be assigned to shape: [`rprShapeSetMaterial`](@ref)(shape,listNodesOut[rootNodeOut]);
-"""
-function rprLoadMaterialX(in_context, in_matsys, xmlData, incudeData, includeCount, resourcePaths, resourcePathsCount, imageAlreadyCreated_count, imageAlreadyCreated_paths, imageAlreadyCreated_list, listNodesOut, listNodesOut_count, listImagesOut, listImagesOut_count, rootNodeOut, rootDisplacementNodeOut)
-    check_error(ccall((:rprLoadMaterialX, libRadeonProRender64), rpr_status, (rpr_context, rpr_material_system, Ptr{Cchar}, Ptr{Ptr{Cchar}}, Cint, Ptr{Ptr{Cchar}}, Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{rpr_image}, Ptr{Ptr{rpr_material_node}}, Ptr{rpr_uint}, Ptr{Ptr{rpr_image}}, Ptr{rpr_uint}, Ptr{rpr_uint}, Ptr{rpr_uint}), in_context, in_matsys, xmlData, incudeData, includeCount, resourcePaths, resourcePathsCount, imageAlreadyCreated_count, imageAlreadyCreated_paths, imageAlreadyCreated_list, listNodesOut, listNodesOut_count, listImagesOut, listImagesOut_count, rootNodeOut, rootDisplacementNodeOut))
-end
-
-"""
-    rprLoadMaterialX_free(listNodes, listImages)
-
-Free the buffers allocated by [`rprLoadMaterialX`](@ref)
-
------> This function is part of the 'Version 1' API - deprecated and replaced by the 'Version 2' API
-
-It does NOT call any [`rprObjectDelete`](@ref) Internally it's doing a simple: delete[] listNodes; delete[] listImages;
-
-This function is NOT traced.
-"""
-function rprLoadMaterialX_free(listNodes, listImages)
-    check_error(ccall((:rprLoadMaterialX_free, libRadeonProRender64), rpr_status, (Ptr{rpr_material_node}, Ptr{rpr_image}), listNodes, listImages))
 end
 
 """
@@ -4668,6 +4632,17 @@ function rprMaterialXBindGeomPropToPrimvar(in_context, geompropvalue, key)
     check_error(ccall((:rprMaterialXBindGeomPropToPrimvar, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}, rpr_uint), in_context, geompropvalue, key))
 end
 
+"""
+    rprMaterialXTexcoord(material, offsetx, offsety, offsetz, scalex, scaley, scalez, uvSet)
+
+function to transform the final UV applied on the shape, call it before [`rprMaterialXSetFile`](@ref).
+
+example: // the UV set 0 (Base UV) of matx is first translated by (0.7,0.6,0.0) and then scaled by (2,1.5,1) [`rprMaterialXTexcoord`](@ref)( matx, 0.7f, 0.6f, 0.0f, 2.0f, 1.5f, 1.0f, 0 ); [`rprMaterialXSetFile`](@ref)( matx, "materialx.mtlx");
+"""
+function rprMaterialXTexcoord(material, offsetx, offsety, offsetz, scalex, scaley, scalez, uvSet)
+    check_error(ccall((:rprMaterialXTexcoord, libRadeonProRender64), rpr_status, (rpr_material_node, rpr_float, rpr_float, rpr_float, rpr_float, rpr_float, rpr_float, rpr_int), material, offsetx, offsety, offsetz, scalex, scaley, scalez, uvSet))
+end
+
 const rpr_GLuint = Cuint
 
 const rpr_GLint = Cint
@@ -4690,11 +4665,11 @@ const RPR_VERSION_MAJOR = 3
 
 const RPR_VERSION_MINOR = 1
 
-const RPR_VERSION_REVISION = 2
+const RPR_VERSION_REVISION = 5
 
-const RPR_VERSION_BUILD = 0xd1cb11d8
+const RPR_VERSION_BUILD = 0x92dd2edd
 
-const RPR_VERSION_MAJOR_MINOR_REVISION = 0x00300102
+const RPR_VERSION_MAJOR_MINOR_REVISION = 0x00300105
 
 const RPR_API_VERSION = RPR_VERSION_MAJOR_MINOR_REVISION
 
