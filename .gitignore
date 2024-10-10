@@ -7,3 +7,5 @@ build/RadeonProRenderSDK
 examples/instances
 Manifest.toml
 test/test.png
+docs/build
+Manifest.jl
