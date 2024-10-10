@@ -280,7 +280,7 @@ abstract type AbstractLight{PtrType} <: RPRObject{PtrType} end
 Default shape constructor which works with every Geometry from the package
 GeometryTypes (Meshes and geometry primitives alike).
 """
-function Shape(context::Context, meshlike::GeometryBasics.Mesh; kw...)
+function Shape(context::Context, meshlike::GeometryBasics.AbstractGeometry; kw...)
     m = uv_normal_mesh(meshlike; kw...)
     return Shape(context, decompose(Point3f, m), decompose_normals(m), faces(m), decompose_uv(m))
 end
