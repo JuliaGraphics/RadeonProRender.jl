@@ -7,6 +7,7 @@ makedocs(;
     sitename="RadeonProRender.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
+        size_threshold =nothing,
         canonical="https://SimonDanisch.github.io/RadeonProRender.jl",
         assets=String[]
     ),
