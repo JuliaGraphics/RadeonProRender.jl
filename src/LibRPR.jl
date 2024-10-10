@@ -419,6 +419,8 @@ end
     RPR_CONTEXT_FIRST_ITERATION_TIME_CALLBACK_DATA = 412
     RPR_CONTEXT_IMAGE_FILTER_RADIUS = 413
     RPR_CONTEXT_PRECOMPILED_BINARY_PATH = 414
+    RPR_CONTEXT_REFLECTION_ENERGY_COMPENSATION_ENABLED = 415
+    RPR_CONTEXT_NORMALIZE_LIGHT_INTENSITY_ENABLED = 416
     RPR_CONTEXT_NAME = 7829367
     RPR_CONTEXT_UNIQUE_ID = 7829368
     RPR_CONTEXT_CUSTOM_PTR = 7829369
@@ -1437,9 +1439,9 @@ Register rendering plugin
 
 <Description>
 
-### Parameters
+# Arguments
 * `path`: Path of plugin to load (for UNICODE, supports UTF-8 encoding)
-### Returns
+# Returns
 unique identifier of plugin, -1 otherwise
 """
 function rprRegisterPlugin(path)
@@ -1453,9 +1455,9 @@ Create rendering context
 
 Rendering context is a root concept encapsulating the render states and responsible for execution control. All the entities in Radeon ProRender are created for a particular rendering context. Entities created for some context can't be used with other contexts. Possible error codes for this call are:
 
-RPR\\_ERROR\\_COMPUTE\\_API\\_NOT\\_SUPPORTED RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_INVALID\\_API\\_VERSION RPR\\_ERROR\\_INVALID\\_PARAMETER
+RPR_ERROR_COMPUTE_API_NOT_SUPPORTED RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY RPR_ERROR_INVALID_API_VERSION RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `api_version`: Api version constant
 * `context_type`: Determines compute API to use, OPENCL only is supported for now
 * `creation_flags`: Determines multi-gpu or cpu-gpu configuration
@@ -1463,8 +1465,8 @@ RPR\\_ERROR\\_COMPUTE\\_API\\_NOT\\_SUPPORTED RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_
 * `cache_path`: Full path to kernel cache created by Radeon ProRender, NULL means to use current folder (for UNICODE, supports UTF-8 encoding)
 * `cpu_thread_limit`:	Limit for the number of threads used for CPU rendering
 * `out_context`:	Pointer to context object
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCreateContext(api_version, pluginIDs, pluginCount, creation_flags, props, cache_path)
     out_context = Ref{rpr_context}()
@@ -1486,16 +1488,16 @@ end
 
 Query information about a context
 
-The workflow is usually two-step: query with the data == NULL and size = 0 to get the required buffer size in size\\_ret, then query with size\\_ret == NULL to fill the buffer with the data. Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+The workflow is usually two-step: query with the data == NULL and size = 0 to get the required buffer size in size_ret, then query with size_ret == NULL to fill the buffer with the data. Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `context`: The context to query
 * `context_info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextGetInfo(context, context_info, size, data, size_ret)
     check_error(ccall((:rprContextGetInfo, libRadeonProRender64), rpr_status, (rpr_context, rpr_context_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), context, context_info, size, data, size_ret))
@@ -1506,17 +1508,17 @@ end
 
 Query information about a context parameter
 
-The workflow is usually two-step: query with the data == NULL and size = 0 to get the required buffer size in size\\_ret, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+The workflow is usually two-step: query with the data == NULL and size = 0 to get the required buffer size in size_ret, then query with size_ret == NULL to fill the buffer with the data Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `context`: The context to query
-* `param_idx`:	The index of the parameter - must be between 0 and (value stored by RPR\\_CONTEXT\\_PARAMETER\\_COUNT)-1
+* `param_idx`:	The index of the parameter - must be between 0 and (value stored by RPR_CONTEXT_PARAMETER_COUNT)-1
 * `parameter_info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextGetParameterInfo(context, param_idx, parameter_info, size, data, size_ret)
     check_error(ccall((:rprContextGetParameterInfo, libRadeonProRender64), rpr_status, (rpr_context, Cint, rpr_parameter_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), context, param_idx, parameter_info, size, data, size_ret))
@@ -1527,11 +1529,11 @@ end
 
 Query the AOV
 
-### Parameters
+# Arguments
 * `context`: The context to get a frame buffer from
 * `out_fb`:	Pointer to framebuffer object
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextGetAOV(context, aov)
     out_fb = Ref{rpr_framebuffer}()
@@ -1544,12 +1546,12 @@ end
 
 Set AOV
 
-### Parameters
+# Arguments
 * `context`: The context to set AOV
 * `aov`:	AOV
 * `frame_buffer`: Frame buffer object to set
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextSetAOV(context, aov, frame_buffer)
     check_error(ccall((:rprContextSetAOV, libRadeonProRender64), rpr_status, (rpr_context, rpr_aov, rpr_framebuffer), context, aov, frame_buffer))
@@ -1560,11 +1562,11 @@ end
 
 
 
-### Parameters
+# Arguments
 * `context`: The context to set
 * `renderLayerString`: Render layer name to attach
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextAttachRenderLayer(context, renderLayerString)
     check_error(ccall((:rprContextAttachRenderLayer, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}), context, renderLayerString))
@@ -1575,11 +1577,11 @@ end
 
 
 
-### Parameters
+# Arguments
 * `context`: The context to set
 * `renderLayerString`: Render layer name to detach
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextDetachRenderLayer(context, renderLayerString)
     check_error(ccall((:rprContextDetachRenderLayer, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}), context, renderLayerString))
@@ -1588,13 +1590,13 @@ end
 """
     rprFrameBufferSetLPE(frame_buffer, lpe)
 
-Set a LPE ( Light Path Expression ) to a framebuffer. Note that this framebuffer should also be assigned to a LPE AOV: RPR\\_AOV\\_LPE\\_0 , RPR\\_AOV\\_LPE\\_1 ....
+Set a LPE ( Light Path Expression ) to a framebuffer. Note that this framebuffer should also be assigned to a LPE AOV: RPR_AOV_LPE_0 , RPR_AOV_LPE_1 ....
 
-### Parameters
+# Arguments
 * `frame_buffer`: Frame buffer object to set
 * `lpe`: Light Path Expression
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprFrameBufferSetLPE(frame_buffer, lpe)
     check_error(ccall((:rprFrameBufferSetLPE, libRadeonProRender64), rpr_status, (rpr_framebuffer, Ptr{rpr_char}), frame_buffer, lpe))
@@ -1603,17 +1605,17 @@ end
 """
     rprContextSetAOVindexLookup(context, key, colorR, colorG, colorB, colorA)
 
-Set AOV Index Lookup Color change the color of AOV rendering IDs, like : RPR\\_AOV\\_MATERIAL\\_ID , RPR\\_AOV\\_OBJECT\\_ID, RPR\\_AOV\\_OBJECT\\_GROUP\\_ID. for example, you can render all the shapes with ObjectGroupID=4 in the Red color inside the RPR\\_AOV\\_OBJECT\\_GROUP\\_ID AOV
+Set AOV Index Lookup Color change the color of AOV rendering IDs, like : RPR_AOV_MATERIAL_ID , RPR_AOV_OBJECT_ID, RPR_AOV_OBJECT_GROUP_ID. for example, you can render all the shapes with ObjectGroupID=4 in the Red color inside the RPR_AOV_OBJECT_GROUP_ID AOV
 
-### Parameters
+# Arguments
 * `context`: The context to set AOV index lookup
 * `key`:	id
 * `colorR`:	red channel
 * `colorG`:	green channel
 * `colorB`:	blue channel
 * `colorA`:	alpha channel
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextSetAOVindexLookup(context, key, colorR, colorG, colorB, colorA)
     check_error(ccall((:rprContextSetAOVindexLookup, libRadeonProRender64), rpr_status, (rpr_context, rpr_int, rpr_float, rpr_float, rpr_float, rpr_float), context, key, colorR, colorG, colorB, colorA))
@@ -1628,7 +1630,7 @@ Notes: - In order to disable the 'index' cutting plane, set (A,B,C,D) = (0,0,0,0
 
 - Index can be any number. It doesn't need to define the list of plane as a contiguous list of indices.
 
-- If the number of enabled planes is greater than the limit supported by the renderer, then RPR\\_ERROR\\_UNSUPPORTED is return by the function.
+- If the number of enabled planes is greater than the limit supported by the renderer, then RPR_ERROR_UNSUPPORTED is return by the function.
 
 - The normal of the equation plane points toward the area that is kept.
 
@@ -1636,15 +1638,15 @@ Notes: - In order to disable the 'index' cutting plane, set (A,B,C,D) = (0,0,0,0
 
 - Plane equation is Ax + By + Cz + D = 0
 
-### Parameters
+# Arguments
 * `context`:	The context to set the Cutting Plane
 * `index`:	cutting plane index ( starts from 0 )
 * `a`:	equation plane A
 * `b`:	equation plane B
 * `c`:	equation plane C
 * `d`:	equation plane D
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextSetCuttingPlane(context, index, a, b, c, d)
     check_error(ccall((:rprContextSetCuttingPlane, libRadeonProRender64), rpr_status, (rpr_context, rpr_int, rpr_float, rpr_float, rpr_float, rpr_float), context, index, a, b, c, d))
@@ -1653,11 +1655,11 @@ end
 """
     rprContextSetAOVindicesLookup(context, keyOffset, keyCount, colorRGBA)
 
-call a batch of [`rprContextSetAOVindexLookup`](@ref)
+call a batch of [`rprContextSetAOVindexLookup`]
 
-example: [`rprContextSetAOVindicesLookup`](@ref)(ctx, 2, 3, table); is equivalent to call : [`rprContextSetAOVindexLookup`](@ref)(ctx, 2, table[0], table[1], table[2], table[3]); [`rprContextSetAOVindexLookup`](@ref)(ctx, 3, table[4], table[5], table[6], table[7]); [`rprContextSetAOVindexLookup`](@ref)(ctx, 4, table[8], table[9], table[10], table[11]);
+example: `rprContextSetAOVindicesLookup`](ctx, 2, 3, table); is equivalent to call : [`rprContextSetAOVindexLookup`] [`rprContextSetAOVindexLookup`] [`rprContextSetAOVindexLookup`;
 
-Depending on the plugin, [`rprContextSetAOVindicesLookup`](@ref) could be faster than calling several [`rprContextSetAOVindexLookup`](@ref).
+Depending on the plugin, [`rprContextSetAOVindicesLookup`] could be faster than calling several [`rprContextSetAOVindexLookup`].
 """
 function rprContextSetAOVindicesLookup(context, keyOffset, keyCount, colorRGBA)
     check_error(ccall((:rprContextSetAOVindicesLookup, libRadeonProRender64), rpr_status, (rpr_context, rpr_int, rpr_int, Ptr{rpr_float}), context, keyOffset, keyCount, colorRGBA))
@@ -1668,9 +1670,9 @@ end
 
 API user can create its own procedural texture. The API needs both a GPU code ( OpenCL string code ) and a CPU code ( callback ) (API function supported by Northstar only)
 
-example:  #define DEFINE\\_FUNC(FUNCNAME, FUNC) FUNC; const std::string g\\_str\\_##FUNCNAME = #FUNC; DEFINE\\_FUNC( RprCustomMatA , void RprCustomMatA(float* a, float* b, float* c, float* d, float* e, float* f, float* valueOut){ valueOut[0]=0.0; valueOut[1]=sin(d[0]*3.14159); valueOut[2]=0.0; } ); [`rprContextSetUserTexture`](@ref)(context, 3, g\\_str\\_RprCustomMatA.c\\_str(), RprCustomMatA); // use slot 3 // create material based on slot 3 : [`rpr_material_node`](@ref) matUserTex3; [`rprMaterialSystemCreateNode`](@ref)(matsys, RPR\\_MATERIAL\\_NODE\\_USER\\_TEXTURE, & matUserTex3); [`rprMaterialNodeSetInputUByKey`](@ref)(matUserTex3, RPR\\_MATERIAL\\_INPUT\\_OP, 3 ); // bind matUserTex3 to slot 3 [`rprMaterialNodeSetInputNByKey`](@ref)(matUserTex3, RPR\\_MATERIAL\\_INPUT\\_4, paramInput ); // bind 'paramInput' to the 'e' argument of 'RprCustomMatA'
+example:  #define DEFINE_FUNC(FUNCNAME, FUNC) FUNC; const std::string g_str_##FUNCNAME = #FUNC; DEFINE_FUNC( RprCustomMatA , void RprCustomMatA(float* a, float* b, float* c, float* d, float* e, float* f, float* valueOut){ valueOut0]=0.0; valueOut[1]=sin(d[0]*3.14159); valueOut[2]=0.0; } ); [`rprContextSetUserTexture`]; // use slot 3 // create material based on slot 3 : [`rpr_material_node`] ; [`rprMaterialSystemCreateNode`] [`rprMaterialNodeSetInputUByKey`]; // bind matUserTex3 to slot 3 [`rprMaterialNodeSetInputNByKey`; // bind 'paramInput' to the 'e' argument of 'RprCustomMatA'
 
-Notes: - If only the GPU is used, a nullptr can be given to 'cpuCode'. - RPR\\_MATERIAL\\_NODE\\_USER\\_TEXTURE\\_0...RPR\\_MATERIAL\\_NODE\\_USER\\_TEXTURE\\_3 , RPR\\_CONTEXT\\_USER\\_TEXTURE\\_0...RPR\\_CONTEXT\\_USER\\_TEXTURE\\_3 are deprecated and should only be used with the old Tahoe plugin. - When exporting the RPR scene to RPRS or GLTF, the CPU callback pointer will be lost in the imported scene.
+Notes: - If only the GPU is used, a nullptr can be given to 'cpuCode'. - RPR_MATERIAL_NODE_USER_TEXTURE_0...RPR_MATERIAL_NODE_USER_TEXTURE_3 , RPR_CONTEXT_USER_TEXTURE_0...RPR_CONTEXT_USER_TEXTURE_3 are deprecated and should only be used with the old Tahoe plugin. - When exporting the RPR scene to RPRS or GLTF, the CPU callback pointer will be lost in the imported scene.
 """
 function rprContextSetUserTexture(context, index, gpuCode, cpuCode)
     check_error(ccall((:rprContextSetUserTexture, libRadeonProRender64), rpr_status, (rpr_context, rpr_int, Ptr{rpr_char}, Ptr{Cvoid}), context, index, gpuCode, cpuCode))
@@ -1679,7 +1681,7 @@ end
 """
     rprContextGetUserTexture(context, index, bufferSizeByte, buffer, size_ret)
 
-get the gpuCode string set by [`rprContextSetUserTexture`](@ref). (API function supported by Northstar only)
+get the gpuCode string set by [`rprContextSetUserTexture`]. (API function supported by Northstar only)
 """
 function rprContextGetUserTexture(context, index, bufferSizeByte, buffer, size_ret)
     check_error(ccall((:rprContextGetUserTexture, libRadeonProRender64), rpr_status, (rpr_context, rpr_int, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), context, index, bufferSizeByte, buffer, size_ret))
@@ -1692,11 +1694,11 @@ Set the scene
 
 The scene is a collection of objects and lights along with all the data required to shade those. The scene is used by the context to render the image.
 
-### Parameters
+# Arguments
 * `context`: The context to set the scene
 * `scene`: The scene to set
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextSetScene(context, scene)
     check_error(ccall((:rprContextSetScene, libRadeonProRender64), rpr_status, (rpr_context, rpr_scene), context, scene))
@@ -1709,11 +1711,11 @@ Get the current scene
 
 The scene is a collection of objects and lights along with all the data required to shade those. The scene is used by the context ro render the image.
 
-### Parameters
+# Arguments
 * `context`: The context to get the scene from
 * `out_scene`: Pointer to scene object
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextGetScene(arg0)
     out_scene = Ref{rpr_scene}()
@@ -1728,12 +1730,12 @@ Set context parameter
 
 Parameters are used to control rendering modes, global sampling and AA settings, etc
 
-### Parameters
+# Arguments
 * `context`: The context to set the value to
-* `in_input`:	Param name, can be any RPR\\_CONTEXT\\_* value
+* `in_input`:	Param name, can be any RPR_CONTEXT_* value
 * `x,y,z,w`:	Parameter value
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextSetParameterByKey1u(context, in_input, x)
     check_error(ccall((:rprContextSetParameterByKey1u, libRadeonProRender64), rpr_status, (rpr_context, rpr_context_info, rpr_uint), context, in_input, x))
@@ -1764,7 +1766,7 @@ end
 
 This is an internal/experimental backdoor for RPR developers team.
 
-A classic usage of RPR doesn't require usage of this call. Use this only if you understand what you are doing. It's sending the name/value directly to the plugin without any process of RPR API. the 'paramName' is not related with the parameters of [`rprContextSetParameterByKey4f`](@ref). 'pluginIndex' can be used if the context has more than one plugin - Not Implemented for now, set it to 0.
+A classic usage of RPR doesn't require usage of this call. Use this only if you understand what you are doing. It's sending the name/value directly to the plugin without any process of RPR API. the 'paramName' is not related with the parameters of [`rprContextSetParameterByKey4f`]. 'pluginIndex' can be used if the context has more than one plugin - Not Implemented for now, set it to 0.
 """
 function rprContextSetInternalParameter4f(context, pluginIndex, paramName, x, y, z, w)
     check_error(ccall((:rprContextSetInternalParameter4f, libRadeonProRender64), rpr_status, (rpr_context, rpr_uint, Ptr{rpr_char}, rpr_float, rpr_float, rpr_float, rpr_float), context, pluginIndex, paramName, x, y, z, w))
@@ -1795,16 +1797,16 @@ end
 
 Perform evaluation and accumulation of a single sample (or number of AA samples if AA is enabled)
 
-The call is blocking and the image is ready when returned. The context accumulates the samples in order to progressively refine the image and enable interactive response. So each new call to Render refines the resultin image with 1 (or num aa samples) color samples. Call [`rprFrameBufferClear`](@ref) if you want to start rendering new image instead of refining the previous one.
+The call is blocking and the image is ready when returned. The context accumulates the samples in order to progressively refine the image and enable interactive response. So each new call to Render refines the resultin image with 1 (or num aa samples) color samples. Call [`rprFrameBufferClear`] if you want to start rendering new image instead of refining the previous one.
 
-Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_INTERNAL\\_ERROR RPR\\_ERROR\\_MATERIAL\\_STACK\\_OVERFLOW
+Possible error codes: RPR_ERROR_OUT_OF_VIDEO_MEMORY RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_INTERNAL_ERROR RPR_ERROR_MATERIAL_STACK_OVERFLOW
 
-if you have the RPR\\_ERROR\\_MATERIAL\\_STACK\\_OVERFLOW error, you have created a shader graph with too many nodes. you can check the nodes limit with [`rprContextGetInfo`](@ref)(,RPR\\_CONTEXT\\_MATERIAL\\_STACK\\_SIZE,)
+if you have the RPR_ERROR_MATERIAL_STACK_OVERFLOW error, you have created a shader graph with too many nodes. you can check the nodes limit with [`rprContextGetInfo`]
 
-### Parameters
+# Arguments
 * `context`: The context object
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextRender(context)
     check_error(ccall((:rprContextRender, libRadeonProRender64), rpr_status, (rpr_context,), context))
@@ -1813,7 +1815,7 @@ end
 """
     rprContextAbortRender(context)
 
-can be called in a different thread to interrupt the rendering then, [`rprContextRender`](@ref) will return RPR\\_ERROR\\_ABORTED instead of RPR\\_SUCCESS
+can be called in a different thread to interrupt the rendering then, [`rprContextRender`] will return RPR_ERROR_ABORTED instead of RPR_SUCCESS
 """
 function rprContextAbortRender(context)
     check_error(ccall((:rprContextAbortRender, libRadeonProRender64), rpr_status, (rpr_context,), context))
@@ -1824,18 +1826,18 @@ end
 
 Perform evaluation and accumulation of a single sample (or number of AA samples if AA is enabled) on the part of the image
 
-The call is blocking and the image is ready when returned. The context accumulates the samples in order to progressively refine the image and enable interactive response. So each new call to Render refines the resultin image with 1 (or num aa samples) color samples. Call [`rprFrameBufferClear`](@ref) if you want to start rendering new image instead of refining the previous one. Possible error codes are:
+The call is blocking and the image is ready when returned. The context accumulates the samples in order to progressively refine the image and enable interactive response. So each new call to Render refines the resultin image with 1 (or num aa samples) color samples. Call [`rprFrameBufferClear`] if you want to start rendering new image instead of refining the previous one. Possible error codes are:
 
-RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_INTERNAL\\_ERROR
+RPR_ERROR_OUT_OF_VIDEO_MEMORY RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_INTERNAL_ERROR
 
-### Parameters
+# Arguments
 * `context`: The context to use for the rendering
 * `xmin`: X coordinate of the top left corner of a tile
 * `xmax`: X coordinate of the bottom right corner of a tile
 * `ymin`: Y coordinate of the top left corner of a tile
 * `ymax`: Y coordinate of the bottom right corner of a tile
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextRenderTile(context, xmin, xmax, ymin, ymax)
     check_error(ccall((:rprContextRenderTile, libRadeonProRender64), rpr_status, (rpr_context, rpr_uint, rpr_uint, rpr_uint, rpr_uint), context, xmin, xmax, ymin, ymax))
@@ -1848,12 +1850,12 @@ Clear all video memory used by the context
 
 This function should be called after all context objects have been destroyed. It guarantees that all context memory is freed and returns the context into its initial state. Will be removed later. Possible error codes are:
 
-RPR\\_ERROR\\_INTERNAL\\_ERROR
+RPR_ERROR_INTERNAL_ERROR
 
-### Parameters
+# Arguments
 * `context`: The context to wipe out
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextClearMemory(context)
     check_error(ccall((:rprContextClearMemory, libRadeonProRender64), rpr_status, (rpr_context,), context))
@@ -1866,16 +1868,16 @@ Create an image from memory data
 
 Images are used as HDRI maps or inputs for various shading system nodes. Possible error codes are:
 
-RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_UNSUPPORTED\\_IMAGE\\_FORMAT RPR\\_ERROR\\_INVALID\\_PARAMETER
+RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY RPR_ERROR_UNSUPPORTED_IMAGE_FORMAT RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `context`: The context to create image
 * `format`: Image format
 * `image_desc`: Image layout description
 * `data`: Image data in system memory, can be NULL in which case the memory is allocated
 * `out_image`: Pointer to image object
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateImage(context, format, image_desc, data)
     out_image = Ref{rpr_image}()
@@ -1890,15 +1892,15 @@ Create a buffer from memory data
 
 Buffers are used as arbitrary input for other nodes
 
-RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_UNSUPPORTED\\_IMAGE\\_FORMAT RPR\\_ERROR\\_INVALID\\_PARAMETER
+RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY RPR_ERROR_UNSUPPORTED_IMAGE_FORMAT RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `context`: The context to create image
 * `buffer_desc`: Buffer layout description
 * `data`: Image data in system memory, can be NULL in which case the memory is allocated
 * `out_buffer`: Pointer to buffer object
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateBuffer(context, buffer_desc, data)
     out_buffer = Ref{rpr_buffer}()
@@ -1917,14 +1919,14 @@ The following image formats are supported: PNG, JPG, TGA, BMP, TIFF, TX(0-mip), 
 
 Possible error codes are:
 
-RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_UNSUPPORTED\\_IMAGE\\_FORMAT RPR\\_ERROR\\_INVALID\\_PARAMETER RPR\\_ERROR\\_IO\\_ERROR
+RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY RPR_ERROR_UNSUPPORTED_IMAGE_FORMAT RPR_ERROR_INVALID_PARAMETER RPR_ERROR_IO_ERROR
 
-### Parameters
+# Arguments
 * `context`: The context to create image
 * `path`: NULL terminated path to an image file (can be relative) (for UNICODE, supports UTF-8 encoding)
 * `out_image`: Pointer to image object
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateImageFromFile(context, path)
     out_image = Ref{rpr_image}()
@@ -1935,7 +1937,7 @@ end
 """
     rprContextCreateImageFromFileMemory(context, extension, data, dataSizeByte)
 
-similar to [`rprContextCreateImageFromFile`](@ref), except that the file input as a memory buffer extension must look like : ".png" , ".bmp" , ".hdr" , ".exr" , ".jpg" ....
+similar to [`rprContextCreateImageFromFile`], except that the file input as a memory buffer extension must look like : ".png" , ".bmp" , ".hdr" , ".exr" , ".jpg" ....
 """
 function rprContextCreateImageFromFileMemory(context, extension, data, dataSizeByte)
     out_image = Ref{rpr_image}()
@@ -1952,12 +1954,12 @@ Scene serves as a container for lights and objects.
 
 Possible error codes are:
 
-RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY
+RPR_ERROR_OUT_OF_SYSTEM_MEMORY
 
-### Parameters
+# Arguments
 * `out_scene`: Pointer to scene object
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateScene(context)
     out_scene = Ref{rpr_scene}()
@@ -1972,14 +1974,14 @@ Create an instance of an object
 
 Possible error codes are:
 
-RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_INVALID\\_PARAMETER
+RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `context`: The context to create an instance for
 * `shape`: Parent shape for an instance
 * `out_instance`: Pointer to instance object
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateInstance(context, shape)
     out_instance = Ref{rpr_shape}()
@@ -1996,16 +1998,16 @@ Radeon ProRender supports mixed meshes consisting of triangles and quads.
 
 Possible error codes are:
 
-RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_INVALID\\_PARAMETER
+RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
-* `vertices`: Pointer to position data (each position is described with 3 [`rpr_float`](@ref) numbers)
+# Arguments
+* `vertices`: Pointer to position data (each position is described with 3 [`rpr_float`] numbers)
 * `num_vertices`: Number of entries in position array
 * `vertex_stride`: Number of bytes between the beginnings of two successive position entries
-* `normals`: Pointer to normal data (each normal is described with 3 [`rpr_float`](@ref) numbers), can be NULL
+* `normals`: Pointer to normal data (each normal is described with 3 [`rpr_float`] numbers), can be NULL
 * `num_normals`: Number of entries in normal array
 * `normal_stride`: Number of bytes between the beginnings of two successive normal entries
-* `texcoord`: Pointer to texcoord data (each texcoord is described with 2 [`rpr_float`](@ref) numbers), can be NULL
+* `texcoord`: Pointer to texcoord data (each texcoord is described with 2 [`rpr_float`] numbers), can be NULL
 * `num_texcoords`: Number of entries in texcoord array
 * `texcoord_stride`: Number of bytes between the beginnings of two successive texcoord entries
 * `vertex_indices`: Pointer to an array of vertex indices
@@ -2014,11 +2016,11 @@ RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY
 * `nidx_stride`: Number of bytes between the beginnings of two successive normal index entries
 * `texcoord_indices`: Pointer to an array of texcoord indices
 * `tidx_stride`: Number of bytes between the beginnings of two successive texcoord index entries
-* `num_face_vertices`: Pointer to an array of num\\_faces numbers describing number of vertices for each face (can be 3(triangle) or 4(quad))
+* `num_face_vertices`: Pointer to an array of num_faces numbers describing number of vertices for each face (can be 3(triangle) or 4(quad))
 * `num_faces`: Number of faces in the mesh
 * `out_mesh`: Pointer to mesh object
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateMesh(context, vertices, num_vertices, vertex_stride, normals, num_normals, normal_stride, texcoords, num_texcoords, texcoord_stride, vertex_indices, vidx_stride, normal_indices, nidx_stride, texcoord_indices, tidx_stride, num_face_vertices, num_faces)
     out_mesh = Ref{rpr_shape}()
@@ -2043,15 +2045,15 @@ end
 
 Create a camera
 
-There are several camera types supported by a single [`rpr_camera`](@ref) type. Possible error codes are:
+There are several camera types supported by a single [`rpr_camera`] type. Possible error codes are:
 
-RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY
+RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY
 
-### Parameters
+# Arguments
 * `context`: The context to create a camera for
 * `out_camera`: Pointer to camera object
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateCamera(context)
     out_camera = Ref{rpr_camera}()
@@ -2068,15 +2070,15 @@ Framebuffer is used to store final rendering result.
 
 Possible error codes are:
 
-RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY
+RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY
 
-### Parameters
+# Arguments
 * `context`: The context to create framebuffer
 * `format`: Framebuffer format
 * `fb_desc`: Framebuffer layout description
 * `status`: Pointer to framebuffer object
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprContextCreateFrameBuffer(context, format, fb_desc)
     out_fb = Ref{rpr_framebuffer}()
@@ -2100,16 +2102,16 @@ end
 
 Query information about a camera
 
-The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data. Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size_ret == NULL to fill the buffer with the data. Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `camera`: The camera to query
 * `camera_info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCameraGetInfo(camera, camera_info, size, data, size_ret)
     check_error(ccall((:rprCameraGetInfo, libRadeonProRender64), rpr_status, (rpr_camera, rpr_camera_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), camera, camera_info, size, data, size_ret))
@@ -2120,11 +2122,11 @@ end
 
 Set camera focal length.
 
-### Parameters
+# Arguments
 * `camera`: The camera to set focal length
 * `flength`: Focal length in millimeters, default is 35mm
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetFocalLength(camera, flength)
     check_error(ccall((:rprCameraSetFocalLength, libRadeonProRender64), rpr_status, (rpr_camera, rpr_float), camera, flength))
@@ -2143,11 +2145,11 @@ end
 
 Set camera focus distance
 
-### Parameters
+# Arguments
 * `camera`: The camera to set focus distance
 * `fdist`: Focus distance in meters, default is 1m
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetFocusDistance(camera, fdist)
     check_error(ccall((:rprCameraSetFocusDistance, libRadeonProRender64), rpr_status, (rpr_camera, rpr_float), camera, fdist))
@@ -2158,12 +2160,12 @@ end
 
 Set world transform for the camera
 
-### Parameters
+# Arguments
 * `camera`: The camera to set transform for
 * `transpose`: Determines whether the basis vectors are in columns(false) or in rows(true) of the matrix
-* `transform`: Array of 16 [`rpr_float`](@ref) values (row-major form)
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+* `transform`: Array of 16 [`rpr_float`] values (row-major form)
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetTransform(camera, transpose, transform)
     check_error(ccall((:rprCameraSetTransform, libRadeonProRender64), rpr_status, (rpr_camera, rpr_bool, Ptr{rpr_float}), camera, transpose, transform))
@@ -2176,12 +2178,12 @@ Set sensor size for the camera
 
 Default sensor size is the one corresponding to full frame 36x24mm sensor
 
-### Parameters
+# Arguments
 * `camera`: The camera to set transform for
 * `width`: Sensor width in millimeters
 * `height`: Sensor height in millimeters
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetSensorSize(camera, width, height)
     check_error(ccall((:rprCameraSetSensorSize, libRadeonProRender64), rpr_status, (rpr_camera, rpr_float, rpr_float), camera, width, height))
@@ -2192,7 +2194,7 @@ end
 
 Set camera transform in lookat form
 
-### Parameters
+# Arguments
 * `camera`: The camera to set transform for
 * `posx`: X component of the position
 * `posy`: Y component of the position
@@ -2203,8 +2205,8 @@ Set camera transform in lookat form
 * `upx`: X component of the up vector
 * `upy`: Y component of the up vector
 * `upz`: Z component of the up vector
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCameraLookAt(camera, posx, posy, posz, atx, aty, atz, upx, upy, upz)
     check_error(ccall((:rprCameraLookAt, libRadeonProRender64), rpr_status, (rpr_camera, rpr_float, rpr_float, rpr_float, rpr_float, rpr_float, rpr_float, rpr_float, rpr_float, rpr_float), camera, posx, posy, posz, atx, aty, atz, upx, upy, upz))
@@ -2215,11 +2217,11 @@ end
 
 Set f-stop for the camera
 
-### Parameters
+# Arguments
 * `camera`: The camera to set f-stop for
-* `fstop`: f-stop value in mm^-1, default is FLT\\_MAX
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+* `fstop`: f-stop value in mm^-1, default is FLT_MAX
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetFStop(camera, fstop)
     check_error(ccall((:rprCameraSetFStop, libRadeonProRender64), rpr_status, (rpr_camera, rpr_float), camera, fstop))
@@ -2230,13 +2232,13 @@ end
 
 Set the number of aperture blades
 
-Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `camera`: The camera to set aperture blades for
 * `num_blades`: Number of aperture blades 4 to 32
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetApertureBlades(camera, num_blades)
     check_error(ccall((:rprCameraSetApertureBlades, libRadeonProRender64), rpr_status, (rpr_camera, rpr_uint), camera, num_blades))
@@ -2247,13 +2249,13 @@ end
 
 Set the exposure of a camera
 
-Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `camera`: The camera to set aperture blades for
-* `exposure`: Represents a time length in the same time scale than [`rprShapeSetMotionTransform`](@ref),[`rprCameraSetMotionTransform`](@ref)...
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+* `exposure`: Represents a time length in the same time scale than [`rprShapeSetMotionTransform`],[`rprCameraSetMotionTransform`]...
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetExposure(camera, exposure)
     check_error(ccall((:rprCameraSetExposure, libRadeonProRender64), rpr_status, (rpr_camera, rpr_float), camera, exposure))
@@ -2264,13 +2266,13 @@ end
 
 Set camera mode
 
-Camera modes include: RPR\\_CAMERA\\_MODE\\_PERSPECTIVE RPR\\_CAMERA\\_MODE\\_ORTHOGRAPHIC RPR\\_CAMERA\\_MODE\\_LATITUDE\\_LONGITUDE\\_360 RPR\\_CAMERA\\_MODE\\_LATITUDE\\_LONGITUDE\\_STEREO RPR\\_CAMERA\\_MODE\\_CUBEMAP RPR\\_CAMERA\\_MODE\\_CUBEMAP\\_STEREO RPR\\_CAMERA\\_MODE\\_FISHEYE
+Camera modes include: RPR_CAMERA_MODE_PERSPECTIVE RPR_CAMERA_MODE_ORTHOGRAPHIC RPR_CAMERA_MODE_LATITUDE_LONGITUDE_360 RPR_CAMERA_MODE_LATITUDE_LONGITUDE_STEREO RPR_CAMERA_MODE_CUBEMAP RPR_CAMERA_MODE_CUBEMAP_STEREO RPR_CAMERA_MODE_FISHEYE
 
-### Parameters
+# Arguments
 * `camera`: The camera to set mode for
-* `mode`: Camera mode, default is RPR\\_CAMERA\\_MODE\\_PERSPECTIVE
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+* `mode`: Camera mode, default is RPR_CAMERA_MODE_PERSPECTIVE
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetMode(camera, mode)
     check_error(ccall((:rprCameraSetMode, libRadeonProRender64), rpr_status, (rpr_camera, rpr_camera_mode), camera, mode))
@@ -2281,11 +2283,11 @@ end
 
 Set orthographic view volume width
 
-### Parameters
+# Arguments
 * `camera`: The camera to set volume width for
 * `width`: View volume width in meters, default is 1 meter
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetOrthoWidth(camera, width)
     check_error(ccall((:rprCameraSetOrthoWidth, libRadeonProRender64), rpr_status, (rpr_camera, rpr_float), camera, width))
@@ -2312,11 +2314,11 @@ end
 
 Set orthographic view volume height
 
-### Parameters
+# Arguments
 * `camera`: The camera to set volume height for
 * `width`: View volume height in meters, default is 1 meter
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetOrthoHeight(camera, height)
     check_error(ccall((:rprCameraSetOrthoHeight, libRadeonProRender64), rpr_status, (rpr_camera, rpr_float), camera, height))
@@ -2327,11 +2329,11 @@ end
 
 Set near plane of a camera
 
-### Parameters
+# Arguments
 * `camera`: The camera to set near plane for
 * `near`: Near plane distance in meters, default is 0.01f
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetNearPlane(camera, near)
     check_error(ccall((:rprCameraSetNearPlane, libRadeonProRender64), rpr_status, (rpr_camera, rpr_float), camera, near))
@@ -2342,11 +2344,11 @@ end
 
 Set the post scale of camera ( 2D camera zoom )
 
-### Parameters
+# Arguments
 * `camera`: The camera to set
 * `scale`: post scale value.
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetPostScale(camera, scale)
     check_error(ccall((:rprCameraSetPostScale, libRadeonProRender64), rpr_status, (rpr_camera, rpr_float), camera, scale))
@@ -2357,11 +2359,11 @@ end
 
 Set far plane of a camera
 
-### Parameters
+# Arguments
 * `camera`: The camera to set far plane for
 * `far`: Far plane distance in meters, default is 100000000.f
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetFarPlane(camera, far)
     check_error(ccall((:rprCameraSetFarPlane, libRadeonProRender64), rpr_status, (rpr_camera, rpr_float), camera, far))
@@ -2372,11 +2374,11 @@ end
 
 Set distorion image for camera
 
-### Parameters
+# Arguments
 * `camera`: The camera to set UV Distortion for
 * `distortionMap`: distorion image
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCameraSetUVDistortion(camera, distortionMap)
     check_error(ccall((:rprCameraSetUVDistortion, libRadeonProRender64), rpr_status, (rpr_camera, rpr_image), camera, distortionMap))
@@ -2387,16 +2389,16 @@ end
 
 Query information about an image
 
-The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size_ret == NULL to fill the buffer with the data Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `image`: An image object to query
 * `image_info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprImageGetInfo(image, image_info, size, data, size_ret)
     check_error(ccall((:rprImageGetInfo, libRadeonProRender64), rpr_status, (rpr_image, rpr_image_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), image, image_info, size, data, size_ret))
@@ -2407,13 +2409,13 @@ end
 
 
 
-this is DEPRECATED in the Northstar plugin. In this plugin, the wrapping is done inside the RPR\\_MATERIAL\\_NODE\\_IMAGE\\_TEXTURE owning the image,  example: [`rprMaterialNodeSetInputUByKey`](@ref)(materialNodeTexture, RPR\\_MATERIAL\\_INPUT\\_WRAP\\_U, RPR\\_IMAGE\\_WRAP\\_TYPE\\_REPEAT);
+this is DEPRECATED in the Northstar plugin. In this plugin, the wrapping is done inside the RPR_MATERIAL_NODE_IMAGE_TEXTURE owning the image,  example: `rprMaterialNodeSetInputUByKey`;
 
-### Parameters
+# Arguments
 * `image`: The image to set wrap for
 * `type`:
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprImageSetWrap(image, type)
     check_error(ccall((:rprImageSetWrap, libRadeonProRender64), rpr_status, (rpr_image, rpr_image_wrap_type), image, type))
@@ -2444,10 +2446,10 @@ end
 
 Set a tile to an UDIM image.
 
-### Parameters
-* `imageUdimRoot`: must be an UDIM image ( created with no data: [`rprContextCreateImage`](@ref)(context, {0,RPR\\_COMPONENT\\_TYPE\\_UINT8}, nullptr, nullptr, ); )
+# Arguments
+* `imageUdimRoot`: must be an UDIM image ( created with no data: `rprContextCreateImage`
 * `tileIndex`: a valid UDIM index: 1001 , 1002, 1003 ... 1011, 1012, 1013 ... etc ...
-* `imageTile`: a valid classic [`rpr_image`](@ref)
+* `imageTile`: a valid classic [`rpr_image`]
 """
 function rprImageSetUDIM(imageUdimRoot, tileIndex, imageTile)
     check_error(ccall((:rprImageSetUDIM, libRadeonProRender64), rpr_status, (rpr_image, rpr_uint, rpr_image), imageUdimRoot, tileIndex, imageTile))
@@ -2458,11 +2460,11 @@ end
 
 
 
-### Parameters
+# Arguments
 * `image`: The image to set filter for
 * `type`:
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprImageSetFilter(image, type)
     check_error(ccall((:rprImageSetFilter, libRadeonProRender64), rpr_status, (rpr_image, rpr_image_filter_type), image, type))
@@ -2473,11 +2475,11 @@ end
 
 
 
-### Parameters
+# Arguments
 * `image`: The image to set gamma for
 * `type`:
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprImageSetGamma(image, type)
     check_error(ccall((:rprImageSetGamma, libRadeonProRender64), rpr_status, (rpr_image, rpr_float), image, type))
@@ -2488,11 +2490,11 @@ end
 
 
 
-### Parameters
+# Arguments
 * `image`: The image to set mipmap for
 * `enabled`: true (enable) or false (disable)
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprImageSetMipmapEnabled(image, enabled)
     check_error(ccall((:rprImageSetMipmapEnabled, libRadeonProRender64), rpr_status, (rpr_image, rpr_bool), image, enabled))
@@ -2503,12 +2505,12 @@ end
 
 Set shape world transform
 
-### Parameters
+# Arguments
 * `shape`: The shape to set transform for
 * `transpose`: Determines whether the basis vectors are in columns(false) or in rows(true) of the matrix
-* `transform`: Array of 16 [`rpr_float`](@ref) values (row-major form)
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+* `transform`: Array of 16 [`rpr_float`] values (row-major form)
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetTransform(shape, transpose, transform)
     check_error(ccall((:rprShapeSetTransform, libRadeonProRender64), rpr_status, (rpr_shape, rpr_bool, Ptr{rpr_float}), shape, transpose, transform))
@@ -2519,12 +2521,12 @@ end
 
 assign custom float value to some vertices of the mesh
 
-example :  // indicesSet and values must have the same size [`rpr_int`](@ref) indicesSet[] = {4,0,1,2,3}; [`rpr_float`](@ref) values[] = { 0.8 , 0.1 , 0.0 , 1.0 , 1.0 }; [`rprShapeSetVertexValue`](@ref)(meshC, 0 , indicesSet , values , sizeof(indicesSet)/sizeof(indicesSet[0]) );
+example :  // indicesSet and values must have the same size `rpr_int`] indicesSet[] = {4,0,1,2,3}; [`rpr_float`] values[] = { 0.8 , 0.1 , 0.0 , 1.0 , 1.0 }; [`rprShapeSetVertexValue`;
 
 setIndex can be between 0 and 3 : we can assign up to 4 floats for each vertex.
 
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetVertexValue(in_shape, setIndex, indices, values, indicesCount)
     check_error(ccall((:rprShapeSetVertexValue, libRadeonProRender64), rpr_status, (rpr_shape, rpr_int, Ptr{rpr_int}, Ptr{rpr_float}, rpr_int), in_shape, setIndex, indices, values, indicesCount))
@@ -2539,11 +2541,11 @@ end
 
 Set shape subdivision
 
-### Parameters
+# Arguments
 * `shape`: The shape to set subdivision for
 * `factor`:	Number of subdivision steps to do
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetSubdivisionFactor(shape, factor)
     check_error(ccall((:rprShapeSetSubdivisionFactor, libRadeonProRender64), rpr_status, (rpr_shape, rpr_uint), shape, factor))
@@ -2556,11 +2558,11 @@ Enable or Disable the auto ratio cap for subdivision
 
 autoRatioCap is a value from 0.0 to 1.0. autoRatioCap=1.0 means very large polygons, less tessellation. as it goes to 0.0, it does more tessellation. This value is ratio of the largest edge in the screen. Example: If you want to make an edge 10 pixels on 1080p, you need to set 10/1080.
 
-### Parameters
+# Arguments
 * `shape`: The shape to set
 * `autoRatioCap`: 0.0 to 1.0
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetSubdivisionAutoRatioCap(shape, autoRatioCap)
     check_error(ccall((:rprShapeSetSubdivisionAutoRatioCap, libRadeonProRender64), rpr_status, (rpr_shape, rpr_float), shape, autoRatioCap))
@@ -2571,11 +2573,11 @@ end
 
 
 
-### Parameters
+# Arguments
 * `shape`: The shape to set subdivision for
 * `factor`:
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetSubdivisionCreaseWeight(shape, factor)
     check_error(ccall((:rprShapeSetSubdivisionCreaseWeight, libRadeonProRender64), rpr_status, (rpr_shape, rpr_float), shape, factor))
@@ -2586,11 +2588,11 @@ end
 
 
 
-### Parameters
+# Arguments
 * `shape`: The shape to set
 * `renderLayerString`: Render layer name to attach
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeAttachRenderLayer(shape, renderLayerString)
     check_error(ccall((:rprShapeAttachRenderLayer, libRadeonProRender64), rpr_status, (rpr_shape, Ptr{rpr_char}), shape, renderLayerString))
@@ -2601,11 +2603,11 @@ end
 
 
 
-### Parameters
+# Arguments
 * `shape`: The shape to set
 * `renderLayerString`: Render layer name to detach
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeDetachRenderLayer(shape, renderLayerString)
     check_error(ccall((:rprShapeDetachRenderLayer, libRadeonProRender64), rpr_status, (rpr_shape, Ptr{rpr_char}), shape, renderLayerString))
@@ -2616,11 +2618,11 @@ end
 
 
 
-### Parameters
+# Arguments
 * `light`: The light to set
 * `renderLayerString`: Render layer name to attach
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprLightAttachRenderLayer(light, renderLayerString)
     check_error(ccall((:rprLightAttachRenderLayer, libRadeonProRender64), rpr_status, (rpr_light, Ptr{rpr_char}), light, renderLayerString))
@@ -2631,11 +2633,11 @@ end
 
 
 
-### Parameters
+# Arguments
 * `light`: The light to set
 * `renderLayerString`: Render layer name to detach
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprLightDetachRenderLayer(light, renderLayerString)
     check_error(ccall((:rprLightDetachRenderLayer, libRadeonProRender64), rpr_status, (rpr_light, Ptr{rpr_char}), light, renderLayerString))
@@ -2646,11 +2648,11 @@ end
 
 
 
-### Parameters
+# Arguments
 * `shape`: The shape to set subdivision for
 * `type`:
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetSubdivisionBoundaryInterop(shape, type)
     check_error(ccall((:rprShapeSetSubdivisionBoundaryInterop, libRadeonProRender64), rpr_status, (rpr_shape, rpr_subdiv_boundary_interfop_type), shape, type))
@@ -2659,15 +2661,15 @@ end
 """
     rprShapeAutoAdaptSubdivisionFactor(shape, framebuffer, camera, factor)
 
-Call this function to automatically set the Subdivision Factor depending on the camera position, frame buffer size. You can retrieve the internally computed factor with [`rprShapeGetInfo`](@ref)(...,RPR\\_SHAPE\\_SUBDIVISION\\_FACTOR,...) You have to call this function each time you want to re-adapt the Subdivision Factor : internally the factor will NOT be automatically re-computed when camera/shape/framebuffer changes.
+Call this function to automatically set the Subdivision Factor depending on the camera position, frame buffer size. You can retrieve the internally computed factor with `rprShapeGetInfo` You have to call this function each time you want to re-adapt the Subdivision Factor : internally the factor will NOT be automatically re-computed when camera/shape/framebuffer changes.
 
-### Parameters
+# Arguments
 * `shape`: The shape to set subdivision for
 * `framebuffer`: frame buffer used for factor adaptation
 * `camera`: camera used for factor adaptation
 * `factor`: factor to regulate the intensity of adaptation
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeAutoAdaptSubdivisionFactor(shape, framebuffer, camera, factor)
     check_error(ccall((:rprShapeAutoAdaptSubdivisionFactor, libRadeonProRender64), rpr_status, (rpr_shape, rpr_framebuffer, rpr_camera, rpr_int), shape, framebuffer, camera, factor))
@@ -2678,11 +2680,11 @@ end
 
 Set displacement scale
 
-### Parameters
+# Arguments
 * `shape`: The shape to set subdivision for
 * `scale`:	The amount of displacement applied
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetDisplacementScale(shape, minscale, maxscale)
     check_error(ccall((:rprShapeSetDisplacementScale, libRadeonProRender64), rpr_status, (rpr_shape, rpr_float, rpr_float), shape, minscale, maxscale))
@@ -2693,11 +2695,11 @@ end
 
 Set object group ID (mainly for debugging).
 
-### Parameters
+# Arguments
 * `shape`: The shape to set
 * `objectGroupID`: The ID
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetObjectGroupID(shape, objectGroupID)
     check_error(ccall((:rprShapeSetObjectGroupID, libRadeonProRender64), rpr_status, (rpr_shape, rpr_uint), shape, objectGroupID))
@@ -2708,11 +2710,11 @@ end
 
 Set object ID (mainly for debugging).
 
-### Parameters
+# Arguments
 * `shape`: The shape to set
 * `objectID`: The ID
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetObjectID(shape, objectID)
     check_error(ccall((:rprShapeSetObjectID, libRadeonProRender64), rpr_status, (rpr_shape, rpr_uint), shape, objectID))
@@ -2723,11 +2725,11 @@ end
 
 Set light group ID when shape has an emissive material (mainly for debugging).
 
-### Parameters
+# Arguments
 * `shape`: The shape to set
 * `lightGroupID`: The ID
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetLightGroupID(shape, lightGroupID)
     check_error(ccall((:rprShapeSetLightGroupID, libRadeonProRender64), rpr_status, (rpr_shape, rpr_uint), shape, lightGroupID))
@@ -2738,13 +2740,13 @@ end
 
 Set object rendering layer mask then, use rprContextSetParameter1u(context,"renderLayerMask",mask) in order to render only a group of shape
 
-WARNING: this function is deprecated and will be removed in the future,  use [`rprShapeAttachRenderLayer`](@ref)/[`rprShapeDetachRenderLayer`](@ref) and [`rprContextAttachRenderLayer`](@ref)/[`rprContextDetachRenderLayer`](@ref) instead
+WARNING: this function is deprecated and will be removed in the future,  use [`rprShapeAttachRenderLayer`]/[`rprShapeDetachRenderLayer`] and [`rprContextAttachRenderLayer`]/[`rprContextDetachRenderLayer`] instead
 
-### Parameters
+# Arguments
 * `shape`: The shape to set
 * `layerMask`: The render mask
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetLayerMask(shape, layerMask)
     check_error(ccall((:rprShapeSetLayerMask, libRadeonProRender64), rpr_status, (rpr_shape, rpr_uint), shape, layerMask))
@@ -2755,11 +2757,11 @@ end
 
 Set displacement texture
 
-### Parameters
+# Arguments
 * `shape`: The shape to set subdivision for
 * `materialNode`: Displacement texture , as material.
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetDisplacementMaterial(shape, materialNode)
     check_error(ccall((:rprShapeSetDisplacementMaterial, libRadeonProRender64), rpr_status, (rpr_shape, rpr_material_node), shape, materialNode))
@@ -2779,12 +2781,12 @@ end
 
 Set shape materials for specific faces
 
-### Parameters
+# Arguments
 * `shape`:	The shape to set the material for
 * `node`: The material to set
 * `face_indices`:
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetMaterialFaces(shape, node, face_indices, num_faces)
     check_error(ccall((:rprShapeSetMaterialFaces, libRadeonProRender64), rpr_status, (rpr_shape, rpr_material_node, Ptr{rpr_int}, Csize_t), shape, node, face_indices, num_faces))
@@ -2812,12 +2814,12 @@ end
 
 Set visibility flag
 
-### Parameters
+# Arguments
 * `shape`: The shape to set visibility for
-* `visibilityFlag`: . one of the visibility flags : RPR\\_SHAPE\\_VISIBILITY\\_PRIMARY\\_ONLY\\_FLAG RPR\\_SHAPE\\_VISIBILITY\\_SHADOW RPR\\_SHAPE\\_VISIBILITY\\_REFLECTION RPR\\_SHAPE\\_VISIBILITY\\_REFRACTION RPR\\_SHAPE\\_VISIBILITY\\_TRANSPARENT RPR\\_SHAPE\\_VISIBILITY\\_DIFFUSE RPR\\_SHAPE\\_VISIBILITY\\_GLOSSY\\_REFLECTION RPR\\_SHAPE\\_VISIBILITY\\_GLOSSY\\_REFRACTION RPR\\_SHAPE\\_VISIBILITY\\_LIGHT RPR\\_SHAPE\\_VISIBILITY\\_RECEIVE\\_SHADOW
+* `visibilityFlag`: . one of the visibility flags : RPR_SHAPE_VISIBILITY_PRIMARY_ONLY_FLAG RPR_SHAPE_VISIBILITY_SHADOW RPR_SHAPE_VISIBILITY_REFLECTION RPR_SHAPE_VISIBILITY_REFRACTION RPR_SHAPE_VISIBILITY_TRANSPARENT RPR_SHAPE_VISIBILITY_DIFFUSE RPR_SHAPE_VISIBILITY_GLOSSY_REFLECTION RPR_SHAPE_VISIBILITY_GLOSSY_REFRACTION RPR_SHAPE_VISIBILITY_LIGHT RPR_SHAPE_VISIBILITY_RECEIVE_SHADOW
 * `visible`: set the flag to TRUE or FALSE
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetVisibilityFlag(shape, visibilityFlag, visible)
     check_error(ccall((:rprShapeSetVisibilityFlag, libRadeonProRender64), rpr_status, (rpr_shape, rpr_shape_info, rpr_bool), shape, visibilityFlag, visible))
@@ -2828,12 +2830,12 @@ end
 
 Set visibility flag
 
-### Parameters
+# Arguments
 * `curve`: The curve to set visibility for
-* `visibilityFlag`: . one of the visibility flags : RPR\\_CURVE\\_VISIBILITY\\_PRIMARY\\_ONLY\\_FLAG RPR\\_CURVE\\_VISIBILITY\\_SHADOW RPR\\_CURVE\\_VISIBILITY\\_REFLECTION RPR\\_CURVE\\_VISIBILITY\\_REFRACTION RPR\\_CURVE\\_VISIBILITY\\_TRANSPARENT RPR\\_CURVE\\_VISIBILITY\\_DIFFUSE RPR\\_CURVE\\_VISIBILITY\\_GLOSSY\\_REFLECTION RPR\\_CURVE\\_VISIBILITY\\_GLOSSY\\_REFRACTION RPR\\_CURVE\\_VISIBILITY\\_LIGHT RPR\\_CURVE\\_VISIBILITY\\_RECEIVE\\_SHADOW
+* `visibilityFlag`: . one of the visibility flags : RPR_CURVE_VISIBILITY_PRIMARY_ONLY_FLAG RPR_CURVE_VISIBILITY_SHADOW RPR_CURVE_VISIBILITY_REFLECTION RPR_CURVE_VISIBILITY_REFRACTION RPR_CURVE_VISIBILITY_TRANSPARENT RPR_CURVE_VISIBILITY_DIFFUSE RPR_CURVE_VISIBILITY_GLOSSY_REFLECTION RPR_CURVE_VISIBILITY_GLOSSY_REFRACTION RPR_CURVE_VISIBILITY_LIGHT RPR_CURVE_VISIBILITY_RECEIVE_SHADOW
 * `visible`: set the flag to TRUE or FALSE
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCurveSetVisibilityFlag(curve, visibilityFlag, visible)
     check_error(ccall((:rprCurveSetVisibilityFlag, libRadeonProRender64), rpr_status, (rpr_curve, rpr_curve_parameter, rpr_bool), curve, visibilityFlag, visible))
@@ -2844,13 +2846,13 @@ end
 
 Set visibility flag
 
-This function sets all RPR\\_SHAPE\\_VISIBILITY\\_* flags to the 'visible' argument value Calling [`rprShapeSetVisibilityFlag`](@ref)(xxx,visible); on each flags would lead to the same result.
+This function sets all RPR_SHAPE_VISIBILITY_* flags to the 'visible' argument value Calling `rprShapeSetVisibilityFlag`; on each flags would lead to the same result.
 
-### Parameters
+# Arguments
 * `shape`: The shape to set visibility for
 * `visible`: Determines if the shape is visible or not
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetVisibility(shape, visible)
     check_error(ccall((:rprShapeSetVisibility, libRadeonProRender64), rpr_status, (rpr_shape, rpr_bool), shape, visible))
@@ -2861,12 +2863,12 @@ end
 
 Set visibility flag for Light
 
-### Parameters
+# Arguments
 * `light`: The light to set visibility for
-* `visibilityFlag`: one of the visibility flags : - RPR\\_LIGHT\\_VISIBILITY\\_LIGHT
+* `visibilityFlag`: one of the visibility flags : - RPR_LIGHT_VISIBILITY_LIGHT
 * `visible`: set the flag to TRUE or FALSE
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprLightSetVisibilityFlag(light, visibilityFlag, visible)
     check_error(ccall((:rprLightSetVisibilityFlag, libRadeonProRender64), rpr_status, (rpr_light, rpr_light_info, rpr_bool), light, visibilityFlag, visible))
@@ -2877,13 +2879,13 @@ end
 
 Set visibility flag
 
-This function sets all RPR\\_CURVE\\_VISIBILITY\\_* flags to the 'visible' argument value Calling [`rprCurveSetVisibilityFlag`](@ref)(xxx,visible); on each flags would lead to the same result.
+This function sets all RPR_CURVE_VISIBILITY_* flags to the 'visible' argument value Calling `rprCurveSetVisibilityFlag`; on each flags would lead to the same result.
 
-### Parameters
+# Arguments
 * `curve`: The curve to set visibility for
 * `visible`: Determines if the curve is visible or not
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCurveSetVisibility(curve, visible)
     check_error(ccall((:rprCurveSetVisibility, libRadeonProRender64), rpr_status, (rpr_curve, rpr_bool), curve, visible))
@@ -2894,13 +2896,13 @@ end
 
 Set visibility flag for specular refleacted rays
 
-This function sets both RPR\\_SHAPE\\_VISIBILITY\\_REFLECTION and RPR\\_SHAPE\\_VISIBILITY\\_REFRACTION flags to the 'visible' argument value Calling [`rprShapeSetVisibilityFlag`](@ref)(xxx,visible); on those 2 flags would lead to the same result.
+This function sets both RPR_SHAPE_VISIBILITY_REFLECTION and RPR_SHAPE_VISIBILITY_REFRACTION flags to the 'visible' argument value Calling `rprShapeSetVisibilityFlag`; on those 2 flags would lead to the same result.
 
-### Parameters
+# Arguments
 * `shape`: The shape to set visibility for
 * `visible`: Determines if the shape is visible or not
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetVisibilityInSpecular(shape, visible)
     check_error(ccall((:rprShapeSetVisibilityInSpecular, libRadeonProRender64), rpr_status, (rpr_shape, rpr_bool), shape, visible))
@@ -2911,11 +2913,11 @@ end
 
 Set shadow catcher flag
 
-### Parameters
+# Arguments
 * `shape`: The shape to set shadow catcher flag for
 * `shadowCatcher`: Determines if the shape behaves as shadow catcher
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetShadowCatcher(shape, shadowCatcher)
     check_error(ccall((:rprShapeSetShadowCatcher, libRadeonProRender64), rpr_status, (rpr_shape, rpr_bool), shape, shadowCatcher))
@@ -2926,13 +2928,13 @@ end
 
 Set shadow color
 
-### Parameters
+# Arguments
 * `shape`: The shape to set shadow color for
 * `r`: Red component of the color
 * `g`: Green component of the color
 * `b`: Blue component of the color
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetShadowColor(shape, r, g, b)
     check_error(ccall((:rprShapeSetShadowColor, libRadeonProRender64), rpr_status, (rpr_shape, rpr_float, rpr_float, rpr_float), shape, r, g, b))
@@ -2943,11 +2945,11 @@ end
 
 Set Reflection catcher flag
 
-### Parameters
+# Arguments
 * `shape`: The shape to set Reflection catcher flag for
 * `reflectionCatcher`: Determines if the shape behaves as Reflection catcher
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetReflectionCatcher(shape, reflectionCatcher)
     check_error(ccall((:rprShapeSetReflectionCatcher, libRadeonProRender64), rpr_status, (rpr_shape, rpr_bool), shape, reflectionCatcher))
@@ -2958,11 +2960,11 @@ end
 
 Set 1 if ignore shape in the Contour rendering flag. ( This flag is used only if Contour is enabled )
 
-### Parameters
+# Arguments
 * `shape`: The shape to set
 * `ignoreInContour`: 0 or 1.
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetContourIgnore(shape, ignoreInContour)
     check_error(ccall((:rprShapeSetContourIgnore, libRadeonProRender64), rpr_status, (rpr_shape, rpr_bool), shape, ignoreInContour))
@@ -2973,11 +2975,11 @@ end
 
 Set 1 if the shape should be treated as an environment light (finite sphere environment light).
 
-### Parameters
+# Arguments
 * `shape`: The shape to set
 * `envLight`: 0 or 1.
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeSetEnvironmentLight(shape, envLight)
     check_error(ccall((:rprShapeSetEnvironmentLight, libRadeonProRender64), rpr_status, (rpr_shape, rpr_bool), shape, envLight))
@@ -2996,9 +2998,9 @@ Setting such flag will result in marking object as static. Such objects can be p
 
 !!! note
 
-    Static flag can be set only before first call to [`rprContextRender`](@ref). By default all objects created as dynamic.
+    Static flag can be set only before first call to [`rprContextRender`]. By default all objects created as dynamic.
 
-### Parameters
+# Arguments
 * `in_shape`: shape to set flag on
 * `in_is_static`: is object static or not
 """
@@ -3011,12 +3013,12 @@ end
 
 Set light world transform
 
-### Parameters
+# Arguments
 * `light`: The light to set transform for
 * `transpose`: Determines whether the basis vectors are in columns(false) or in rows(true) of the matrix
-* `transform`: Array of 16 [`rpr_float`](@ref) values (row-major form)
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+* `transform`: Array of 16 [`rpr_float`] values (row-major form)
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprLightSetTransform(light, transpose, transform)
     check_error(ccall((:rprLightSetTransform, libRadeonProRender64), rpr_status, (rpr_light, rpr_bool, Ptr{rpr_float}), light, transpose, transform))
@@ -3025,13 +3027,13 @@ end
 """
     rprLightSetGroupId(light, groupId)
 
-Set light group ID. This parameter can be used with RPR\\_AOV\\_LIGHT\\_GROUP0, RPR\\_AOV\\_LIGHT\\_GROUP1, ...
+Set light group ID. This parameter can be used with RPR_AOV_LIGHT_GROUP0, RPR_AOV_LIGHT_GROUP1, ...
 
-### Parameters
+# Arguments
 * `light`: The light to set transform for
 * `groupId`: -1 to remove the group. or a value between 0 and 3.
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprLightSetGroupId(light, groupId)
     check_error(ccall((:rprLightSetGroupId, libRadeonProRender64), rpr_status, (rpr_light, rpr_uint), light, groupId))
@@ -3042,16 +3044,16 @@ end
 
 Query information about a shape
 
-The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size_ret == NULL to fill the buffer with the data Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `shape`: The shape object to query
 * `material_info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprShapeGetInfo(arg0, arg1, arg2, arg3, arg4)
     check_error(ccall((:rprShapeGetInfo, libRadeonProRender64), rpr_status, (rpr_shape, rpr_shape_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), arg0, arg1, arg2, arg3, arg4))
@@ -3062,16 +3064,16 @@ end
 
 Query information about a mesh
 
-The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size_ret == NULL to fill the buffer with the data Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `shape`: The mesh to query
 * `mesh_info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprMeshGetInfo(mesh, mesh_info, size, data, size_ret)
     check_error(ccall((:rprMeshGetInfo, libRadeonProRender64), rpr_status, (rpr_shape, rpr_mesh_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), mesh, mesh_info, size, data, size_ret))
@@ -3082,16 +3084,16 @@ end
 
 Query information about a Curve
 
-The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size_ret == NULL to fill the buffer with the data Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `shape`: The Curve to query
 * `rpr_curve_parameter`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprCurveGetInfo(curve, curve_info, size, data, size_ret)
     check_error(ccall((:rprCurveGetInfo, libRadeonProRender64), rpr_status, (rpr_curve, rpr_curve_parameter, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), curve, curve_info, size, data, size_ret))
@@ -3102,16 +3104,16 @@ end
 
 Query information about a hetero volume
 
-The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size_ret == NULL to fill the buffer with the data Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `heteroVol`: The heteroVolume to query
 * `heteroVol_info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprHeteroVolumeGetInfo(heteroVol, heteroVol_info, size, data, size_ret)
     check_error(ccall((:rprHeteroVolumeGetInfo, libRadeonProRender64), rpr_status, (rpr_hetero_volume, rpr_hetero_volume_parameter, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), heteroVol, heteroVol_info, size, data, size_ret))
@@ -3126,16 +3128,16 @@ end
 
 Query information about a Buffer
 
-The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size_ret == NULL to fill the buffer with the data Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `buffer`: The heteroVolume to query
 * `buffer_info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprBufferGetInfo(buffer, buffer_info, size, data, size_ret)
     check_error(ccall((:rprBufferGetInfo, libRadeonProRender64), rpr_status, (rpr_buffer, rpr_buffer_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), buffer, buffer_info, size, data, size_ret))
@@ -3146,12 +3148,12 @@ end
 
 Get the parent shape for an instance
 
-Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `shape`: The shape to get a parent shape from
-* `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+* `status`: RPR_SUCCESS in case of success, error code otherwise
+# Returns
 Shape object
 """
 function rprInstanceGetBaseShape(shape)
@@ -3165,12 +3167,12 @@ end
 
 Create point light
 
-Create analytic point light represented by a point in space. Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY
+Create analytic point light represented by a point in space. Possible error codes: RPR_ERROR_OUT_OF_VIDEO_MEMORY RPR_ERROR_OUT_OF_SYSTEM_MEMORY
 
-### Parameters
+# Arguments
 * `context`: The context to create a light for
-* `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+* `status`: RPR_SUCCESS in case of success, error code otherwise
+# Returns
 Light object
 """
 function rprContextCreatePointLight(context)
@@ -3184,12 +3186,12 @@ end
 
 Set radiant power of a point light source
 
-### Parameters
+# Arguments
 * `r`: R component of a radiant power vector
 * `g`: G component of a radiant power vector
 * `b`: B component of a radiant power vector
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprPointLightSetRadiantPower3f(light, r, g, b)
     check_error(ccall((:rprPointLightSetRadiantPower3f, libRadeonProRender64), rpr_status, (rpr_light, rpr_float, rpr_float, rpr_float), light, r, g, b))
@@ -3202,12 +3204,12 @@ Create spot light
 
 Create analytic spot light
 
-Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY
+Possible error codes: RPR_ERROR_OUT_OF_VIDEO_MEMORY RPR_ERROR_OUT_OF_SYSTEM_MEMORY
 
-### Parameters
+# Arguments
 * `context`: The context to create a light for
-* `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+* `status`: RPR_SUCCESS in case of success, error code otherwise
+# Returns
 Light object
 """
 function rprContextCreateSpotLight(context, light)
@@ -3227,12 +3229,12 @@ end
 
 Set radiant power of a spot light source
 
-### Parameters
+# Arguments
 * `r`: R component of a radiant power vector
 * `g`: G component of a radiant power vector
 * `b`: B component of a radiant power vector
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSpotLightSetRadiantPower3f(light, r, g, b)
     check_error(ccall((:rprSpotLightSetRadiantPower3f, libRadeonProRender64), rpr_status, (rpr_light, rpr_float, rpr_float, rpr_float), light, r, g, b))
@@ -3254,12 +3256,12 @@ end
 
 Set Power for Sphere Light
 
-### Parameters
+# Arguments
 * `r`: R component of a radiant power vector
 * `g`: G component of a radiant power vector
 * `b`: B component of a radiant power vector
-### Returns
-status RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+status RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSphereLightSetRadiantPower3f(light, r, g, b)
     check_error(ccall((:rprSphereLightSetRadiantPower3f, libRadeonProRender64), rpr_status, (rpr_light, rpr_float, rpr_float, rpr_float), light, r, g, b))
@@ -3270,10 +3272,10 @@ end
 
 Set Radius for Sphere Light
 
-### Parameters
+# Arguments
 * `radius`: Radius to set
-### Returns
-status RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+status RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSphereLightSetRadius(light, radius)
     check_error(ccall((:rprSphereLightSetRadius, libRadeonProRender64), rpr_status, (rpr_light, rpr_float), light, radius))
@@ -3284,12 +3286,12 @@ end
 
 Set Power for Disk Light
 
-### Parameters
+# Arguments
 * `r`: R component of a radiant power vector
 * `g`: G component of a radiant power vector
 * `b`: B component of a radiant power vector
-### Returns
-status RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+status RPR_SUCCESS in case of success, error code otherwise
 """
 function rprDiskLightSetRadiantPower3f(light, r, g, b)
     check_error(ccall((:rprDiskLightSetRadiantPower3f, libRadeonProRender64), rpr_status, (rpr_light, rpr_float, rpr_float, rpr_float), light, r, g, b))
@@ -3300,10 +3302,10 @@ end
 
 Set Radius for Disk Light
 
-### Parameters
+# Arguments
 * `radius`: Radius to set
-### Returns
-status RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+status RPR_SUCCESS in case of success, error code otherwise
 """
 function rprDiskLightSetRadius(light, radius)
     check_error(ccall((:rprDiskLightSetRadius, libRadeonProRender64), rpr_status, (rpr_light, rpr_float), light, radius))
@@ -3314,10 +3316,10 @@ end
 
 Set Outer Angle for Disk Light
 
-### Parameters
+# Arguments
 * `angle`: Outer angle in radians
-### Returns
-status RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+status RPR_SUCCESS in case of success, error code otherwise
 """
 function rprDiskLightSetAngle(light, angle)
     check_error(ccall((:rprDiskLightSetAngle, libRadeonProRender64), rpr_status, (rpr_light, rpr_float), light, angle))
@@ -3328,10 +3330,10 @@ end
 
 Set Inner Angle for Disk Light
 
-### Parameters
+# Arguments
 * `innerAngle`: Inner angle in radians
-### Returns
-status RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+status RPR_SUCCESS in case of success, error code otherwise
 """
 function rprDiskLightSetInnerAngle(light, innerAngle)
     check_error(ccall((:rprDiskLightSetInnerAngle, libRadeonProRender64), rpr_status, (rpr_light, rpr_float), light, innerAngle))
@@ -3344,11 +3346,11 @@ Set cone shape for a spot light
 
 Spot light produces smooth penumbra in a region between inner and outer circles, the area inside the inner cicrle receives full power while the area outside the outer one is fully in shadow.
 
-### Parameters
+# Arguments
 * `iangle`: Inner angle of a cone in radians
 * `oangle`: Outer angle of a coner in radians, should be greater that or equal to inner angle
-### Returns
-status RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+status RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSpotLightSetConeShape(light, iangle, oangle)
     check_error(ccall((:rprSpotLightSetConeShape, libRadeonProRender64), rpr_status, (rpr_light, rpr_float, rpr_float), light, iangle, oangle))
@@ -3359,12 +3361,12 @@ end
 
 Create directional light
 
-Create analytic directional light. Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY
+Create analytic directional light. Possible error codes: RPR_ERROR_OUT_OF_VIDEO_MEMORY RPR_ERROR_OUT_OF_SYSTEM_MEMORY
 
-### Parameters
+# Arguments
 * `context`: The context to create a light for
-* `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+* `status`: RPR_SUCCESS in case of success, error code otherwise
+# Returns
 light id of a newly created light
 """
 function rprContextCreateDirectionalLight(context)
@@ -3378,12 +3380,12 @@ end
 
 Set radiant power of a directional light source
 
-### Parameters
+# Arguments
 * `r`: R component of a radiant power vector
 * `g`: G component of a radiant power vector
 * `b`: B component of a radiant power vector
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprDirectionalLightSetRadiantPower3f(light, r, g, b)
     check_error(ccall((:rprDirectionalLightSetRadiantPower3f, libRadeonProRender64), rpr_status, (rpr_light, rpr_float, rpr_float, rpr_float), light, r, g, b))
@@ -3394,10 +3396,10 @@ end
 
 Set softness of shadow produced by the light
 
-### Parameters
+# Arguments
 * `softnessAngle`: (in Radian) value should be between [ 0 ; pi/4 ]. 0.0 means sharp shadow
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprDirectionalLightSetShadowSoftnessAngle(light, softnessAngle)
     check_error(ccall((:rprDirectionalLightSetShadowSoftnessAngle, libRadeonProRender64), rpr_status, (rpr_light, rpr_float), light, softnessAngle))
@@ -3408,12 +3410,12 @@ end
 
 Create an environment light
 
-Environment light is a light based on lightprobe. Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY
+Environment light is a light based on lightprobe. Possible error codes: RPR_ERROR_OUT_OF_VIDEO_MEMORY RPR_ERROR_OUT_OF_SYSTEM_MEMORY
 
-### Parameters
+# Arguments
 * `context`: The context to create a light for
-* `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+* `status`: RPR_SUCCESS in case of success, error code otherwise
+# Returns
 Light object
 """
 function rprContextCreateEnvironmentLight(context)
@@ -3427,13 +3429,13 @@ end
 
 Set image for an environment light
 
-Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER RPR\\_ERROR\\_UNSUPPORTED\\_IMAGE\\_FORMAT
+Possible error codes: RPR_ERROR_INVALID_PARAMETER RPR_ERROR_UNSUPPORTED_IMAGE_FORMAT
 
-### Parameters
+# Arguments
 * `env_light`: Environment light
 * `image`: Image object to set
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprEnvironmentLightSetImage(env_light, image)
     check_error(ccall((:rprEnvironmentLightSetImage, libRadeonProRender64), rpr_status, (rpr_light, rpr_image), env_light, image))
@@ -3444,11 +3446,11 @@ end
 
 Set intensity scale or an env light
 
-### Parameters
+# Arguments
 * `env_light`: Environment light
 * `intensity_scale`: Intensity scale
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprEnvironmentLightSetIntensityScale(env_light, intensity_scale)
     check_error(ccall((:rprEnvironmentLightSetIntensityScale, libRadeonProRender64), rpr_status, (rpr_light, rpr_float), env_light, intensity_scale))
@@ -3459,13 +3461,13 @@ end
 
 Set portal for environment light to accelerate convergence of indoor scenes
 
-Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `env_light`: Environment light
 * `portal`: Portal mesh, might have multiple components
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprEnvironmentLightAttachPortal(scene, env_light, portal)
     check_error(ccall((:rprEnvironmentLightAttachPortal, libRadeonProRender64), rpr_status, (rpr_scene, rpr_light, rpr_shape), scene, env_light, portal))
@@ -3476,13 +3478,13 @@ end
 
 Remove portal for environment light.
 
-Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `env_light`: Environment light
 * `portal`: Portal mesh, that have been added to light.
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprEnvironmentLightDetachPortal(scene, env_light, portal)
     check_error(ccall((:rprEnvironmentLightDetachPortal, libRadeonProRender64), rpr_status, (rpr_scene, rpr_light, rpr_shape), scene, env_light, portal))
@@ -3495,20 +3497,20 @@ Sets/Gets environment override on IBL
 
 This function sets overrides for different parts of IBL. overrideType argument can take following values:
 
-* RPR\\_ENVIRONMENT\\_LIGHT\\_OVERRIDE\\_REFLECTION
+* RPR_ENVIRONMENT_LIGHT_OVERRIDE_REFLECTION
 
-* RPR\\_ENVIRONMENT\\_LIGHT\\_OVERRIDE\\_REFRACTION
+* RPR_ENVIRONMENT_LIGHT_OVERRIDE_REFRACTION
 
-* RPR\\_ENVIRONMENT\\_LIGHT\\_OVERRIDE\\_TRANSPARENCY
+* RPR_ENVIRONMENT_LIGHT_OVERRIDE_TRANSPARENCY
 
-* RPR\\_ENVIRONMENT\\_LIGHT\\_OVERRIDE\\_BACKGROUND
+* RPR_ENVIRONMENT_LIGHT_OVERRIDE_BACKGROUND
 
-* RPR\\_ENVIRONMENT\\_LIGHT\\_OVERRIDE\\_IRRADIANCE
+* RPR_ENVIRONMENT_LIGHT_OVERRIDE_IRRADIANCE
 
-### Parameters
-* `in_ibl`: image based light created with [`rprContextCreateEnvironmentLight`](@ref)
+# Arguments
+* `in_ibl`: image based light created with [`rprContextCreateEnvironmentLight`]
 * `overrideType`: override parameter
-* `in_iblOverride`: image based light created with [`rprContextCreateEnvironmentLight`](@ref)
+* `in_iblOverride`: image based light created with [`rprContextCreateEnvironmentLight`]
 """
 function rprEnvironmentLightSetEnvironmentLightOverride(in_ibl, overrideType, in_iblOverride)
     check_error(ccall((:rprEnvironmentLightSetEnvironmentLightOverride, libRadeonProRender64), rpr_status, (rpr_light, rpr_environment_override, rpr_light), in_ibl, overrideType, in_iblOverride))
@@ -3525,12 +3527,12 @@ end
 
 Create sky light
 
-Analytical sky model Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY
+Analytical sky model Possible error codes: RPR_ERROR_OUT_OF_VIDEO_MEMORY RPR_ERROR_OUT_OF_SYSTEM_MEMORY
 
-### Parameters
+# Arguments
 * `context`: The context to create a light for
-* `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+* `status`: RPR_SUCCESS in case of success, error code otherwise
+# Returns
 Light object
 """
 function rprContextCreateSkyLight(context)
@@ -3544,11 +3546,11 @@ end
 
 Set turbidity of a sky light
 
-### Parameters
+# Arguments
 * `skylight`: Sky light
 * `turbidity`: Turbidity value
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSkyLightSetTurbidity(skylight, turbidity)
     check_error(ccall((:rprSkyLightSetTurbidity, libRadeonProRender64), rpr_status, (rpr_light, rpr_float), skylight, turbidity))
@@ -3559,11 +3561,11 @@ end
 
 Set albedo of a sky light
 
-### Parameters
+# Arguments
 * `skylight`: Sky light
 * `albedo`: Albedo value
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSkyLightSetAlbedo(skylight, albedo)
     check_error(ccall((:rprSkyLightSetAlbedo, libRadeonProRender64), rpr_status, (rpr_light, rpr_float), skylight, albedo))
@@ -3574,11 +3576,11 @@ end
 
 Set scale of a sky light
 
-### Parameters
+# Arguments
 * `skylight`: Sky light
 * `scale`: Scale value
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSkyLightSetScale(skylight, scale)
     check_error(ccall((:rprSkyLightSetScale, libRadeonProRender64), rpr_status, (rpr_light, rpr_float), skylight, scale))
@@ -3589,13 +3591,13 @@ end
 
 Set the direction of the sky light
 
-### Parameters
+# Arguments
 * `skylight`: Sky light
 * `x`: direction x
 * `y`: direction y
 * `z`: direction z
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSkyLightSetDirection(skylight, x, y, z)
     check_error(ccall((:rprSkyLightSetDirection, libRadeonProRender64), rpr_status, (rpr_light, rpr_float, rpr_float, rpr_float), skylight, x, y, z))
@@ -3606,13 +3608,13 @@ end
 
 Set portal for sky light to accelerate convergence of indoor scenes
 
-Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `skylight`: Sky light
 * `portal`: Portal mesh, might have multiple components
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSkyLightAttachPortal(scene, skylight, portal)
     check_error(ccall((:rprSkyLightAttachPortal, libRadeonProRender64), rpr_status, (rpr_scene, rpr_light, rpr_shape), scene, skylight, portal))
@@ -3623,13 +3625,13 @@ end
 
 Remove portal for Sky light.
 
-Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `env_light`: Sky light
 * `portal`: Portal mesh, that have been added to light.
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSkyLightDetachPortal(scene, skylight, portal)
     check_error(ccall((:rprSkyLightDetachPortal, libRadeonProRender64), rpr_status, (rpr_scene, rpr_light, rpr_shape), scene, skylight, portal))
@@ -3642,12 +3644,12 @@ Create IES light
 
 Create IES light
 
-Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY
+Possible error codes: RPR_ERROR_OUT_OF_VIDEO_MEMORY RPR_ERROR_OUT_OF_SYSTEM_MEMORY
 
-### Parameters
+# Arguments
 * `context`: The context to create a light for
-* `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+* `status`: RPR_SUCCESS in case of success, error code otherwise
+# Returns
 Light object
 """
 function rprContextCreateIESLight(context, light)
@@ -3659,12 +3661,12 @@ end
 
 Set radiant power of a IES light source
 
-### Parameters
+# Arguments
 * `r`: R component of a radiant power vector
 * `g`: G component of a radiant power vector
 * `b`: B component of a radiant power vector
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprIESLightSetRadiantPower3f(light, r, g, b)
     check_error(ccall((:rprIESLightSetRadiantPower3f, libRadeonProRender64), rpr_status, (rpr_light, rpr_float, rpr_float, rpr_float), light, r, g, b))
@@ -3675,15 +3677,15 @@ end
 
 Set image for an IES light
 
-Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER RPR\\_ERROR\\_UNSUPPORTED\\_IMAGE\\_FORMAT : If the format of the IES file is not supported by Radeon ProRender. RPR\\_ERROR\\_IO\\_ERROR : If the IES image path file doesn't exist.
+Possible error codes: RPR_ERROR_INVALID_PARAMETER RPR_ERROR_UNSUPPORTED_IMAGE_FORMAT : If the format of the IES file is not supported by Radeon ProRender. RPR_ERROR_IO_ERROR : If the IES image path file doesn't exist.
 
-### Parameters
+# Arguments
 * `env_light`: Environment light
 * `imagePath`: Image path to set (for UNICODE, supports UTF-8 encoding)
 * `nx`:	resolution X of the IES image
 * `ny`: resolution Y of the IES image
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprIESLightSetImageFromFile(env_light, imagePath, nx, ny)
     check_error(ccall((:rprIESLightSetImageFromFile, libRadeonProRender64), rpr_status, (rpr_light, Ptr{rpr_char}, rpr_int, rpr_int), env_light, imagePath, nx, ny))
@@ -3694,15 +3696,15 @@ end
 
 Set image for an IES light
 
-Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER RPR\\_ERROR\\_UNSUPPORTED\\_IMAGE\\_FORMAT : If the format of the IES data is not supported by Radeon ProRender.
+Possible error codes: RPR_ERROR_INVALID_PARAMETER RPR_ERROR_UNSUPPORTED_IMAGE_FORMAT : If the format of the IES data is not supported by Radeon ProRender.
 
-### Parameters
+# Arguments
 * `env_light`: Environment light
 * `iesData`: Image data string defining the IES. null terminated string. IES format.
 * `nx`:	resolution X of the IES image
 * `ny`: resolution Y of the IES image
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprIESLightSetImageFromIESdata(env_light, iesData, nx, ny)
     check_error(ccall((:rprIESLightSetImageFromIESdata, libRadeonProRender64), rpr_status, (rpr_light, Ptr{rpr_char}, rpr_int, rpr_int), env_light, iesData, nx, ny))
@@ -3713,16 +3715,16 @@ end
 
 Query information about a light
 
-The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size_ret == NULL to fill the buffer with the data Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `light`: The light to query
 * `light_info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprLightGetInfo(light, info, size, data, size_ret)
     check_error(ccall((:rprLightGetInfo, libRadeonProRender64), rpr_status, (rpr_light, rpr_light_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), light, info, size, data, size_ret))
@@ -3735,10 +3737,10 @@ Remove all objects from a scene Also detaches the camera
 
 A scene is essentially a collection of shapes, lights and volume regions.
 
-### Parameters
+# Arguments
 * `scene`: The scene to clear
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSceneClear(scene)
     check_error(ccall((:rprSceneClear, libRadeonProRender64), rpr_status, (rpr_scene,), scene))
@@ -3751,11 +3753,11 @@ Attach a shape to the scene
 
 A scene is essentially a collection of shapes, lights and volume regions.
 
-### Parameters
+# Arguments
 * `scene`: The scene to attach
 * `shape`: The shape to attach
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSceneAttachShape(scene, shape)
     check_error(ccall((:rprSceneAttachShape, libRadeonProRender64), rpr_status, (rpr_scene, rpr_shape), scene, shape))
@@ -3768,10 +3770,10 @@ Detach a shape from the scene
 
 A scene is essentially a collection of shapes, lights and volume regions.
 
-### Parameters
+# Arguments
 * `scene`: The scene to dettach from
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSceneDetachShape(scene, shape)
     check_error(ccall((:rprSceneDetachShape, libRadeonProRender64), rpr_status, (rpr_scene, rpr_shape), scene, shape))
@@ -3784,11 +3786,11 @@ Attach a heteroVolume to the scene
 
 A scene is essentially a collection of shapes, lights and volume regions.
 
-### Parameters
+# Arguments
 * `scene`: The scene to attach
 * `heteroVolume`: The heteroVolume to attach
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSceneAttachHeteroVolume(scene, heteroVolume)
     check_error(ccall((:rprSceneAttachHeteroVolume, libRadeonProRender64), rpr_status, (rpr_scene, rpr_hetero_volume), scene, heteroVolume))
@@ -3801,10 +3803,10 @@ Detach a heteroVolume from the scene
 
 A scene is essentially a collection of shapes, lights and volume regions.
 
-### Parameters
+# Arguments
 * `scene`: The scene to dettach from
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSceneDetachHeteroVolume(scene, heteroVolume)
     check_error(ccall((:rprSceneDetachHeteroVolume, libRadeonProRender64), rpr_status, (rpr_scene, rpr_hetero_volume), scene, heteroVolume))
@@ -3831,16 +3833,16 @@ end
 
 Create a set of curves
 
-A [`rpr_curve`](@ref) is a set of curves A curve is a set of segments A segment is always composed of 4 3D points
+A [`rpr_curve`] is a set of curves A curve is a set of segments A segment is always composed of 4 3D points
 
-### Parameters
-* `controlPointsData`: array of [`rpr_float`](@ref)[num\\_controlPoints*3]
+# Arguments
+* `controlPointsData`: array of [`rpr_float`][num_controlPoints*3]
 * `controlPointsStride`: in most of cases, for contiguous controlPointsData, should be set to 3*sizeof(float)
 * `num_indices`: should be set at : 4*(number of segments)
-* `indicesData`: array of [`rpr_uint`](@ref)[num\\_indices] . those are indices to the controlPointsData array.
+* `indicesData`: array of [`rpr_uint`][num_indices] . those are indices to the controlPointsData array.
 * `radius`: array of N float.  if curve is not tapered, N = curveCount. if curve is tapered, N = 2*(number of segments)
 * `textureUV`: array of float2[curveCount].
-* `segmentPerCurve`: array of [`rpr_int`](@ref)[curveCount].  (number of segments) = sum of each element of this array.
+* `segmentPerCurve`: array of [`rpr_int`][curveCount].  (number of segments) = sum of each element of this array.
 * `creationFlag_tapered`: Set it to 0 by default. Set to 1 if using tapered radius. May be used for other bit field options in the future (so, don't set it to a value > 1 for now.)
 """
 function rprContextCreateCurve(context, out_curve, num_controlPoints, controlPointsData, controlPointsStride, num_indices, curveCount, indicesData, radius, textureUV, segmentPerCurve, creationFlag_tapered)
@@ -3854,11 +3856,11 @@ Attach a light to the scene
 
 A scene is essentially a collection of shapes, lights and volume regions
 
-### Parameters
+# Arguments
 * `scene`: The scene to attach
 * `light`: The light to attach
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSceneAttachLight(scene, light)
     check_error(ccall((:rprSceneAttachLight, libRadeonProRender64), rpr_status, (rpr_scene, rpr_light), scene, light))
@@ -3871,11 +3873,11 @@ Detach a light from the scene
 
 A scene is essentially a collection of shapes, lights and volume regions
 
-### Parameters
+# Arguments
 * `scene`: The scene to dettach from
 * `light`: The light to detach
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSceneDetachLight(scene, light)
     check_error(ccall((:rprSceneDetachLight, libRadeonProRender64), rpr_status, (rpr_scene, rpr_light), scene, light))
@@ -3886,7 +3888,7 @@ end
 
 Sets/gets environment override as active in scene
 
-### Parameters
+# Arguments
 * `in_scene`: scene
 * `in_light`: ibl
 """
@@ -3905,16 +3907,16 @@ end
 
 Query information about a scene
 
-The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size_ret == NULL to fill the buffer with the data Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `scene`: The scene to query
 * `info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSceneGetInfo(scene, info, size, data, size_ret)
     check_error(ccall((:rprSceneGetInfo, libRadeonProRender64), rpr_status, (rpr_scene, rpr_scene_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), scene, info, size, data, size_ret))
@@ -3923,13 +3925,13 @@ end
 """
     rprSceneSetBackgroundImage(scene, image)
 
-Set background image for the scene which does not affect the scene lighting, it is shown as view-independent rectangular background Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+Set background image for the scene which does not affect the scene lighting, it is shown as view-independent rectangular background Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `scene`: The scene to set background for
 * `image`: Background image
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSceneSetBackgroundImage(scene, image)
     check_error(ccall((:rprSceneSetBackgroundImage, libRadeonProRender64), rpr_status, (rpr_scene, rpr_image), scene, image))
@@ -3940,10 +3942,10 @@ end
 
 Get background image
 
-### Parameters
+# Arguments
 * `scene`: The scene to get background image from
-* `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+* `status`: RPR_SUCCESS in case of success, error code otherwise
+# Returns
 Image object
 """
 function rprSceneGetBackgroundImage(scene)
@@ -3959,11 +3961,11 @@ Set right camera for the scene
 
 This is the main camera which for rays generation for the scene.
 
-### Parameters
+# Arguments
 * `scene`: The scene to set camera for
 * `camera`: Camera
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSceneSetCameraRight(scene, camera)
     check_error(ccall((:rprSceneSetCameraRight, libRadeonProRender64), rpr_status, (rpr_scene, rpr_camera), scene, camera))
@@ -3974,10 +3976,10 @@ end
 
 Get right camera for the scene
 
-### Parameters
+# Arguments
 * `scene`: The scene to get camera for
-* `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+* `status`: RPR_SUCCESS in case of success, error code otherwise
+# Returns
 camera id for the camera if any, NULL otherwise
 """
 function rprSceneGetCameraRight(scene)
@@ -3993,11 +3995,11 @@ Set camera for the scene
 
 This is the main camera which for rays generation for the scene.
 
-### Parameters
+# Arguments
 * `scene`: The scene to set camera for
 * `camera`: Camera
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprSceneSetCamera(scene, camera)
     check_error(ccall((:rprSceneSetCamera, libRadeonProRender64), rpr_status, (rpr_scene, rpr_camera), scene, camera))
@@ -4008,10 +4010,10 @@ end
 
 Get camera for the scene
 
-### Parameters
+# Arguments
 * `scene`: The scene to get camera for
-* `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+* `status`: RPR_SUCCESS in case of success, error code otherwise
+# Returns
 camera id for the camera if any, NULL otherwise
 """
 function rprSceneGetCamera(scene)
@@ -4025,16 +4027,16 @@ end
 
 Query information about a framebuffer
 
-The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size\\_ret == NULL to fill the buffer with the data Possible error codes: RPR\\_ERROR\\_INVALID\\_PARAMETER
+The workflow is usually two-step: query with the data == NULL to get the required buffer size, then query with size_ret == NULL to fill the buffer with the data Possible error codes: RPR_ERROR_INVALID_PARAMETER
 
-### Parameters
+# Arguments
 * `framebuffer`: Framebuffer object to query
 * `info`: The type of info to query
 * `size`: The size of the buffer pointed by data
 * `data`: The buffer to store queried info
 * `size_ret`: Returns the size in bytes of the data being queried
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprFrameBufferGetInfo(framebuffer, info, size, data, size_ret)
     check_error(ccall((:rprFrameBufferGetInfo, libRadeonProRender64), rpr_status, (rpr_framebuffer, rpr_framebuffer_info, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), framebuffer, info, size, data, size_ret))
@@ -4045,14 +4047,14 @@ end
 
 Clear contents of a framebuffer to zero
 
-Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY
+Possible error codes: RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY
 
 The call is blocking and the image is ready when returned
 
-### Parameters
+# Arguments
 * `frame_buffer`: Framebuffer to clear
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprFrameBufferClear(frame_buffer)
     check_error(ccall((:rprFrameBufferClear, libRadeonProRender64), rpr_status, (rpr_framebuffer,), frame_buffer))
@@ -4063,15 +4065,15 @@ end
 
 Fill contents of a framebuffer with a single color
 
-Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY
+Possible error codes: RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY
 
-The call is blocking and the image is ready when returned. If you want to fill with zeros, it's advised to use [`rprFrameBufferClear`](@ref).
+The call is blocking and the image is ready when returned. If you want to fill with zeros, it's advised to use [`rprFrameBufferClear`].
 
-### Parameters
+# Arguments
 * `frame_buffer`: Framebuffer to clear
 * `r,g,b,a`: : the color to fill
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprFrameBufferFillWithColor(frame_buffer, r, g, b, a)
     check_error(ccall((:rprFrameBufferFillWithColor, libRadeonProRender64), rpr_status, (rpr_framebuffer, rpr_float, rpr_float, rpr_float, rpr_float), frame_buffer, r, g, b, a))
@@ -4080,15 +4082,15 @@ end
 """
     rprFrameBufferSaveToFile(frame_buffer, file_path)
 
-Save frame buffer to file. In case the file format is .bin, the header of the saved file contains [`rpr_framebuffer_desc`](@ref) and [`rpr_framebuffer_format`](@ref) at very begining. The remaining data is raw data of saved framebuffer.
+Save frame buffer to file. In case the file format is .bin, the header of the saved file contains [`rpr_framebuffer_desc`] and [`rpr_framebuffer_format`] at very begining. The remaining data is raw data of saved framebuffer.
 
-Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY
+Possible error codes: RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY
 
-### Parameters
+# Arguments
 * `frame_buffer`: Frame buffer to save
 * `file_path`: Path to file (for UNICODE, supports UTF-8 encoding)
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprFrameBufferSaveToFile(frame_buffer, file_path)
     check_error(ccall((:rprFrameBufferSaveToFile, libRadeonProRender64), rpr_status, (rpr_framebuffer, Ptr{rpr_char}), frame_buffer, file_path))
@@ -4099,11 +4101,11 @@ end
 
 Save frame buffer to file
 
-Same that [`rprFrameBufferSaveToFile`](@ref), but more options. A list of frambuffers can be given, they will be saved to a multilayer EXR.
+Same that [`rprFrameBufferSaveToFile`], but more options. A list of frambuffers can be given, they will be saved to a multilayer EXR.
 
 'extraOptions' is not used for now, but may be use in the future to define some export options, like channel configurations, compression... It must be set to NULL for now.
 
-For layer names, the framebuffer names ( from [`rprObjectSetName`](@ref) ) will be used if it exists.
+For layer names, the framebuffer names ( from [`rprObjectSetName`] ) will be used if it exists.
 
 As this function is new ( 2.01.6 SDK ) and still experimental, its arguments may change in the future.
 """
@@ -4116,13 +4118,13 @@ end
 
 Resolve framebuffer
 
-Convert the input Renderer's native raw format 'src\\_frame\\_buffer' into an output 'dst\\_frame\\_buffer' that can be used for final rendering.
+Convert the input Renderer's native raw format 'src_frame_buffer' into an output 'dst_frame_buffer' that can be used for final rendering.
 
-src\\_frame\\_buffer and dst\\_frame\\_buffer should usually have the same dimension/format. src\\_frame\\_buffer is the result of a [`rprContextRender`](@ref) and should be attached to an AOV with [`rprContextSetAOV`](@ref) before the [`rprContextRender`](@ref) call. dst\\_frame\\_buffer should not be attached to any AOV.
+src_frame_buffer and dst_frame_buffer should usually have the same dimension/format. src_frame_buffer is the result of a [`rprContextRender`] and should be attached to an AOV with [`rprContextSetAOV`] before the [`rprContextRender`] call. dst_frame_buffer should not be attached to any AOV.
 
-The post process that is applied to src\\_frame\\_buffer depends on the AOV it's attached to. So it's important to not modify its AOV ( with [`rprContextSetAOV`](@ref) ) between the [`rprContextRender`](@ref) and [`rprContextResolveFrameBuffer`](@ref) calls.
+The post process that is applied to src_frame_buffer depends on the AOV it's attached to. So it's important to not modify its AOV ( with [`rprContextSetAOV`] ) between the [`rprContextRender`] and [`rprContextResolveFrameBuffer`] calls.
 
-If noDisplayGamma=FALSE, then RPR\\_CONTEXT\\_DISPLAY\\_GAMMA is applied to the dst\\_frame\\_buffer otherwise, display gamma is not used. It's recommended to set it to FALSE for AOVs representing colors ( like RPR\\_AOV\\_COLOR ) and use TRUE for other AOVs.
+If noDisplayGamma=FALSE, then RPR_CONTEXT_DISPLAY_GAMMA is applied to the dst_frame_buffer otherwise, display gamma is not used. It's recommended to set it to FALSE for AOVs representing colors ( like RPR_AOV_COLOR ) and use TRUE for other AOVs.
 """
 function rprContextResolveFrameBuffer(context, src_frame_buffer, dst_frame_buffer, noDisplayGamma)
     check_error(ccall((:rprContextResolveFrameBuffer, libRadeonProRender64), rpr_status, (rpr_context, rpr_framebuffer, rpr_framebuffer, rpr_bool), context, src_frame_buffer, dst_frame_buffer, noDisplayGamma))
@@ -4133,7 +4135,7 @@ end
 
 Create material system
 
-Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY
+Possible error codes: RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY
 """
 function rprMaterialSystemGetInfo(in_material_system, type, in_size, in_data)
     out_size = Ref{Csize_t}()
@@ -4146,7 +4148,7 @@ end
 
 Get material system information
 
-Possible error codes: RPR\\_ERROR\\_INTERNAL\\_ERROR
+Possible error codes: RPR_ERROR_INTERNAL_ERROR
 """
 function rprContextCreateMaterialSystem(in_context, type)
     out_matsys = Ref{rpr_material_system}()
@@ -4159,7 +4161,7 @@ end
 
 Create material node
 
-Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY
+Possible error codes: RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY
 """
 function rprMaterialSystemGetSize(in_context)
     out_size = Ref{rpr_uint}()
@@ -4172,7 +4174,7 @@ end
 
 Returns the number of material nodes for a given material system
 
-Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY
+Possible error codes: RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY
 """
 function rprMaterialSystemCreateNode(in_matsys, in_type)
     out_node = Ref{rpr_material_node}()
@@ -4183,7 +4185,7 @@ end
 """
     rprMaterialNodeSetID(in_node, id)
 
-set the RPR\\_MATERIAL\\_NODE\\_ID of a material. this ID doesn't need to be unique. this ID can be rendered with the RPR\\_AOV\\_MATERIAL\\_ID AOV - color of this AOV can be customized with [`rprContextSetAOVindexLookup`](@ref).
+set the RPR_MATERIAL_NODE_ID of a material. this ID doesn't need to be unique. this ID can be rendered with the RPR_AOV_MATERIAL_ID AOV - color of this AOV can be customized with [`rprContextSetAOVindexLookup`].
 """
 function rprMaterialNodeSetID(in_node, id)
     check_error(ccall((:rprMaterialNodeSetID, libRadeonProRender64), rpr_status, (rpr_material_node, rpr_uint), in_node, id))
@@ -4194,7 +4196,7 @@ end
 
 Connect nodes
 
-Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY
+Possible error codes: RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY
 """
 function rprMaterialNodeSetInputNByKey(in_node, in_input, in_input_node)
     check_error(ccall((:rprMaterialNodeSetInputNByKey, libRadeonProRender64), rpr_status, (rpr_material_node, rpr_material_node_input, rpr_material_node), in_node, in_input, in_input_node))
@@ -4205,7 +4207,7 @@ end
 
 Set float input value
 
-Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY
+Possible error codes: RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY
 """
 function rprMaterialNodeSetInputFByKey(in_node, in_input, in_value_x, in_value_y, in_value_z, in_value_w)
     check_error(ccall((:rprMaterialNodeSetInputFByKey, libRadeonProRender64), rpr_status, (rpr_material_node, rpr_material_node_input, rpr_float, rpr_float, rpr_float, rpr_float), in_node, in_input, in_value_x, in_value_y, in_value_z, in_value_w))
@@ -4225,7 +4227,7 @@ end
 
 Set uint input value
 
-Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY
+Possible error codes: RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY
 """
 function rprMaterialNodeSetInputUByKey(in_node, in_input, in_value)
     check_error(ccall((:rprMaterialNodeSetInputUByKey, libRadeonProRender64), rpr_status, (rpr_material_node, rpr_material_node_input, rpr_uint), in_node, in_input, in_value))
@@ -4236,7 +4238,7 @@ end
 
 Set image input value
 
-Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY
+Possible error codes: RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY
 """
 function rprMaterialNodeSetInputImageDataByKey(in_node, in_input, image)
     check_error(ccall((:rprMaterialNodeSetInputImageDataByKey, libRadeonProRender64), rpr_status, (rpr_material_node, rpr_material_node_input, rpr_image), in_node, in_input, image))
@@ -4336,9 +4338,9 @@ end
 
 Delete object
 
-[`rprObjectDelete`](@ref)(obj) deletes 'obj' from memory. User has to make sure that 'obj' will not be used anymore after this call.
+`rprObjectDelete` deletes 'obj' from memory. User has to make sure that 'obj' will not be used anymore after this call.
 
-Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY
+Possible error codes: RPR_ERROR_OUT_OF_SYSTEM_MEMORY RPR_ERROR_OUT_OF_VIDEO_MEMORY
 """
 function rprObjectDelete(obj)
     check_error(ccall((:rprObjectDelete, libRadeonProRender64), rpr_status, (Ptr{Cvoid},), obj))
@@ -4349,11 +4351,11 @@ end
 
 Set material node name
 
-### Parameters
+# Arguments
 * `node`: Node to set the name for
 * `name`: NULL terminated string name
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprObjectSetName(node, name)
     check_error(ccall((:rprObjectSetName, libRadeonProRender64), rpr_status, (Ptr{Cvoid}, Ptr{rpr_char}), node, name))
@@ -4362,13 +4364,13 @@ end
 """
     rprObjectSetCustomPointer(node, customPtr)
 
-Set a custom pointer to an RPR object ( [`rpr_shape`](@ref), [`rpr_image`](@ref) ... ) The custom pointer is not used internally by RPR. The API user only is responsible of it. An example of usage of this pointer is the C++ wrapper ( RadeonProRender.hpp )
+Set a custom pointer to an RPR object ( [`rpr_shape`], [`rpr_image`] ... ) The custom pointer is not used internally by RPR. The API user only is responsible of it. An example of usage of this pointer is the C++ wrapper ( RadeonProRender.hpp )
 
-### Parameters
+# Arguments
 * `node`: Node to set the 'custom pointer' for
 * `customPtr`: Any 8 bytes value decided by the API user.
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprObjectSetCustomPointer(node, customPtr)
     check_error(ccall((:rprObjectSetCustomPointer, libRadeonProRender64), rpr_status, (Ptr{Cvoid}, Ptr{Cvoid}), node, customPtr))
@@ -4377,10 +4379,10 @@ end
 """
     rprObjectGetCustomPointer(node, customPtr_out)
 
-outputs the 'custom pointer' set by [`rprObjectSetCustomPointer`](@ref). Equivalent of the calls : [`rprImageGetInfo`](@ref)(image,RPR\\_IMAGE\\_CUSTOM\\_PTR,...) for [`rpr_image`](@ref) , [`rprCameraGetInfo`](@ref)(camera,RPR\\_CAMERA\\_CUSTOM\\_PTR,...) for [`rpr_camera`](@ref) , ...etc...
+outputs the 'custom pointer' set by `rprObjectSetCustomPointer`]. Equivalent of the calls : [`rprImageGetInfo`] for [`rpr_image`] , [`rprCameraGetInfo` for [`rpr_camera`] , ...etc...
 
-### Returns
-RPR\\_SUCCESS in case of success, error code otherwise
+# Returns
+RPR_SUCCESS in case of success, error code otherwise
 """
 function rprObjectGetCustomPointer(node, customPtr_out)
     check_error(ccall((:rprObjectGetCustomPointer, libRadeonProRender64), rpr_status, (Ptr{Cvoid}, Ptr{Ptr{Cvoid}}), node, customPtr_out))
@@ -4391,12 +4393,12 @@ end
 
 Create post effect
 
-Create analytic point light represented by a point in space. Possible error codes: RPR\\_ERROR\\_OUT\\_OF\\_VIDEO\\_MEMORY RPR\\_ERROR\\_OUT\\_OF\\_SYSTEM\\_MEMORY
+Create analytic point light represented by a point in space. Possible error codes: RPR_ERROR_OUT_OF_VIDEO_MEMORY RPR_ERROR_OUT_OF_SYSTEM_MEMORY
 
-### Parameters
+# Arguments
 * `context`: The context to create a light for
-* `status`: RPR\\_SUCCESS in case of success, error code otherwise
-### Returns
+* `status`: RPR_SUCCESS in case of success, error code otherwise
+# Returns
 Light object
 """
 function rprContextCreatePostEffect(context, type)
@@ -4498,51 +4500,13 @@ function rprHeteroVolumeSetDensityScale(heteroVolume, scale)
 end
 
 """
-    rprLoadMaterialX(in_context, in_matsys, xmlData, incudeData, includeCount, resourcePaths, resourcePathsCount, imageAlreadyCreated_count, imageAlreadyCreated_paths, imageAlreadyCreated_list, listNodesOut, listNodesOut_count, listImagesOut, listImagesOut_count, rootNodeOut, rootDisplacementNodeOut)
-
-Parse a MaterialX XML data, and create the Material graph composed of rpr\\_material\\_nodes, and rpr\\_images
-
------> This function is part of the 'Version 1' API - deprecated and replaced by the 'Version 2' API
-
-This function is NOT traced. However internally it's calling some RPR API to build the graph, those calls are traced.
-
-### Parameters
-* `xmlData`: null-terminated string of the MaterialX XML data
-* `resourcePaths`: and resourcePathsCount list of paths used for image loading
-* `imageAlreadyCreated_count`:
-* `imageAlreadyCreated_paths`:
-* `imageAlreadyCreated_list`: We can specify a list of [`rpr_image`](@ref) that are already loaded.  If [`rprLoadMaterialX`](@ref) finds any images in the XML belonging to this list it will use it directly instead of creating it with [`rprContextCreateImageFromFile`](@ref) Those images will not be added in the listImagesOut list. example to add an image in the imageAlreadyCreated list: imageAlreadyCreated\\_count = 1 imageAlreadyCreated\\_paths[0] = "../../Textures/UVCheckerMap13-1024.png" // same path specified in the 'value' of the image in the XML imageAlreadyCreated\\_list[0] = ([`rpr_image`](@ref)) existing\\_rpr\\_image imageAlreadyCreated\\_paths and imageAlreadyCreated\\_list must have the same size.
-* `listNodesOut`:
-* `listImagesOut`: Thoses 2 buffers are allocated by [`rprLoadMaterialX`](@ref), then you should use [`rprLoadMaterialX_free`](@ref) to free them. they contain the list of rpr\\_material and [`rpr_image`](@ref) created by [`rprLoadMaterialX`](@ref).
-* `rootNodeOut`: Closure node in the material graph. Index inside listNodesOut. Could be -1 if an error occured. This is the material that should be assigned to shape: [`rprShapeSetMaterial`](@ref)(shape,listNodesOut[rootNodeOut]);
-"""
-function rprLoadMaterialX(in_context, in_matsys, xmlData, incudeData, includeCount, resourcePaths, resourcePathsCount, imageAlreadyCreated_count, imageAlreadyCreated_paths, imageAlreadyCreated_list, listNodesOut, listNodesOut_count, listImagesOut, listImagesOut_count, rootNodeOut, rootDisplacementNodeOut)
-    check_error(ccall((:rprLoadMaterialX, libRadeonProRender64), rpr_status, (rpr_context, rpr_material_system, Ptr{Cchar}, Ptr{Ptr{Cchar}}, Cint, Ptr{Ptr{Cchar}}, Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{rpr_image}, Ptr{Ptr{rpr_material_node}}, Ptr{rpr_uint}, Ptr{Ptr{rpr_image}}, Ptr{rpr_uint}, Ptr{rpr_uint}, Ptr{rpr_uint}), in_context, in_matsys, xmlData, incudeData, includeCount, resourcePaths, resourcePathsCount, imageAlreadyCreated_count, imageAlreadyCreated_paths, imageAlreadyCreated_list, listNodesOut, listNodesOut_count, listImagesOut, listImagesOut_count, rootNodeOut, rootDisplacementNodeOut))
-end
-
-"""
-    rprLoadMaterialX_free(listNodes, listImages)
-
-Free the buffers allocated by [`rprLoadMaterialX`](@ref)
-
------> This function is part of the 'Version 1' API - deprecated and replaced by the 'Version 2' API
-
-It does NOT call any [`rprObjectDelete`](@ref) Internally it's doing a simple: delete[] listNodes; delete[] listImages;
-
-This function is NOT traced.
-"""
-function rprLoadMaterialX_free(listNodes, listImages)
-    check_error(ccall((:rprLoadMaterialX_free, libRadeonProRender64), rpr_status, (Ptr{rpr_material_node}, Ptr{rpr_image}), listNodes, listImages))
-end
-
-"""
     rprMaterialXAddResourceFolder(in_context, resourcePath)
 
 Add resource search path.
 
 -----> Note: This function is part of the 'Version 2' MaterialX API that replaces 'Version 1'
 
-example: [`rprMaterialXAddResourceFolder`](@ref)(context, "dependency/"); [`rprMaterialXAddResourceFolder`](@ref)(context, "../imageLib/"); [`rprMaterialXSetFile`](@ref)(material, "materialx.mtlx"); During the parsing of "materialx.mtlx" inside the [`rprMaterialXSetFile`](@ref) call, the folder path "dependency/" , "../imageLib/" will be used to search any files referenced in the materialX
+example: `rprMaterialXAddResourceFolder`] [`rprMaterialXAddResourceFolder`]; [`rprMaterialXSetFile`; During the parsing of "materialx.mtlx" inside the [`rprMaterialXSetFile`] call, the folder path "dependency/" , "../imageLib/" will be used to search any files referenced in the materialX
 """
 function rprMaterialXAddResourceFolder(in_context, resourcePath)
     check_error(ccall((:rprMaterialXAddResourceFolder, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}), in_context, resourcePath))
@@ -4551,7 +4515,7 @@ end
 """
     rprMaterialXCleanResourceFolder(in_context)
 
-Clean the list created by [`rprMaterialXAddResourceFolder`](@ref) calls
+Clean the list created by [`rprMaterialXAddResourceFolder`] calls
 
 -----> Note: This function is part of the 'Version 2' MaterialX API that replaces 'Version 1'
 """
@@ -4566,7 +4530,7 @@ Add a dependency Mtlx file.
 
 -----> Note: This function is part of the 'Version 2' MaterialX API that replaces 'Version 1'
 
-example: [`rprMaterialXAddDependencyMtlx`](@ref)(context, "standard\\_surface.mtlx"); [`rprMaterialXSetFile`](@ref)(material, "materialx.mtlx"); During the parsing of "materialx.mtlx" inside the [`rprMaterialXSetFile`](@ref) call, standard\\_surface.mtlx is also parsed and used as a dependancy file.
+example: `rprMaterialXAddDependencyMtlx`](context, "standard_surface.mtlx"); [`rprMaterialXSetFile`; During the parsing of "materialx.mtlx" inside the [`rprMaterialXSetFile`] call, standard_surface.mtlx is also parsed and used as a dependancy file.
 """
 function rprMaterialXAddDependencyMtlx(in_context, resourcePath)
     check_error(ccall((:rprMaterialXAddDependencyMtlx, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}), in_context, resourcePath))
@@ -4575,13 +4539,13 @@ end
 """
     rprMaterialXAddDependencyMtlxAsBuffer(in_context, buffer, bufferSize)
 
-Add a dependency Mtlx file. Same than [`rprMaterialXAddDependencyMtlx`](@ref), but input a file buffer instead of the file.
+Add a dependency Mtlx file. Same than [`rprMaterialXAddDependencyMtlx`], but input a file buffer instead of the file.
 
 -----> Note: This function is part of the 'Version 2' MaterialX API that replaces 'Version 1'
 
 'buffer' represents the content of a XML string defining the MaterialX material. The size of the buffer is defined by 'bufferSize', not by a null-terminated character.
 
-example: [`rprMaterialXAddDependencyMtlxAsBuffer`](@ref)(context, inbuffer, size); [`rprMaterialXSetFile`](@ref)(material, "materialx.mtlx"); During the parsing of "materialx.mtlx" inside the [`rprMaterialXSetFile`](@ref) call, 'inbuffer' is also parsed and used as a dependancy file.
+example: `rprMaterialXAddDependencyMtlxAsBuffer`](context, inbuffer, size); [`rprMaterialXSetFile`; During the parsing of "materialx.mtlx" inside the [`rprMaterialXSetFile`] call, 'inbuffer' is also parsed and used as a dependancy file.
 """
 function rprMaterialXAddDependencyMtlxAsBuffer(in_context, buffer, bufferSize)
     check_error(ccall((:rprMaterialXAddDependencyMtlxAsBuffer, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}, Csize_t), in_context, buffer, bufferSize))
@@ -4590,7 +4554,7 @@ end
 """
     rprMaterialXCleanDependencyMtlx(in_context)
 
-Clean the list created by [`rprMaterialXAddDependencyMtlx`](@ref) / [`rprMaterialXAddDependencyMtlxAsBuffer`](@ref) calls
+Clean the list created by [`rprMaterialXAddDependencyMtlx`] / [`rprMaterialXAddDependencyMtlxAsBuffer`] calls
 
 -----> Note: This function is part of the 'Version 2' MaterialX API that replaces 'Version 1'
 """
@@ -4605,7 +4569,7 @@ Add a pre-loaded image to the MaterialX creation.
 
 -----> Note: This function is part of the 'Version 2' MaterialX API that replaces 'Version 1'
 
-example: [`rprMaterialXAddPreloadedImage`](@ref)(context, "images/back.png" , imgA); [`rprMaterialXAddPreloadedImage`](@ref)(context, "images/skin.png" , imgB); [`rprMaterialXSetFile`](@ref)(material, "materialx.mtlx"); During the parsing of "materialx.mtlx" inside the [`rprMaterialXSetFile`](@ref) call, if an image uses the exact path "images/back.png" or "images/skin.png" , then [`rprMaterialXSetFile`](@ref) will use imgA/imgB instead of creation the image itself.
+example: `rprMaterialXAddPreloadedImage`](context, "images/back.png" , imgA); [`rprMaterialXAddPreloadedImage`]; [`rprMaterialXSetFile`; During the parsing of "materialx.mtlx" inside the [`rprMaterialXSetFile`] call, if an image uses the exact path "images/back.png" or "images/skin.png" , then [`rprMaterialXSetFile`] will use imgA/imgB instead of creation the image itself.
 """
 function rprMaterialXAddPreloadedImage(in_context, imgPath, img)
     check_error(ccall((:rprMaterialXAddPreloadedImage, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}, rpr_image), in_context, imgPath, img))
@@ -4614,7 +4578,7 @@ end
 """
     rprMaterialXCleanPreloadedImages(in_context)
 
-Clean the map created by [`rprMaterialXAddPreloadedImage`](@ref) calls.
+Clean the map created by [`rprMaterialXAddPreloadedImage`] calls.
 
 -----> Note: This function is part of the 'Version 2' MaterialX API that replaces 'Version 1'
 """
@@ -4629,7 +4593,7 @@ Assign the materialX file to a RPR material.
 
 -----> Note: This function is part of the 'Version 2' MaterialX API that replaces 'Version 1'
 
-The material must be created as RPR\\_MATERIAL\\_NODE\\_MATX type.
+The material must be created as RPR_MATERIAL_NODE_MATX type.
 """
 function rprMaterialXSetFile(material, xmlPath)
     check_error(ccall((:rprMaterialXSetFile, libRadeonProRender64), rpr_status, (rpr_material_node, Ptr{rpr_char}), material, xmlPath))
@@ -4638,7 +4602,7 @@ end
 """
     rprMaterialXSetFileAsBuffer(material, buffer, bufferSize)
 
-Same that [`rprMaterialXSetFile`](@ref) but input a file buffer instead of the file.
+Same that [`rprMaterialXSetFile`] but input a file buffer instead of the file.
 
 -----> Note: This function is part of the 'Version 2' MaterialX API that replaces 'Version 1'
 
@@ -4651,9 +4615,9 @@ end
 """
     rprMaterialXGetLoaderMessages(in_context, size, data, size_ret)
 
-Return the Warning/Error messages from the last MaterialX Loading. This function helps to debug. If [`rprMaterialXSetFile`](@ref)/[`rprMaterialXSetFileAsBuffer`](@ref) fails, it's a good practice to call [`rprMaterialXGetLoaderMessages`](@ref) just after.
+Return the Warning/Error messages from the last MaterialX Loading. This function helps to debug. If [`rprMaterialXSetFile`]/[`rprMaterialXSetFileAsBuffer`] fails, it's a good practice to call [`rprMaterialXGetLoaderMessages`] just after.
 
-'size' is the size of allocated 'data' buffer. 'data' can be nullptr if we only want to get 'size\\_ret'. 'size\\_ret' is the actual size of the out buffer - can be nullptr.
+'size' is the size of allocated 'data' buffer. 'data' can be nullptr if we only want to get 'size_ret'. 'size_ret' is the actual size of the out buffer - can be nullptr.
 """
 function rprMaterialXGetLoaderMessages(in_context, size, data, size_ret)
     check_error(ccall((:rprMaterialXGetLoaderMessages, libRadeonProRender64), rpr_status, (rpr_context, Csize_t, Ptr{Cvoid}, Ptr{Csize_t}), in_context, size, data, size_ret))
@@ -4662,10 +4626,21 @@ end
 """
     rprMaterialXBindGeomPropToPrimvar(in_context, geompropvalue, key)
 
-In MaterialX, Geompropvalue are referenced as strings, example:  input name="geomprop" type="string" value="UVset01" We can map this MaterialX Geompropvalue to a RadeonProRender Primvar, example: [`rprMaterialXBindGeomPropToPrimvar`](@ref)(context, "UVset01", 100 ); In this example, the materialX "UVset01" will be used as the RadeonProRender Primvar key=100 ( created with [`rprShapeSetPrimvar`](@ref) ) Internally this is a map from geompropvalue to key, meaning a geompropvalue only has 1 unique key, but 1 key can have several geompropvalue.
+In MaterialX, Geompropvalue are referenced as strings, example:  input name="geomprop" type="string" value="UVset01" We can map this MaterialX Geompropvalue to a RadeonProRender Primvar, example: `rprMaterialXBindGeomPropToPrimvar` Internally this is a map from geompropvalue to key, meaning a geompropvalue only has 1 unique key, but 1 key can have several geompropvalue.
 """
 function rprMaterialXBindGeomPropToPrimvar(in_context, geompropvalue, key)
     check_error(ccall((:rprMaterialXBindGeomPropToPrimvar, libRadeonProRender64), rpr_status, (rpr_context, Ptr{rpr_char}, rpr_uint), in_context, geompropvalue, key))
+end
+
+"""
+    rprMaterialXTexcoord(material, offsetx, offsety, offsetz, scalex, scaley, scalez, uvSet)
+
+function to transform the final UV applied on the shape, call it before [`rprMaterialXSetFile`].
+
+example: // the UV set 0 (Base UV) of matx is first translated by (0.7,0.6,0.0) and then scaled by (2,1.5,1) `rprMaterialXTexcoord`]( matx, 0.7f, 0.6f, 0.0f, 2.0f, 1.5f, 1.0f, 0 ); [`rprMaterialXSetFile`;
+"""
+function rprMaterialXTexcoord(material, offsetx, offsety, offsetz, scalex, scaley, scalez, uvSet)
+    check_error(ccall((:rprMaterialXTexcoord, libRadeonProRender64), rpr_status, (rpr_material_node, rpr_float, rpr_float, rpr_float, rpr_float, rpr_float, rpr_float, rpr_int), material, offsetx, offsety, offsetz, scalex, scaley, scalez, uvSet))
 end
 
 const rpr_GLuint = Cuint
@@ -4690,11 +4665,11 @@ const RPR_VERSION_MAJOR = 3
 
 const RPR_VERSION_MINOR = 1
 
-const RPR_VERSION_REVISION = 2
+const RPR_VERSION_REVISION = 5
 
-const RPR_VERSION_BUILD = 0xd1cb11d8
+const RPR_VERSION_BUILD = 0x92dd2edd
 
-const RPR_VERSION_MAJOR_MINOR_REVISION = 0x00300102
+const RPR_VERSION_MAJOR_MINOR_REVISION = 0x00300105
 
 const RPR_API_VERSION = RPR_VERSION_MAJOR_MINOR_REVISION
 

@@ -10,5 +10,5 @@ Documentation for [RadeonProRender](https://github.com/SimonDanisch/RadeonProRen
 ```
 
 ```@autodocs
-Modules = [RadeonProRender]
+Modules = [RadeonProRender, RadeonProRender.RPR]
 ```
