@@ -49,7 +49,7 @@ mesh, mat = add_shape!(scene, context, matsys, Rect3f(Vec3f(0, -2, 0), Vec3f(5, 
 mesh, mat = add_shape!(scene, context, matsys, Rect3f(Vec3f(0, 2, 0), Vec3f(5, 0.1, 5));
                        color=colorant"white")
 
-mesh, mat_sphere = add_shape!(scene, context, matsys, Tesselation(Sphere(Point3f(2, 0, 2), 1.0f0), 100);
+mesh, mat_sphere = add_shape!(scene, context, matsys, Tessellation(Sphere(Point3f(2, 0, 2), 1.0f0), 100);
                               material=RPR.RPR_MATERIAL_NODE_MICROFACET, roughness=0.2, color=colorant"red")
 
 fb_size = (800, 600)

@@ -34,7 +34,7 @@ function create_mesh(DN = 512, dphi=pi/200.0f0, dtheta=dphi)
     z = @. r * sin(phi) * sin(theta)
 
     xyz = Point3f[Point3f(x[i, j], y[i, j], z[i, j]) for i in 1:size(x, 1), j in 1:size(x, 2)]
-    r = Tesselation(Rect2f((0, 0), (1, 1)), size(x))
+    r = Tessellation(Rect2f((0, 0), (1, 1)), size(x))
     # decomposing a rectangle into uv and triangles is what we need to map the z coordinates on
     # since the xyz data assumes the coordinates to have the same neighouring relations
     # like a grid

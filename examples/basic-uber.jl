@@ -49,9 +49,9 @@ mesh, mat = add_shape!(scene, context, matsys, Rect3f(Vec3f(0, -2, 0), Vec3f(5, 
 mesh, mat = add_shape!(scene, context, matsys, Rect3f(Vec3f(0, 2, 0), Vec3f(5, 0.1, 5));
                        color=colorant"white")
 
-mesh, mat = add_shape!(scene, context, matsys, Tesselation(Sphere(Point3f(2, 0, 2), 0.95f0), 100);
+mesh, mat = add_shape!(scene, context, matsys, Tessellation(Sphere(Point3f(2, 0, 2), 0.95f0), 100);
                        color=colorant"white")
-rpr_mesh = RPR.Shape(context, Tesselation(Sphere(Point3f(2, 0, 2), 1.0f0), 100))
+rpr_mesh = RPR.Shape(context, Tessellation(Sphere(Point3f(2, 0, 2), 1.0f0), 100))
 push!(scene, rpr_mesh)
 material = RPR.MaterialNode(matsys, RPR.RPR_MATERIAL_NODE_UBERV2)
 
