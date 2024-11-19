@@ -53,7 +53,7 @@ M, N = size(z)
 points = map(x-> x ./ Point3f(4, 4, 1.0) .+ Point3f(0, 0, 1.0), vec(Point3f.(x, y', z)))
 # Connect the vetices with faces, as one would use for a 2D Rectangle
 # grid with M,N grid points
-faces = decompose(LineFace{GLIndex}, Tesselation(Rect2(0, 0, 1, 1), (M, N)))
+faces = decompose(LineFace{GLIndex}, Tessellation(Rect2(0, 0, 1, 1), (M, N)))
 indices = RPR.rpr_int[]
 for elem in faces
     push!(indices, first(elem)-1, first(elem)-1, last(elem)-1, last(elem)-1)
