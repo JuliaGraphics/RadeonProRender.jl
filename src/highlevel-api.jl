@@ -281,7 +281,7 @@ Default shape constructor which works with every Geometry from the package
 GeometryTypes (Meshes and geometry primitives alike).
 """
 function Shape(context::Context, meshlike; kw...)
-    m = uv_normal_mesh(meshlike; kw...)
+    m = expand_faceviews(uv_normal_mesh(meshlike; kw...))
     return Shape(context, decompose(Point3f, m), decompose_normals(m), faces(m), decompose_uv(m))
 end
 
@@ -300,7 +300,7 @@ function Shape(context::Context, vertices, normals, faces, uvs)
 
     nraw = decompose(Vec3f, normals)
     @assert eltype(nraw) == Vec3f
-    
+
     if isnothing(uvs)
         uvraw = C_NULL
         uvlength = 0
@@ -318,10 +318,10 @@ function Shape(context::Context, vertices, normals, faces, uvs)
 
 
     foreach(i -> checkbounds(vertices, i + 1), iraw)
-    rpr_mesh = rprContextCreateMesh(context, 
-        vraw, length(vertices), sizeof(Point3f), 
-        nraw, length(normals), sizeof(Vec3f), 
-        uvraw, uvlength, uvbytesize, 
+    rpr_mesh = rprContextCreateMesh(context,
+        vraw, length(vertices), sizeof(Point3f),
+        nraw, length(normals), sizeof(Vec3f),
+        uvraw, uvlength, uvbytesize,
         iraw, sizeof(rpr_int), iraw, sizeof(rpr_int), iraw, sizeof(rpr_int), facelens, length(faces)
     )
 
